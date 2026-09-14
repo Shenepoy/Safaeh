@@ -680,6 +680,37 @@ void main() {
     expectNoStatusBarInset(tileKey, find.text('Choose'));
   });
 
+  testWidgets('tile picker can paint its title in the Safaeh phone chrome', (
+    tester,
+  ) async {
+    await setPhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSafaehTilePicker<String>(
+              context: context,
+              title: 'Choose account',
+              showTitleInBody: false,
+              options: const [SafaehTileOption(value: 'cash', label: 'Cash')],
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    final panelTop = tester
+        .getTopLeft(find.byKey(const ValueKey('safaeh_panel')))
+        .dy;
+    final titleTop = tester.getTopLeft(find.text('Choose account')).dy;
+    expect(find.text('Choose account'), findsOneWidget);
+    expect(titleTop - panelTop, lessThan(32));
+  });
+
   testWidgets('railWidthOf shifts the tablet dialog off the start rail', (
     tester,
   ) async {
@@ -1176,10 +1207,112 @@ void main() {
 
     await tester.drag(
       find.byKey(const ValueKey('safaeh_drag_handle')),
-      const Offset(0, 220),
+      const Offset(0, 300),
     );
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('safaeh_panel')), findsNothing);
+  });
+
+  testWidgets('phone sheet needs a longer handle pull to dismiss', (
+    tester,
+  ) async {
+    await setPhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSafaeh<void>(
+              context: context,
+              title: 'Rows',
+              child: const Text('sheet-body'),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    final panel = find.byKey(const ValueKey('safaeh_panel'));
+    final handle = find.byKey(const ValueKey('safaeh_drag_handle'));
+
+    await tester.drag(handle, const Offset(0, 110));
+    await tester.pumpAndSettle();
+    expect(panel, findsOneWidget);
+
+    await tester.drag(handle, const Offset(0, 220));
+    await tester.pumpAndSettle();
+    expect(panel, findsNothing);
+  });
+
+  testWidgets('phone sheet dismissal distance scales with modal height', (
+    tester,
+  ) async {
+    await setPhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSafaeh<void>(
+              context: context,
+              title: 'Tall sheet',
+              child: const SizedBox(height: 600),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    final panel = find.byKey(const ValueKey('safaeh_panel'));
+    final handle = find.byKey(const ValueKey('safaeh_drag_handle'));
+
+    await tester.drag(handle, const Offset(0, 180));
+    await tester.pumpAndSettle();
+    expect(panel, findsOneWidget);
+
+    await tester.drag(handle, const Offset(0, 240));
+    await tester.pumpAndSettle();
+    expect(panel, findsNothing);
+  });
+
+  testWidgets('phone sheet disables the material overscroll indicator', (
+    tester,
+  ) async {
+    await setPhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSafaeh<void>(
+              context: context,
+              title: 'Rows',
+              child: SizedBox(
+                height: 320,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < 20; i++)
+                        SizedBox(height: 48, child: Text('probe-row-$i')),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StretchingOverscrollIndicator), findsNothing);
+    expect(find.byType(GlowingOverscrollIndicator), findsNothing);
   });
 
   testWidgets('phone sheet paints through the bottom safe-area inset', (
@@ -1258,11 +1391,49 @@ void main() {
 
       // The same gesture pattern users make after reaching the list's start:
       // the content gives the pull to the sheet and the threshold dismisses.
-      await tester.drag(find.text('drag-row-2'), const Offset(0, 220));
+      await tester.drag(find.text('drag-row-2'), const Offset(0, 360));
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('safaeh_panel')), findsNothing);
     },
   );
+
+  testWidgets('phone sheet accepts a fast content fling at the top', (
+    tester,
+  ) async {
+    await setPhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSafaeh<void>(
+              context: context,
+              title: 'Rows',
+              child: SizedBox(
+                height: 320,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < 20; i++)
+                        SizedBox(height: 48, child: Text('fling-row-$i')),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('safaeh_panel')), findsOneWidget);
+
+    await tester.fling(find.text('fling-row-2'), const Offset(0, 220), 1200);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('safaeh_panel')), findsNothing);
+  });
 
   testWidgets('short picker sheet can be pulled down from its content', (
     tester,
@@ -1291,7 +1462,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('safaeh_panel')), findsOneWidget);
 
-    await tester.drag(find.text('Arabic'), const Offset(0, 120));
+    await tester.drag(find.text('Arabic'), const Offset(0, 220));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('safaeh_panel')), findsNothing);
   });

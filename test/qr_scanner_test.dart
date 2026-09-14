@@ -71,7 +71,9 @@ void main() {
     expect(find.text('Need camera'), findsOneWidget);
     expect(find.text('Open settings'), findsOneWidget);
     expect(
-      tester.widget<IconButton>(find.widgetWithIcon(IconButton, Icons.close)).tooltip,
+      tester
+          .widget<IconButton>(find.widgetWithIcon(IconButton, Icons.close))
+          .tooltip,
       'Close',
     );
     await tester.tap(find.byIcon(Icons.close));

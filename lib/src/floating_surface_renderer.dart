@@ -128,13 +128,15 @@ _FloatingVisual _resolveFloatingVisual(
   final transparency = _normalizedTransparency(
     appearance.transparency ?? _defaultTransparency(appearance.style),
   );
-  // Glass should read as a light frosted pane rather than inheriting the
-  // component's often-coloured fallback surface. Use the active theme surface
-  // by default so light themes stay white-ish and dark themes stay dark. A
-  // host can still provide a deliberately branded tint through tintColor.
+  // Keep the v0.2.5 dark-mode treatment: dark glass inherits the host
+  // component's fallback surface, which gives Hisab's floating navigation its
+  // established depth. Light mode uses the active theme surface so it remains
+  // white-ish. A host can still provide a deliberately branded tint through
+  // tintColor.
   final tint =
       appearance.tintColor ??
-      (appearance.style == SafaehFloatingSurfaceStyle.glass
+      (appearance.style == SafaehFloatingSurfaceStyle.glass &&
+              cs.brightness == Brightness.light
           ? cs.surface
           : fallbackColor);
   final fill = tint.withValues(alpha: tint.a * (1 - transparency / 100));

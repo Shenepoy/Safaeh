@@ -38,6 +38,7 @@ class SafaehOptionPickerBody<T> extends StatelessWidget {
     this.selected,
     this.footer,
     this.tabletBreakpoint,
+    this.showTitleInBody = true,
     this.onSelected,
   });
 
@@ -47,6 +48,7 @@ class SafaehOptionPickerBody<T> extends StatelessWidget {
   final T? selected;
   final String? footer;
   final double? tabletBreakpoint;
+  final bool showTitleInBody;
 
   /// When set, option taps call this instead of [safaehPop] (catalog
   /// previews that must stay open).
@@ -62,6 +64,7 @@ class SafaehOptionPickerBody<T> extends StatelessWidget {
       fontWeight: FontWeight.w700,
     );
     final showTitle =
+        showTitleInBody &&
         showInBodyTitle &&
         ((title != null && title!.isNotEmpty) || titleBuilder != null);
 
@@ -71,7 +74,7 @@ class SafaehOptionPickerBody<T> extends StatelessWidget {
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          padding: EdgeInsets.fromLTRB(16, showTitleInBody ? 12 : 0, 16, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -137,6 +140,7 @@ Future<T?> showSafaehPicker<T>({
   SafaehTransition? slideUp,
   SafaehPhoneSheetPlacement phonePlacement = SafaehPhoneSheetPlacement.bottom,
   bool useRootNavigator = true,
+  bool showTitleInBody = true,
   SafaehRouteOptions? route,
 }) {
   final tokens = SafaehTheme.of(context);
@@ -157,7 +161,7 @@ Future<T?> showSafaehPicker<T>({
     slideUp: slideUp,
     phonePlacement: phonePlacement,
     useRootNavigator: useRootNavigator,
-    paintPhoneTitle: false,
+    paintPhoneTitle: !showTitleInBody,
     route: route,
     child: SafaehOptionPickerBody<T>(
       title: title,
@@ -166,6 +170,7 @@ Future<T?> showSafaehPicker<T>({
       selected: selected,
       footer: footer,
       tabletBreakpoint: breakpoint,
+      showTitleInBody: showTitleInBody,
     ),
   );
 }

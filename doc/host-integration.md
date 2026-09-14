@@ -11,7 +11,7 @@ Safaeh ships six complete public onboarding directions:
 enum SafaehOnboardingDesign { meadow, orbit, paper, atelier, zen, prism }
 ```
 
-Select one directly on `SafaehOnboarding`; Meadow is the default. Hosts can
+Select one directly on `SafaehOnboarding`; Zen is the default. Hosts can
 persist the selected `design.id` in their own settings, or build a picker from
 `SafaehOnboardingDesignCatalog.all`. Safaeh does not persist application
 preferences.
@@ -27,6 +27,11 @@ profile, password reset, magic link, provider buttons, and pending email. It
 accepts neutral snapshots and callbacks only. It never imports an auth SDK,
 performs network calls, or decides whether a session is valid.
 
+Language and theme controls are placed in the top bar by default. Set
+`controlPlacement` to `SafaehOnboardingControlPlacement.bottomCenter` to put
+the host-provided controls together at the bottom center; the Back and Next
+actions remain in their normal leading/trailing positions.
+
 For a custom host design, use the public `SafaehOnboardingListItem`,
 `SafaehOnboardingTracker`, and `SafaehOnboardingActionBar` primitives while
 keeping the same host-owned copy and callbacks. The example catalog previews
@@ -35,13 +40,13 @@ all six presets, Arabic/RTL, themes, reduced motion, and auth states.
 ### Persist a design in the host
 
 Safaeh intentionally does not write preferences. Store the stable ID in the
-host and fall back to Meadow when a value is missing or was introduced by a
+host and fall back to Zen when a value is missing or was introduced by a
 future version:
 
 ```dart
 final saved = settings.getString('onboarding_design');
 final design = SafaehOnboardingDesignCatalog.tryParse(saved ?? '') ??
-    SafaehOnboardingDesign.meadow;
+    SafaehOnboardingDesign.zen;
 
 await settings.setString('onboarding_design', design.id);
 ```
@@ -73,6 +78,7 @@ localized widgets and content builders directly:
 ```dart
 SafaehOnboarding(
   design: design,
+  controlPlacement: SafaehOnboardingControlPlacement.bottomCenter,
   labels: SafaehOnboardingLabels(
     back: l10n.back,
     next: l10n.continueLabel,

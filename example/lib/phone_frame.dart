@@ -45,28 +45,28 @@ class CatalogPhoneFrame extends StatelessWidget {
                     child: Directionality(
                       textDirection: TextDirection.ltr,
                       child: Row(
-                      children: [
-                        Text(
-                          '9:41',
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        const Spacer(),
-                        Icon(
-                          Icons.signal_cellular_alt,
-                          size: 14,
-                          color: scheme.onSurface,
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(Icons.wifi, size: 14, color: scheme.onSurface),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.battery_full,
-                          size: 14,
-                          color: scheme.onSurface,
-                        ),
-                      ],
-                    ),
+                        children: [
+                          Text(
+                            '9:41',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const Spacer(),
+                          Icon(
+                            Icons.signal_cellular_alt,
+                            size: 14,
+                            color: scheme.onSurface,
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.wifi, size: 14, color: scheme.onSurface),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.battery_full,
+                            size: 14,
+                            color: scheme.onSurface,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -137,7 +137,8 @@ class _CatalogPhonePreviewDialog extends StatefulWidget {
       _CatalogPhonePreviewDialogState();
 }
 
-class _CatalogPhonePreviewDialogState extends State<_CatalogPhonePreviewDialog> {
+class _CatalogPhonePreviewDialogState
+    extends State<_CatalogPhonePreviewDialog> {
   var _placement = SafaehPhoneSheetPlacement.bottom;
 
   void _pop(BuildContext context) {

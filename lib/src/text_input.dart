@@ -23,6 +23,7 @@ class SafaehTextInputSheet extends StatefulWidget {
     this.enableSuggestions = true,
     this.onChanged,
     this.cancelLabel,
+    this.showTitleInBody = true,
     this.titleBuilder,
     this.tabletBreakpoint,
     this.autofocus = true,
@@ -42,6 +43,7 @@ class SafaehTextInputSheet extends StatefulWidget {
   final bool enableSuggestions;
   final ValueChanged<String>? onChanged;
   final String? cancelLabel;
+  final bool showTitleInBody;
   final SafaehTitleBuilder? titleBuilder;
   final double? tabletBreakpoint;
   final bool autofocus;
@@ -90,7 +92,7 @@ class _SafaehTextInputSheetState extends State<SafaehTextInputSheet> {
         MaterialLocalizations.of(context).cancelButtonLabel;
 
     return buildSafaehSheetShell(
-      showTitleInBody: !isWide,
+      showTitleInBody: widget.showTitleInBody && !isWide,
       title:
           widget.titleBuilder?.call(context, titleStyle) ??
           Text(widget.title, style: titleStyle),
@@ -174,6 +176,7 @@ Future<String?> showSafaehTextInput({
   double? maxHeight,
   bool barrierDismissible = true,
   bool useRootNavigator = true,
+  bool showTitleInBody = true,
   SafaehRouteOptions? route,
 }) {
   return showSafaeh<String?>(
@@ -192,7 +195,7 @@ Future<String?> showSafaehTextInput({
     slideUp: slideUp,
     phonePlacement: phonePlacement,
     useRootNavigator: useRootNavigator,
-    paintPhoneTitle: false,
+    paintPhoneTitle: !showTitleInBody,
     route: route,
     child: SafaehTextInputSheet(
       title: title,
@@ -209,6 +212,7 @@ Future<String?> showSafaehTextInput({
       enableSuggestions: enableSuggestions,
       onChanged: onChanged,
       cancelLabel: cancelLabel,
+      showTitleInBody: showTitleInBody,
       titleBuilder: titleBuilder,
       tabletBreakpoint: tabletBreakpoint,
     ),

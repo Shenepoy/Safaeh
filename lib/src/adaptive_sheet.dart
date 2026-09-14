@@ -110,6 +110,12 @@ const double kSafaehPhoneHandleFallbackHeight = 24;
 /// First-content height used before the first layout measurement.
 const double kSafaehPhoneFirstContentFallbackHeight = 48;
 
+/// Minimum downward travel required to dismiss a phone bottom sheet by dragging.
+const double _safaehPhoneDismissDistance = 180;
+
+/// Taller sheets require a larger pull instead of dismissing too easily.
+const double _safaehPhoneDismissFraction = 0.30;
+
 /// Top of a bottom-docked raised sheet.
 ///
 /// ```
@@ -680,6 +686,22 @@ class _AdaptiveSheetHost extends StatelessWidget {
           )
         : const SizedBox(height: 8);
 
+    final contentBody = contentPadding != null
+        ? Padding(padding: contentPadding!, child: child)
+        : child;
+    final sheetContent = !isWide
+        ? ScrollConfiguration(
+            // The phone sheet consumes a top-edge pull to dismiss itself.
+            // Keep the child scrollable's physics and notifications intact,
+            // but avoid painting a second material stretch/glow over the
+            // sheet while that gesture is handed to the sheet.
+            behavior: ScrollConfiguration.of(
+              context,
+            ).copyWith(overscroll: false),
+            child: contentBody,
+          )
+        : contentBody;
+
     final Widget panelBody = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -699,12 +721,7 @@ class _AdaptiveSheetHost extends StatelessWidget {
           fit: FlexFit.loose,
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: bodyMaxHeight),
-            child: FocusScope(
-              autofocus: false,
-              child: contentPadding != null
-                  ? Padding(padding: contentPadding!, child: child)
-                  : child,
-            ),
+            child: FocusScope(autofocus: false, child: sheetContent),
           ),
         ),
       ],
@@ -958,7 +975,12 @@ class _PhoneSheetDragDismissState extends State<_PhoneSheetDragDismiss>
 
   void _onDragEnd(DragEndDetails details) {
     final velocity = details.primaryVelocity ?? 0;
-    if (_dy.value >= SheetHandleDrag.dismissDistance ||
+    final sheetHeight = context.size?.height ?? 0;
+    final dismissDistance = math.max(
+      _safaehPhoneDismissDistance,
+      sheetHeight * _safaehPhoneDismissFraction,
+    );
+    if (_dy.value >= dismissDistance ||
         velocity >= SheetHandleDrag.flingVelocity) {
       _tryDismiss();
       return;
@@ -1001,11 +1023,10 @@ class _PhoneSheetDragDismissState extends State<_PhoneSheetDragDismiss>
       if (delta > 0) _updateDrag(-delta);
     } else if (notification is ScrollEndNotification && _contentDragActive) {
       _contentDragActive = false;
-      _onDragEnd(
-        DragEndDetails(
-          primaryVelocity: notification.dragDetails?.primaryVelocity,
-        ),
-      );
+      // Keep Flutter's original velocity vector. Reconstructing
+      // DragEndDetails with only primaryVelocity leaves velocity at zero and
+      // violates DragEndDetails' axis-consistency assertion for flings.
+      _onDragEnd(notification.dragDetails ?? DragEndDetails());
     }
     return false;
   }

@@ -11,6 +11,27 @@ import 'theme.dart';
 /// without coupling themselves to Safaeh's private implementation classes.
 enum SafaehOnboardingDesign { meadow, orbit, paper, atelier, zen, prism }
 
+/// Placement of host-provided language and theme controls.
+enum SafaehOnboardingControlPlacement { top, bottomCenter }
+
+/// Placement of the optional skip action.
+///
+/// Positions use logical start/end edges so the action mirrors naturally in
+/// RTL layouts. For example, [topEnd] is the top-right corner in LTR and the
+/// top-left corner in RTL.
+enum SafaehOnboardingSkipPlacement { topEnd, topStart, bottomEnd, bottomStart }
+
+extension SafaehOnboardingSkipPlacementX on SafaehOnboardingSkipPlacement {
+  bool get isTop => switch (this) {
+    SafaehOnboardingSkipPlacement.topEnd ||
+    SafaehOnboardingSkipPlacement.topStart => true,
+    SafaehOnboardingSkipPlacement.bottomEnd ||
+    SafaehOnboardingSkipPlacement.bottomStart => false,
+  };
+
+  bool get isBottom => !isTop;
+}
+
 extension SafaehOnboardingDesignX on SafaehOnboardingDesign {
   /// Stable storage/catalog identifier.
   String get id => name;
@@ -165,10 +186,12 @@ class SafaehOnboarding extends StatefulWidget {
   const SafaehOnboarding({
     super.key,
     required this.steps,
-    this.design = SafaehOnboardingDesign.meadow,
+    this.design = SafaehOnboardingDesign.zen,
     this.initialStep = 0,
     this.labels = const SafaehOnboardingLabels(),
     this.actions = const SafaehOnboardingHostActions(),
+    this.controlPlacement = SafaehOnboardingControlPlacement.top,
+    this.skipPlacement = SafaehOnboardingSkipPlacement.topEnd,
     this.onStepChanged,
     this.backgroundBuilder,
     this.showSkip = false,
@@ -182,6 +205,8 @@ class SafaehOnboarding extends StatefulWidget {
   final int initialStep;
   final SafaehOnboardingLabels labels;
   final SafaehOnboardingHostActions actions;
+  final SafaehOnboardingControlPlacement controlPlacement;
+  final SafaehOnboardingSkipPlacement skipPlacement;
   final ValueChanged<int>? onStepChanged;
   final SafaehOnboardingBackgroundBuilder? backgroundBuilder;
   final bool showSkip;
@@ -297,6 +322,20 @@ class _SafaehOnboardingState extends State<SafaehOnboarding> {
     final actions = widget.actions;
     final busy = _completing || actions.busy;
     final background = widget.backgroundBuilder?.call(context, widget.design);
+    final controlsAtBottom =
+        widget.controlPlacement ==
+        SafaehOnboardingControlPlacement.bottomCenter;
+    final bottomCenterControls =
+        controlsAtBottom &&
+            (actions.languageControl != null || actions.themeControl != null)
+        ? _SafaehOnboardingControlGroup(
+            languageControl: actions.languageControl,
+            themeControl: actions.themeControl,
+          )
+        : null;
+    final canShowSkip = widget.showSkip && actions.onSkip != null;
+    final skipAtTop = canShowSkip && widget.skipPlacement.isTop;
+    final skipAtBottom = canShowSkip && widget.skipPlacement.isBottom;
     return Semantics(
       container: true,
       label: widget.labels.progress(_currentStep + 1, widget.steps.length),
@@ -304,17 +343,27 @@ class _SafaehOnboardingState extends State<SafaehOnboarding> {
         fit: StackFit.expand,
         children: [
           _SafaehOnboardingBackdrop(design: widget.design, custom: background),
+          // Let the footer surface paint behind the bottom system inset. The
+          // action bar adds that inset to its own content padding below, so
+          // controls remain safe while the fade reaches the actual viewport
+          // edge instead of stopping above the home indicator.
           SafeArea(
+            bottom: false,
             child: Column(
               children: [
                 if (widget.showTopBar)
                   _OnboardingTopBar(
                     design: widget.design,
-                    languageControl: actions.languageControl,
-                    themeControl: actions.themeControl,
+                    languageControl: controlsAtBottom
+                        ? null
+                        : actions.languageControl,
+                    themeControl: controlsAtBottom
+                        ? null
+                        : actions.themeControl,
                     leadingAction: actions.leadingAction,
-                    onSkip: widget.showSkip ? actions.onSkip : null,
+                    onSkip: skipAtTop ? actions.onSkip : null,
                     skipLabel: widget.labels.skip,
+                    skipPlacement: widget.skipPlacement,
                     busy: busy,
                   ),
                 Expanded(
@@ -351,6 +400,10 @@ class _SafaehOnboardingState extends State<SafaehOnboarding> {
                     onNext: _next,
                     leadingAction: actions.secondaryAction,
                     trailingAction: actions.completionProgress,
+                    bottomCenterAction: bottomCenterControls,
+                    onSkip: skipAtBottom ? actions.onSkip : null,
+                    skipLabel: widget.labels.skip,
+                    skipPlacement: widget.skipPlacement,
                   ),
               ],
             ),
@@ -367,7 +420,7 @@ class SafaehOnboardingTracker extends StatelessWidget {
     super.key,
     required this.currentStep,
     required this.totalSteps,
-    this.design = SafaehOnboardingDesign.meadow,
+    this.design = SafaehOnboardingDesign.zen,
     this.labels = const SafaehOnboardingLabels(),
     this.onStepSelected,
   });
@@ -443,10 +496,14 @@ class SafaehOnboardingActionBar extends StatelessWidget {
     required this.onBack,
     required this.onNext,
     this.busyIndicator,
-    this.design = SafaehOnboardingDesign.meadow,
+    this.design = SafaehOnboardingDesign.zen,
     this.labels = const SafaehOnboardingLabels(),
     this.leadingAction,
     this.trailingAction,
+    this.bottomCenterAction,
+    this.onSkip,
+    this.skipLabel = 'Skip',
+    this.skipPlacement = SafaehOnboardingSkipPlacement.bottomEnd,
   });
 
   final bool isFirst;
@@ -461,10 +518,19 @@ class SafaehOnboardingActionBar extends StatelessWidget {
   final Widget? leadingAction;
   final Widget? trailingAction;
 
+  /// Optional host controls rendered in the horizontal center of the split
+  /// action bar. The onboarding shell uses this for language and theme
+  /// controls when [SafaehOnboardingControlPlacement.bottomCenter] is set.
+  final Widget? bottomCenterAction;
+  final VoidCallback? onSkip;
+  final String skipLabel;
+  final SafaehOnboardingSkipPlacement skipPlacement;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
     final radius = switch (design) {
       SafaehOnboardingDesign.paper => 8.0,
       SafaehOnboardingDesign.zen => 4.0,
@@ -492,7 +558,63 @@ class SafaehOnboardingActionBar extends StatelessWidget {
           : Text(nextLabel),
     );
 
+    final back = !isFirst
+        ? TextButton.icon(
+            onPressed: busy ? null : onBack,
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.transparent,
+              side: BorderSide.none,
+              minimumSize: const Size(0, 48),
+              padding: const EdgeInsetsDirectional.symmetric(horizontal: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(radius),
+              ),
+            ),
+            icon: Icon(safaehArrowBack(context)),
+            label: Text(labels.back),
+          )
+        : null;
+    final skip = onSkip == null
+        ? null
+        : TextButton(
+            onPressed: busy ? null : onSkip,
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            child: Text(skipLabel),
+          );
+    final skipAtStart =
+        skip != null &&
+        skipPlacement == SafaehOnboardingSkipPlacement.bottomStart;
+    final skipAtEnd =
+        skip != null &&
+        skipPlacement == SafaehOnboardingSkipPlacement.bottomEnd;
+    final splitActions = Stack(
+      alignment: Alignment.center,
+      clipBehavior: Clip.none,
+      children: [
+        Row(
+          children: [
+            ?leadingAction,
+            if (back != null) ...[
+              back,
+              const SizedBox(width: 8),
+            ] else
+              const SizedBox(width: 8),
+            ?trailingAction,
+            if (skipAtStart) ...[skip, const SizedBox(width: 8)],
+            const Spacer(),
+            if (skipAtEnd) ...[skip, const SizedBox(width: 8)],
+            next,
+          ],
+        ),
+        if (bottomCenterAction != null) Center(child: bottomCenterAction!),
+      ],
+    );
     return DecoratedBox(
+      key: const ValueKey('safaeh-onboarding-action-bar-surface'),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -504,24 +626,8 @@ class SafaehOnboardingActionBar extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(20, 8, 20, 20),
-        child: Row(
-          children: [
-            ?leadingAction,
-            if (!isFirst) ...[
-              TextButton.icon(
-                onPressed: busy ? null : onBack,
-                icon: Icon(safaehArrowBack(context)),
-                label: Text(labels.back),
-              ),
-              const SizedBox(width: 8),
-            ] else
-              const SizedBox(width: 8),
-            ?trailingAction,
-            const Spacer(),
-            next,
-          ],
-        ),
+        padding: EdgeInsetsDirectional.fromSTEB(20, 8, 20, 20 + bottomInset),
+        child: splitActions,
       ),
     );
   }
@@ -532,7 +638,7 @@ class SafaehOnboardingList extends StatelessWidget {
   const SafaehOnboardingList({
     super.key,
     required this.children,
-    this.design = SafaehOnboardingDesign.meadow,
+    this.design = SafaehOnboardingDesign.zen,
     this.spacing = 10,
   });
 
@@ -578,7 +684,7 @@ class SafaehOnboardingListItem extends StatelessWidget {
     this.subtitle,
     this.leading,
     this.trailing,
-    this.design = SafaehOnboardingDesign.meadow,
+    this.design = SafaehOnboardingDesign.zen,
     this.selected = false,
     this.enabled = true,
     this.onTap,
@@ -734,6 +840,41 @@ class SafaehOnboardingDesignPreview extends StatelessWidget {
   }
 }
 
+class _SafaehOnboardingControlGroup extends StatelessWidget {
+  const _SafaehOnboardingControlGroup({
+    this.languageControl,
+    this.themeControl,
+  });
+
+  final Widget? languageControl;
+  final Widget? themeControl;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: colorScheme.surface.withValues(alpha: 0.86),
+      elevation: 1,
+      shadowColor: colorScheme.shadow.withValues(alpha: 0.18),
+      shape: StadiumBorder(
+        side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.42)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ?languageControl,
+            if (languageControl != null && themeControl != null)
+              const SizedBox(width: 2),
+            ?themeControl,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _OnboardingTopBar extends StatelessWidget {
   const _OnboardingTopBar({
     required this.design,
@@ -742,6 +883,7 @@ class _OnboardingTopBar extends StatelessWidget {
     required this.leadingAction,
     required this.onSkip,
     required this.skipLabel,
+    required this.skipPlacement,
     required this.busy,
   });
 
@@ -751,6 +893,7 @@ class _OnboardingTopBar extends StatelessWidget {
   final Widget? leadingAction;
   final VoidCallback? onSkip;
   final String skipLabel;
+  final SafaehOnboardingSkipPlacement skipPlacement;
   final bool busy;
 
   @override
@@ -761,15 +904,49 @@ class _OnboardingTopBar extends StatelessWidget {
         onSkip == null) {
       return const SizedBox(height: 12);
     }
+    final skip = onSkip == null
+        ? null
+        : TextButton(
+            onPressed: busy ? null : onSkip,
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            child: Text(skipLabel),
+          );
+    final skipAtStart =
+        skip != null && skipPlacement == SafaehOnboardingSkipPlacement.topStart;
+    final skipAtEnd =
+        skip != null && skipPlacement == SafaehOnboardingSkipPlacement.topEnd;
+    // A lone top skip is overlay chrome. Keeping it out of the normal column
+    // flow prevents an optional action from pushing the first page downward.
+    if (skip != null &&
+        (skipAtStart || skipAtEnd) &&
+        languageControl == null &&
+        themeControl == null &&
+        leadingAction == null) {
+      return SizedBox(
+        height: 12,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            PositionedDirectional(
+              top: 0,
+              start: skipAtStart ? 0 : null,
+              end: skipAtEnd ? 0 : null,
+              child: skip,
+            ),
+          ],
+        ),
+      );
+    }
     final children = <Widget>[
+      if (skipAtStart) ...[skip, const SizedBox(width: 4)],
       ?leadingAction,
       const Spacer(),
       ?languageControl,
       if (themeControl != null) ...[const SizedBox(width: 4), ?themeControl],
-      if (onSkip != null) ...[
-        const SizedBox(width: 4),
-        TextButton(onPressed: busy ? null : onSkip, child: Text(skipLabel)),
-      ],
+      if (skipAtEnd) ...[const SizedBox(width: 4), skip],
     ];
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 16, 0),
@@ -866,10 +1043,11 @@ class _SafaehStepSurface extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final maxWidth = switch (design) {
-      SafaehOnboardingDesign.orbit => 980.0,
-      SafaehOnboardingDesign.atelier => 1080.0,
-      _ => 760.0,
+      SafaehOnboardingDesign.orbit => 1080.0,
+      SafaehOnboardingDesign.atelier => 1160.0,
+      _ => 900.0,
     };
+    final horizontalInset = MediaQuery.sizeOf(context).width < 600 ? 8.0 : 16.0;
     final titleBlock = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -940,7 +1118,12 @@ class _SafaehStepSurface extends StatelessWidget {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 16, 4),
+          padding: EdgeInsetsDirectional.fromSTEB(
+            horizontalInset,
+            2,
+            horizontalInset,
+            2,
+          ),
           child: surface,
         ),
       ),
@@ -1193,7 +1376,7 @@ class _MeadowTracker extends StatelessWidget {
               decoration: BoxDecoration(
                 color: i == current
                     ? colors.primary
-                    : colors.onSurface.withValues(alpha: 0.22),
+                    : colors.onSurface.withValues(alpha: 0.42),
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
@@ -1228,7 +1411,7 @@ class _OrbitTracker extends StatelessWidget {
             child: CircularProgressIndicator(
               value: progress,
               strokeWidth: 3,
-              backgroundColor: colors.onSurface.withValues(alpha: 0.15),
+              backgroundColor: colors.onSurface.withValues(alpha: 0.30),
               color: colors.primary,
             ),
           ),
@@ -1266,7 +1449,7 @@ class _PaperTracker extends StatelessWidget {
             radius: 13,
             backgroundColor: i <= current
                 ? colors.primary
-                : colors.onSurface.withValues(alpha: 0.12),
+                : colors.outlineVariant.withValues(alpha: 0.72),
             foregroundColor: i <= current
                 ? colors.onPrimary
                 : colors.onSurfaceVariant,
@@ -1276,7 +1459,7 @@ class _PaperTracker extends StatelessWidget {
             Expanded(
               child: Container(
                 height: 1,
-                color: colors.outlineVariant,
+                color: colors.outline.withValues(alpha: 0.72),
                 margin: const EdgeInsets.symmetric(horizontal: 4),
               ),
             ),
@@ -1314,7 +1497,7 @@ class _AtelierTracker extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: i <= current
                       ? colors.primary
-                      : colors.onSurface.withValues(alpha: 0.18),
+                      : colors.onSurface.withValues(alpha: 0.34),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -1337,8 +1520,8 @@ class _ZenTracker extends StatelessWidget {
       borderRadius: BorderRadius.circular(2),
       child: LinearProgressIndicator(
         value: progress,
-        minHeight: 2,
-        backgroundColor: colors.onSurface.withValues(alpha: 0.12),
+        minHeight: 4,
+        backgroundColor: colors.onSurface.withValues(alpha: 0.72),
         color: colors.primary,
       ),
     );
@@ -1369,7 +1552,7 @@ class _PrismTracker extends StatelessWidget {
             decoration: BoxDecoration(
               color: i == current
                   ? colors.primary
-                  : colors.onSurface.withValues(alpha: 0.18),
+                  : colors.onSurface.withValues(alpha: 0.34),
               borderRadius: BorderRadius.circular(20),
               boxShadow: i == current
                   ? [

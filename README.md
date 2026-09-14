@@ -103,6 +103,7 @@ Captured with [`widgets_to_image`](https://pub.dev/packages/widgets_to_image) (`
 |------|----------------|
 | **Onboarding** | Six public presets through `SafaehOnboardingDesign`; `SafaehOnboarding`, design catalog metadata, host-owned steps, trackers, action bars, list items, and generic `SafaehAuthFlow` |
 | **Sheets** | `showSafaeh` morphs phone sheet ↔ tablet dialog; `showSafaehPicker` / `SafaehOption` (cards, `enabled`); `showSafaehTilePicker` / `SafaehTileOption` (list rows, search); `showSafaehMultiTilePicker` (multi-select); `showSafaehConfirm`, `showSafaehTextInput`, `SafaehStatusBody`, `buildSafaehSheetShell`, `SafaehOptionList`, `SafaehOptionTile` |
+| **Dropdown** | `SafaehAnchoredDropdownChip` / `SafaehDropdownOption` for anchored menus that match the trigger width, with host label and selection-color hooks |
 | **Dialog** | `showSafaehDialog` centered panel with optional `railWidthOf` |
 | **Theme** | `SafaehTheme` / `SafaehThemeData` for breakpoint, motion, radius, rail widths, camera compact height, `contentMaxWidth`, `floatingAppearance`; `copyWith` |
 | **Motion** | `safaehResolvedMotion` zeros durations when animations are disabled |

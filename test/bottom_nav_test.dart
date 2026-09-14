@@ -23,7 +23,7 @@ void main() {
     );
 
     expect(metrics.visible, isTrue);
-    expect(metrics.visualInset, 72);
+    expect(metrics.visualInset, 80);
     expect(metrics.contentInset, 112);
 
     tester.view.viewInsets = const FakeViewPadding(bottom: 300);

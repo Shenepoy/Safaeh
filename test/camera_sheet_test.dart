@@ -127,49 +127,50 @@ void main() {
     expect(find.text('lens'), findsNothing);
   });
 
-  testWidgets('showSafaehCameraSheet skips slide when animations are disabled', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(400, 800);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets(
+    'showSafaehCameraSheet skips slide when animations are disabled',
+    (tester) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        builder: (context, child) {
-          return MediaQuery(
-            data: MediaQuery.of(context).copyWith(disableAnimations: true),
-            child: child!,
-          );
-        },
-        home: Builder(
-          builder: (context) => TextButton(
-            onPressed: () => showSafaehCameraSheet<void>(
-              context: context,
-              builder: (context, sheet) => const Center(child: Text('lens')),
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(disableAnimations: true),
+              child: child!,
+            );
+          },
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showSafaehCameraSheet<void>(
+                context: context,
+                builder: (context, sheet) => const Center(child: Text('lens')),
+              ),
+              child: const Text('open'),
             ),
-            child: const Text('open'),
           ),
         ),
-      ),
-    );
+      );
 
-    await tester.tap(find.text('open'));
-    await tester.pump();
-    final panel = find.byKey(const ValueKey('safaeh_camera_panel'));
-    expect(panel, findsOneWidget);
-    expect(
-      tester.getTopLeft(panel).dy,
-      closeTo(800 * (1 - kSafaehCameraCompactHeightFraction), 1),
-    );
-    final slide = tester.widget<FractionalTranslation>(
-      find
-          .ancestor(of: panel, matching: find.byType(FractionalTranslation))
-          .first,
-    );
-    expect(slide.translation.dy, 0);
-  });
+      await tester.tap(find.text('open'));
+      await tester.pump();
+      final panel = find.byKey(const ValueKey('safaeh_camera_panel'));
+      expect(panel, findsOneWidget);
+      expect(
+        tester.getTopLeft(panel).dy,
+        closeTo(800 * (1 - kSafaehCameraCompactHeightFraction), 1),
+      );
+      final slide = tester.widget<FractionalTranslation>(
+        find
+            .ancestor(of: panel, matching: find.byType(FractionalTranslation))
+            .first,
+      );
+      expect(slide.translation.dy, 0);
+    },
+  );
 
   testWidgets('handle drag does not rebuild the preview builder', (
     tester,

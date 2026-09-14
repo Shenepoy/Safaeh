@@ -1,6 +1,8 @@
-/// Safaeh: sheets, camera/QR chrome, page index, sidenav, and content-aside.
+/// Safaeh: sheets, anchored dropdowns, camera/QR chrome, page index, sidenav,
+/// and content-aside.
 library;
 
+export 'src/anchored_dropdown.dart';
 export 'src/adaptive_sheet.dart';
 export 'src/auth_flow.dart';
 export 'src/bottom_nav.dart';

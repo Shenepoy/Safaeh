@@ -122,20 +122,21 @@ class SheetHandleBar extends StatelessWidget {
           container: true,
           button: onTap != null,
           onTap: onTap,
-          label: semanticLabel ??
+          label:
+              semanticLabel ??
               (onTap == null
                   ? (expanded ? collapseLabel : expandLabel)
                   : (expanded
-                      ? (collapseLabel ??
-                          dismissLabel ??
-                          MaterialLocalizations.of(
-                            context,
-                          ).modalBarrierDismissLabel)
-                      : (expandLabel ??
-                          dismissLabel ??
-                          MaterialLocalizations.of(
-                            context,
-                          ).modalBarrierDismissLabel))),
+                        ? (collapseLabel ??
+                              dismissLabel ??
+                              MaterialLocalizations.of(
+                                context,
+                              ).modalBarrierDismissLabel)
+                        : (expandLabel ??
+                              dismissLabel ??
+                              MaterialLocalizations.of(
+                                context,
+                              ).modalBarrierDismissLabel))),
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onVerticalDragUpdate: onVerticalDragUpdate,

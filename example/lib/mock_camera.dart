@@ -24,65 +24,65 @@ class CatalogMockCameraFeed extends StatelessWidget {
       child: Stack(
         key: const ValueKey('catalog_mock_camera'),
         fit: StackFit.expand,
-      children: [
-        const ColoredBox(color: Color(0xFF0E1214)),
-        const IgnorePointer(
-          child: CustomPaint(
-            painter: _MockViewfinderPainter(),
-            child: SizedBox.expand(),
-          ),
-        ),
-        const DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: RadialGradient(
-              center: Alignment(0, -0.1),
-              radius: 1.05,
-              colors: [Color(0x00000000), Color(0x73000000)],
+        children: [
+          const ColoredBox(color: Color(0xFF0E1214)),
+          const IgnorePointer(
+            child: CustomPaint(
+              painter: _MockViewfinderPainter(),
+              child: SizedBox.expand(),
             ),
           ),
-        ),
-        if (showLabel)
-          Positioned.directional(
-            textDirection: dir,
-            start: 0,
-            top: 0,
-            child: Padding(
-              padding: labelPadding,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: const Color(0xB3000000),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0x66FFFFFF)),
-                ),
-                child: Padding(
-                  padding: const EdgeInsetsDirectional.fromSTEB(8, 4, 10, 4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFE53935),
-                          shape: BoxShape.circle,
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment(0, -0.1),
+                radius: 1.05,
+                colors: [Color(0x00000000), Color(0x73000000)],
+              ),
+            ),
+          ),
+          if (showLabel)
+            Positioned.directional(
+              textDirection: dir,
+              start: 0,
+              top: 0,
+              child: Padding(
+                padding: labelPadding,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: const Color(0xB3000000),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0x66FFFFFF)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.fromSTEB(8, 4, 10, 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFE53935),
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        label,
-                        style: const TextStyle(
-                          color: Color(0xF2FFFFFF),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          height: 1.1,
+                        const SizedBox(width: 6),
+                        Text(
+                          label,
+                          style: const TextStyle(
+                            color: Color(0xF2FFFFFF),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            height: 1.1,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -122,12 +122,7 @@ class _MockViewfinderPainter extends CustomPainter {
       Paint()..color = const Color(0xFF161A1C),
     );
     canvas.drawRect(
-      Rect.fromLTWH(
-        size.width * 0.18,
-        horizon - 28,
-        size.width * 0.28,
-        28,
-      ),
+      Rect.fromLTWH(size.width * 0.18, horizon - 28, size.width * 0.28, 28),
       Paint()..color = const Color(0xFF2A3036),
     );
 

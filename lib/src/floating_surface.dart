@@ -21,8 +21,9 @@ enum SafaehFloatingSurfaceStyle {
 /// [transparency] is expressed as a percentage: `0` is opaque and `100` is
 /// fully transparent. Leave nullable fields unset to use the defaults for
 /// [style]. A non-null custom field replaces only that part of the preset.
-/// Glass uses the active [ColorScheme.surface] as its default tint; other
-/// styles use the surface fallback supplied by each package-owned component.
+/// Glass uses the active [ColorScheme.surface] as its default tint in light
+/// mode and keeps the host component's fallback tint in dark mode; other
+/// styles always use the surface fallback supplied by each component.
 /// The presets use `0% / 0` for [SafaehFloatingSurfaceStyle.solid],
 /// `28% / 0` for [SafaehFloatingSurfaceStyle.translucent],
 /// `48% / 18` for [SafaehFloatingSurfaceStyle.glass], and

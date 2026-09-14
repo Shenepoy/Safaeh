@@ -91,6 +91,166 @@ void main() {
     }
   });
 
+  testWidgets(
+    'centers host controls while keeping the primary action at the edge',
+    (tester) async {
+      const languageKey = ValueKey('language-control');
+      const themeKey = ValueKey('theme-control');
+      await tester.pumpWidget(
+        _host(
+          SizedBox(
+            width: 480,
+            height: 760,
+            child: SafaehOnboarding(
+              initialStep: 1,
+              controlPlacement: SafaehOnboardingControlPlacement.bottomCenter,
+              steps: _steps(),
+              actions: SafaehOnboardingHostActions(
+                languageControl: IconButton(
+                  key: languageKey,
+                  onPressed: () {},
+                  icon: const Icon(Icons.language),
+                ),
+                themeControl: IconButton(
+                  key: themeKey,
+                  onPressed: () {},
+                  icon: const Icon(Icons.brightness_6),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final language = tester.getCenter(find.byKey(languageKey));
+      final theme = tester.getCenter(find.byKey(themeKey));
+      expect((language.dx + theme.dx) / 2, closeTo(240, 1));
+      expect(language.dy, greaterThan(400));
+      expect(tester.getCenter(find.byType(FilledButton)).dx, greaterThan(300));
+    },
+  );
+
+  testWidgets('skip defaults to top end and supports every placement', (
+    tester,
+  ) async {
+    Future<void> pumpPlacement(SafaehOnboardingSkipPlacement placement) async {
+      await tester.pumpWidget(
+        _host(
+          SizedBox(
+            width: 480,
+            height: 760,
+            child: SafaehOnboarding(
+              skipPlacement: placement,
+              showSkip: true,
+              steps: _steps(),
+              actions: SafaehOnboardingHostActions(onSkip: () {}),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    final skip = find.text('Skip');
+
+    await pumpPlacement(SafaehOnboardingSkipPlacement.topEnd);
+    expect(tester.getCenter(skip).dx, greaterThan(300));
+    expect(tester.getCenter(skip).dy, lessThan(100));
+
+    await pumpPlacement(SafaehOnboardingSkipPlacement.topStart);
+    expect(tester.getCenter(skip).dx, lessThan(180));
+    expect(tester.getCenter(skip).dy, lessThan(100));
+
+    await pumpPlacement(SafaehOnboardingSkipPlacement.bottomEnd);
+    expect(tester.getCenter(skip).dx, greaterThan(260));
+    expect(tester.getCenter(skip).dy, greaterThan(500));
+
+    await pumpPlacement(SafaehOnboardingSkipPlacement.bottomStart);
+    expect(tester.getCenter(skip).dx, lessThan(180));
+    expect(tester.getCenter(skip).dy, greaterThan(500));
+  });
+
+  testWidgets('back action is transparent and uses white foreground', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _host(
+        SizedBox(
+          width: 480,
+          height: 760,
+          child: SafaehOnboarding(initialStep: 1, steps: _steps()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final back = tester.widget<TextButton>(find.byType(TextButton).first);
+    final states = <WidgetState>{};
+    expect(back.style?.backgroundColor?.resolve(states), Colors.transparent);
+    expect(back.style?.foregroundColor?.resolve(states), Colors.white);
+    expect(back.style?.side?.resolve(states), BorderSide.none);
+  });
+
+  testWidgets('footer fade reaches the viewport bottom behind the home inset', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(480, 800);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(bottom: 34);
+    tester.view.viewPadding = const FakeViewPadding(bottom: 34);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
+    addTearDown(tester.view.resetViewPadding);
+
+    await tester.pumpWidget(
+      _host(
+        SafaehOnboarding(
+          steps: _steps(),
+          actions: SafaehOnboardingHostActions(
+            onComplete: () async => SafaehOnboardingResult.completed,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final footerSurface = find.byKey(
+      const ValueKey('safaeh-onboarding-action-bar-surface'),
+    );
+    expect(tester.getRect(footerSurface).bottom, closeTo(800, 1));
+    expect(tester.getRect(find.text('Next')).bottom, lessThan(800 - 34));
+  });
+
+  testWidgets('Zen tracker keeps strong contrast in light mode', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(
+          brightness: Brightness.light,
+          useMaterial3: true,
+          colorSchemeSeed: Colors.indigo,
+        ),
+        home: const Scaffold(
+          body: SafaehOnboardingTracker(
+            currentStep: 0,
+            totalSteps: 4,
+            design: SafaehOnboardingDesign.zen,
+          ),
+        ),
+      ),
+    );
+
+    final progress = tester.widget<LinearProgressIndicator>(
+      find.byType(LinearProgressIndicator),
+    );
+    expect(progress.backgroundColor, isNotNull);
+    expect(progress.backgroundColor!.a, greaterThanOrEqualTo(0.7));
+    expect(progress.minHeight, greaterThanOrEqualTo(3));
+  });
+
   testWidgets('host can switch designs without losing the current step', (
     tester,
   ) async {

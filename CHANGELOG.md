@@ -8,6 +8,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Tags are `vX.Y.Z` and must match `version:` in [`pubspec.yaml`](pubspec.yaml).
 See [VERSIONING.md](VERSIONING.md).
 
+## [Unreleased]
+
+### Added
+
+- Added `SafaehAnchoredDropdownChip` and `SafaehDropdownOption` for reusable
+  anchored menus with trigger-width sizing and host styling hooks.
+
+## [0.3.1] - 2026-09-14
+
+### Added
+
+- Added host-controlled onboarding control and skip placement options,
+  including bottom-centered language/theme controls and RTL-aware skip
+  positions.
+- Added public onboarding action-bar controls and preserved the zen preset as
+  the default across the public onboarding components.
+
+### Changed
+
+- Made phone sheet dismissal require a size-aware drag distance and removed
+  the visible overscroll stretch/glow from sheet bodies.
+
+### Fixed
+
+- Preserved the original scroll-end velocity vector when handing a top-edge
+  pull to the phone sheet, avoiding invalid `DragEndDetails` assertions.
+
 ## [0.3.0] - 2026-09-12
 
 ### Added

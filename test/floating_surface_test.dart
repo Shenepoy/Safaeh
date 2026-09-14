@@ -141,6 +141,50 @@ void main() {
     expect(color.a, closeTo(0.52, 0.01));
   });
 
+  testWidgets(
+    'glass preserves the legacy dark fallback instead of a light tint',
+    (tester) async {
+      const surfaceKey = ValueKey('glass_dark_theme_surface');
+      const fallback = Color(0xFF336699);
+      const darkSurface = Color(0xFF101418);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: const ColorScheme.dark(
+              surface: darkSurface,
+              onSurface: Color(0xFFE8EEF2),
+            ),
+          ),
+          home: ColoredBox(
+            color: Colors.black,
+            child: SafaehFloatingSurface(
+              key: surfaceKey,
+              appearance: const SafaehFloatingAppearance(
+                style: SafaehFloatingSurfaceStyle.glass,
+              ),
+              fallbackColor: fallback,
+              child: const SizedBox(width: 160, height: 80),
+            ),
+          ),
+        ),
+      );
+
+      final decorated = tester.widget<DecoratedBox>(
+        _fillDecoration(find.byKey(surfaceKey)),
+      );
+      final color = (decorated.decoration as BoxDecoration).color!;
+      // Safaeh v0.2.5 (used by v0.7.23-test) kept the host component's fallback
+      // tint in dark mode. Preserve that older dark appearance while allowing
+      // light mode to use the theme surface.
+      expect(color.r, closeTo(fallback.r, 0.01));
+      expect(color.g, closeTo(fallback.g, 0.01));
+      expect(color.b, closeTo(fallback.b, 0.01));
+      expect(color.a, closeTo(0.52, 0.01));
+    },
+  );
+
   testWidgets('zero and full transparency affect only the fill alpha', (
     tester,
   ) async {

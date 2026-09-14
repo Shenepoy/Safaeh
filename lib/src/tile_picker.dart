@@ -57,6 +57,7 @@ class SafaehTilePickerBody<T> extends StatefulWidget {
     this.selectedValues,
     this.tileBuilder,
     this.tabletBreakpoint,
+    this.showTitleInBody = true,
     this.multiSelect = false,
     this.searchHint,
     this.searchEmptyLabel,
@@ -73,6 +74,7 @@ class SafaehTilePickerBody<T> extends StatefulWidget {
   final Iterable<T>? selectedValues;
   final SafaehTileBuilder<T>? tileBuilder;
   final double? tabletBreakpoint;
+  final bool showTitleInBody;
   final bool multiSelect;
   final String? searchHint;
   final String? searchEmptyLabel;
@@ -180,6 +182,7 @@ class _SafaehTilePickerBodyState<T> extends State<SafaehTilePickerBody<T>> {
     ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700);
     final titleText = widget.title ?? '';
     final showTitle =
+        widget.showTitleInBody &&
         showInBodyTitle &&
         ((widget.title != null && widget.title!.isNotEmpty) ||
             widget.titleBuilder != null);
@@ -191,7 +194,10 @@ class _SafaehTilePickerBodyState<T> extends State<SafaehTilePickerBody<T>> {
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Padding(
-          padding: EdgeInsets.only(top: showTitle ? 0 : 16, bottom: 16),
+          padding: EdgeInsets.only(
+            top: widget.showTitleInBody ? (showTitle ? 0 : 16) : 0,
+            bottom: 16,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -277,6 +283,7 @@ Future<T?> showSafaehTilePicker<T>({
   String? searchEmptyLabel,
   SafaehTileSearchMatch<T>? searchMatches,
   bool useRootNavigator = true,
+  bool showTitleInBody = true,
   SafaehRouteOptions? route,
 }) {
   final tokens = SafaehTheme.of(context);
@@ -297,7 +304,7 @@ Future<T?> showSafaehTilePicker<T>({
     slideUp: slideUp,
     phonePlacement: phonePlacement,
     useRootNavigator: useRootNavigator,
-    paintPhoneTitle: false,
+    paintPhoneTitle: !showTitleInBody,
     route: route,
     child: SafaehTilePickerBody<T>(
       title: title,
@@ -307,6 +314,7 @@ Future<T?> showSafaehTilePicker<T>({
       selected: selected,
       tileBuilder: tileBuilder,
       tabletBreakpoint: breakpoint,
+      showTitleInBody: showTitleInBody,
       searchHint: searchHint,
       searchEmptyLabel: searchEmptyLabel,
       searchMatches: searchMatches,
@@ -340,6 +348,7 @@ Future<List<T>?> showSafaehMultiTilePicker<T>({
   String? searchEmptyLabel,
   SafaehTileSearchMatch<T>? searchMatches,
   bool useRootNavigator = true,
+  bool showTitleInBody = true,
   SafaehRouteOptions? route,
 }) {
   final tokens = SafaehTheme.of(context);
@@ -360,7 +369,7 @@ Future<List<T>?> showSafaehMultiTilePicker<T>({
     slideUp: slideUp,
     phonePlacement: phonePlacement,
     useRootNavigator: useRootNavigator,
-    paintPhoneTitle: false,
+    paintPhoneTitle: !showTitleInBody,
     route: route,
     child: SafaehTilePickerBody<T>(
       title: title,
@@ -370,6 +379,7 @@ Future<List<T>?> showSafaehMultiTilePicker<T>({
       selectedValues: selected,
       tileBuilder: tileBuilder,
       tabletBreakpoint: breakpoint,
+      showTitleInBody: showTitleInBody,
       multiSelect: true,
       searchHint: searchHint,
       searchEmptyLabel: searchEmptyLabel,

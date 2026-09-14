@@ -18,7 +18,7 @@ class SafaehBottomNavMetrics {
     this.contentClearance = defaultContentClearance,
   });
 
-  static const double defaultVisualClearance = 72.0;
+  static const double defaultVisualClearance = 80.0;
   static const double defaultContentClearance = 112.0;
 
   final bool requestedVisible;

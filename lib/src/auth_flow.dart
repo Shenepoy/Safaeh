@@ -140,7 +140,7 @@ class SafaehAuthFlow extends StatefulWidget {
     this.snapshot = const SafaehAuthSnapshot(),
     this.actions = const SafaehAuthActions(),
     this.labels = const SafaehAuthLabels(),
-    this.design = SafaehOnboardingDesign.meadow,
+    this.design = SafaehOnboardingDesign.zen,
     this.providers = const [
       SafaehAuthProvider.google,
       SafaehAuthProvider.github,

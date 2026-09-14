@@ -10,7 +10,7 @@ class OnboardingDesignDemo extends StatefulWidget {
 }
 
 class _OnboardingDesignDemoState extends State<OnboardingDesignDemo> {
-  SafaehOnboardingDesign _design = SafaehOnboardingDesign.meadow;
+  SafaehOnboardingDesign _design = SafaehOnboardingDesign.zen;
   SafaehAuthMode _authMode = SafaehAuthMode.signIn;
   bool _showAuth = false;
   bool _darkControls = false;
@@ -68,6 +68,8 @@ class _OnboardingDesignDemoState extends State<OnboardingDesignDemo> {
                 )
               : SafaehOnboarding(
                   design: _design,
+                  controlPlacement:
+                      SafaehOnboardingControlPlacement.bottomCenter,
                   steps: _steps,
                   labels: const SafaehOnboardingLabels(stepProgress: _progress),
                   actions: SafaehOnboardingHostActions(

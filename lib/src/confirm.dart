@@ -16,6 +16,7 @@ class SafaehConfirmSheet extends StatelessWidget {
     required this.confirmLabel,
     this.cancelLabel,
     this.isDestructive = false,
+    this.showTitleInBody = true,
     this.titleBuilder,
     this.contentBuilder,
     this.tabletBreakpoint,
@@ -26,6 +27,7 @@ class SafaehConfirmSheet extends StatelessWidget {
   final String confirmLabel;
   final String? cancelLabel;
   final bool isDestructive;
+  final bool showTitleInBody;
   final SafaehTitleBuilder? titleBuilder;
   final SafaehTitleBuilder? contentBuilder;
   final double? tabletBreakpoint;
@@ -48,7 +50,7 @@ class SafaehConfirmSheet extends StatelessWidget {
     final radius = BorderRadius.circular(tokens.radius);
 
     return buildSafaehSheetShell(
-      showTitleInBody: !isWide,
+      showTitleInBody: showTitleInBody && !isWide,
       title:
           titleBuilder?.call(context, titleStyle) ??
           Text(title, style: titleStyle),
@@ -115,6 +117,7 @@ Future<bool?> showSafaehConfirm({
   double? maxHeight,
   bool barrierDismissible = true,
   bool useRootNavigator = true,
+  bool showTitleInBody = true,
   SafaehRouteOptions? route,
 }) {
   return showSafaeh<bool>(
@@ -134,7 +137,7 @@ Future<bool?> showSafaehConfirm({
     phonePlacement: phonePlacement,
     dismissValue: dismissReturnsFalse ? false : null,
     useRootNavigator: useRootNavigator,
-    paintPhoneTitle: false,
+    paintPhoneTitle: !showTitleInBody,
     route: route,
     child: SafaehConfirmSheet(
       title: title,
@@ -142,6 +145,7 @@ Future<bool?> showSafaehConfirm({
       confirmLabel: confirmLabel,
       cancelLabel: cancelLabel,
       isDestructive: isDestructive,
+      showTitleInBody: showTitleInBody,
       titleBuilder: titleBuilder,
       contentBuilder: contentBuilder,
       tabletBreakpoint: tabletBreakpoint,

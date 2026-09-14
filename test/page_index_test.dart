@@ -56,10 +56,8 @@ void main() {
                 id: 'alpha',
                 label: 'Alpha',
                 key: alpha,
-                labelBuilder: (data, style) => Text(
-                  'built-$data',
-                  style: style,
-                ),
+                labelBuilder: (data, style) =>
+                    Text('built-$data', style: style),
               ),
             ],
           ),
@@ -291,7 +289,9 @@ void main() {
     expect(find.text('On this page'), findsNothing);
   });
 
-  testWidgets('active index marker is on the start edge in RTL', (tester) async {
+  testWidgets('active index marker is on the start edge in RTL', (
+    tester,
+  ) async {
     final alpha = GlobalKey();
     await tester.pumpWidget(
       MaterialApp(
@@ -312,7 +312,9 @@ void main() {
     );
 
     final box = tester.widget<Container>(
-      find.ancestor(of: find.text('Alpha'), matching: find.byType(Container)).first,
+      find
+          .ancestor(of: find.text('Alpha'), matching: find.byType(Container))
+          .first,
     );
     expect(box.decoration, isA<BoxDecoration>());
     final border = (box.decoration! as BoxDecoration).border;
