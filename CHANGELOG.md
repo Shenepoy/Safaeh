@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Tags are `vX.Y.Z` and must match `version:` in [`pubspec.yaml`](pubspec.yaml).
 See [VERSIONING.md](VERSIONING.md).
 
+## [0.4.0] - 2026-09-15
+
+### Added
+
+- Added `SafaehMorphingAppBar` for page-positioned title crossfades and a
+  stable host action slot.
+- Added `SafaehMorphingAppBarAction` for page-aware action opacity and input
+  handoff, plus `SafaehMorphingAppBarBottom` for clipped bottom chrome that
+  reports its visible height.
+
+### Docs
+
+- Added pinned morphing app-bar host integration documentation and an
+  interactive multilingual example catalog entry.
+
 ## [0.3.2] - 2026-09-15
 
 ### Added

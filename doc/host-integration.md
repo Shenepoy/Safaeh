@@ -235,6 +235,66 @@ The direct `floatingAppearance` wins over
 one in the host when expanded behavior needs modal focus or outside-tap
 dismissal. `asDrawer` and `overlay` are mutually exclusive.
 
+## Pinned morphing app bar
+
+Use `SafaehMorphingAppBar` when a shell keeps one app bar pinned while a
+`PageView` moves between destinations. Pass the live page position and one
+already-localized title widget per destination:
+
+```dart
+SafaehMorphingAppBar(
+  page: pageController.page ?? 0,
+  titles: [
+    Text(l10n.home),
+    Text(l10n.statistics),
+    Text(l10n.settings),
+  ],
+  leading: const SizedBox(width: kToolbarHeight),
+  actionsBuilder: (context, page) => Stack(
+    alignment: AlignmentDirectional.center,
+    children: [
+      SafaehMorphingAppBarAction(
+        page: page,
+        targetPage: 0,
+        child: IconButton(
+          tooltip: l10n.home,
+          onPressed: openHome,
+          icon: const Icon(Icons.home_outlined),
+        ),
+      ),
+      SafaehMorphingAppBarAction(
+        page: page,
+        targetPage: 2,
+        child: IconButton(
+          tooltip: l10n.settings,
+          onPressed: openSettings,
+          icon: const Icon(Icons.settings_outlined),
+        ),
+      ),
+    ],
+  ),
+  bottom: SafaehMorphingAppBarBottom(
+    factor: (2 - (pageController.page ?? 0)).clamp(0.0, 1.0).toDouble(),
+    height: 48,
+    child: const Center(child: Text('Range controls')),
+  ),
+);
+```
+
+`SafaehMorphingAppBar` clamps the page to the title list, crossfades only the
+two adjacent titles, and wraps the `actionsBuilder` result in one stable
+trailing slot. Give it a fixed-width leading spacer when the title must stay
+on the physical center line as the action changes. The package does not
+translate titles or choose routes.
+
+`SafaehMorphingAppBarAction` linearly fades a child around `targetPage` and
+ignores taps below `interactiveThreshold` (0.5 by default). Stack one action
+per destination or use the builder for a host-specific action group.
+`SafaehMorphingAppBarBottom` accepts a 0–1 factor, clips the full-height child,
+and reports the matching preferred height so the scaffold does not retain a
+hidden bottom bar. Keep the factor calculation in the host when its bottom
+chrome represents domain-specific state.
+
 ## `titleBuilder` / `labelBuilder`
 
 Every titled sheet accepts `SafaehTitleBuilder`:

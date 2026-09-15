@@ -270,6 +270,8 @@ Widget galleryPreview(String id, String Function(String key) t) {
       return SizedBox(height: 140, child: EndAsideDemo(t: t));
     case 'aligned_chrome':
       return SizedBox(height: 220, child: AlignedChromeDemo(t: t));
+    case 'morphing_app_bar':
+      return SizedBox(height: 340, child: MorphingAppBarDemo(t: t));
     case 'camera':
       return SizedBox(
         height: 300,

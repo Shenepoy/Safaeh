@@ -69,8 +69,9 @@ flutter run
 12. **Floating nav** — `SafaehFloatingNavBar`
 13. **Page index** — side rail and overlay + scroll helper
 14. **Content band / end aside / aligned chrome** — `safaehBandMetrics`
-15. **Camera host / QR overlay / QR message** — QR chrome sits in the
+15. **Morphing app bar** — page-aware title, action, and bottom chrome
+16. **Camera host / QR overlay / QR message** — QR chrome sits in the
     camera bottom panel (`SafaehCameraSheetHost`)
-16. **Feedback** — shared host, typed surfaces, action messages, and custom
+17. **Feedback** — shared host, typed surfaces, action messages, and custom
     feedback builders
-17. **Language + theme toggles**
+18. **Language + theme toggles**

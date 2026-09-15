@@ -1,5 +1,5 @@
-/// Safaeh: sheets, anchored dropdowns, camera/QR chrome, page index, sidenav,
-/// and content-aside.
+/// Safaeh: sheets, anchored dropdowns, morphing app bars, camera/QR chrome,
+/// page index, sidenav, and content-aside.
 library;
 
 export 'src/anchored_dropdown.dart';
@@ -15,6 +15,7 @@ export 'src/dialog.dart';
 export 'src/floating_nav.dart';
 export 'src/floating_surface.dart';
 export 'src/feedback.dart';
+export 'src/morphing_app_bar.dart';
 export 'src/option_picker.dart';
 export 'src/option_tile.dart';
 export 'src/onboarding.dart';

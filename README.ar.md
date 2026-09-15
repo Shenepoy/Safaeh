@@ -119,6 +119,7 @@
 | **Motion** | <span dir="ltr"><code>safaehResolvedMotion</code></span> يصفر المدد عندما تُعطَّل الحركات |
 | **Nav** | <span dir="ltr"><code>SafaehSidenav</code></span> درج مؤقت (<span dir="ltr"><code>asDrawer: true</code></span>) أو rail قصّ؛ <span dir="ltr"><code>SafaehFloatingNavBar</code></span> (نفس <span dir="ltr"><code>SafaehSidenavDestination</code></span>) |
 | **Page index** | <span dir="ltr"><code>SafaehPageIndex</code></span> وoverlay و<span dir="ltr"><code>scrollToPageSection</code></span> و<span dir="ltr"><code>safaehActivePageSectionId</code></span> (معرفات + مفاتيح فقط — بلا <span dir="ltr"><code>.tr()</code></span> أثناء التمرير) |
+| **App bar** | <span dir="ltr"><code>SafaehMorphingAppBar</code></span> و<span dir="ltr"><code>SafaehMorphingAppBarAction</code></span> و<span dir="ltr"><code>SafaehMorphingAppBarBottom</code></span> لتحويل العنوان والأفعال وchrome السفلي حسب الصفحة |
 | **Content** | <span dir="ltr"><code>safaehBandMetrics</code></span>، <span dir="ltr"><code>SafaehContentBand</code></span>، <span dir="ltr"><code>SafaehEndAsideLayout</code></span>، <span dir="ltr"><code>SafaehContentAlignedAppBar</code></span>، <span dir="ltr"><code>SafaehContentAlignedFabLocation</code></span> |
 | **Camera** | <span dir="ltr"><code>showSafaehCameraSheet</code></span> / <span dir="ltr"><code>SafaehCameraSheetHost</code></span> لفة ورق مضغوط ↔ كامل |
 | **QR chrome** | <span dir="ltr"><code>SafaehQrScannerOverlay</code></span> (معاينة مضيف اختيارية)، <span dir="ltr"><code>SafaehQrTopBar</code></span>، <span dir="ltr"><code>SafaehQrMessageBody</code></span>، <span dir="ltr"><code>SafaehQrFramePainter</code></span> |
@@ -138,7 +139,7 @@
 
 ```yaml
 dependencies:
-  safaeh: ^0.2.6
+  safaeh: ^0.4.0
 ```
 
 <div dir="rtl" lang="ar">
@@ -162,7 +163,7 @@ dependencies:
   safaeh:
     git:
       url: https://github.com/Zyzto/Safaeh.git
-      ref: v0.2.6
+      ref: v0.4.0
 ```
 
 ```dart
@@ -171,7 +172,7 @@ import 'package:safaeh/safaeh.dart';
 
 <div dir="rtl" lang="ar">
 
-الإصدار الحالي: **0.2.6**.
+الإصدار الحالي: **0.4.0**.
 
 </div>
 
@@ -353,7 +354,54 @@ SafaehContentAlignedFabLocation.resolve(
 
 انظر <span dir="ltr"><a href="doc/host-integration.md">doc/host-integration.md</a></span>.
 
-### 8. Chrome الكاميرا / QR
+### 8. شريط التطبيق المتحوّل
+
+استخدم <span dir="ltr"><code>SafaehMorphingAppBar</code></span> عندما يبقى
+شريط تطبيق واحد مثبتاً أثناء انتقال <span dir="ltr"><code>PageView</code></span>
+بين الوجهات. مرّر موضع الصفحة الحالي وعناوين مترجمة من التطبيق المضيف:
+
+```dart
+SafaehMorphingAppBar(
+  page: pageController.page ?? 0,
+  titles: [Text(l10n.home), Text(l10n.statistics), Text(l10n.settings)],
+  leading: const SizedBox(width: kToolbarHeight),
+  actionsBuilder: (context, page) => Stack(
+    alignment: AlignmentDirectional.center,
+    children: [
+      SafaehMorphingAppBarAction(
+        page: page,
+        targetPage: 0,
+        child: IconButton(
+          tooltip: l10n.home,
+          onPressed: openHome,
+          icon: const Icon(Icons.home_outlined),
+        ),
+      ),
+      SafaehMorphingAppBarAction(
+        page: page,
+        targetPage: 2,
+        child: IconButton(
+          tooltip: l10n.settings,
+          onPressed: openSettings,
+          icon: const Icon(Icons.settings_outlined),
+        ),
+      ),
+    ],
+  ),
+  bottom: SafaehMorphingAppBarBottom(
+    factor: (2 - (pageController.page ?? 0)).clamp(0.0, 1.0).toDouble(),
+    height: 48,
+    child: const Center(child: Text('Range controls')),
+  ),
+);
+```
+
+الحزمة تملك التحويل البصري فقط؛ أما النصوص والترجمة والتوجيه فتظل في
+التطبيق المضيف. يشرح <span dir="ltr"><a href="doc/host-integration.md">دليل التكامل</a></span>
+الحساب الكامل للأفعال والـ bottom chrome، ويوجد مثال تفاعلي في كتالوج
+<span dir="ltr"><code>example/</code></span>.
+
+### 9. Chrome الكاميرا / QR
 
 </div>
 
@@ -404,7 +452,7 @@ await showSafaehCameraSheet<void>(
 
 **QR:** <span dir="ltr"><code>SafaehQrScannerOverlay</code></span>، <span dir="ltr"><code>SafaehQrTopBar</code></span>، <span dir="ltr"><code>SafaehQrMessageBody</code></span>، <span dir="ltr"><code>SafaehQrFramePainter</code></span>
 
-**Shell:** <span dir="ltr"><code>SafaehSidenav</code></span>، <span dir="ltr"><code>SafaehSidenavDestination</code></span>، <span dir="ltr"><code>SafaehSidenavProfile</code></span>، <span dir="ltr"><code>SafaehSidenavAvatar</code></span>، <span dir="ltr"><code>SafaehFloatingNavBar</code></span>، <span dir="ltr"><code>SafaehPageIndex</code></span>، <span dir="ltr"><code>SafaehPageIndexOverlay</code></span>، <span dir="ltr"><code>scrollToPageSection</code></span>، <span dir="ltr"><code>safaehActivePageSectionId</code></span>، <span dir="ltr"><code>safaehBandMetrics</code></span>، <span dir="ltr"><code>SafaehContentBand</code></span>، <span dir="ltr"><code>SafaehEndAsideLayout</code></span>، <span dir="ltr"><code>SafaehContentAlignedAppBar</code></span>، <span dir="ltr"><code>SafaehContentAlignedFabLocation</code></span>
+**Shell:** <span dir="ltr"><code>SafaehSidenav</code></span>، <span dir="ltr"><code>SafaehSidenavDestination</code></span>، <span dir="ltr"><code>SafaehSidenavProfile</code></span>، <span dir="ltr"><code>SafaehSidenavAvatar</code></span>، <span dir="ltr"><code>SafaehFloatingNavBar</code></span>، <span dir="ltr"><code>SafaehPageIndex</code></span>، <span dir="ltr"><code>SafaehPageIndexOverlay</code></span>، <span dir="ltr"><code>scrollToPageSection</code></span>، <span dir="ltr"><code>safaehActivePageSectionId</code></span>، <span dir="ltr"><code>SafaehMorphingAppBar</code></span>، <span dir="ltr"><code>SafaehMorphingAppBarAction</code></span>، <span dir="ltr"><code>SafaehMorphingAppBarBottom</code></span>، <span dir="ltr"><code>safaehBandMetrics</code></span>، <span dir="ltr"><code>SafaehContentBand</code></span>، <span dir="ltr"><code>SafaehEndAsideLayout</code></span>، <span dir="ltr"><code>SafaehContentAlignedAppBar</code></span>، <span dir="ltr"><code>SafaehContentAlignedFabLocation</code></span>
 
 **Tokens:** <span dir="ltr"><code>SafaehTheme</code></span>، <span dir="ltr"><code>SafaehThemeData</code></span>، <span dir="ltr"><code>SafaehThemeData.copyWith</code></span>، <span dir="ltr"><code>safaehResolvedMotion</code></span>، <span dir="ltr"><code>kSafaehCameraCompactHeightFraction</code></span>
 

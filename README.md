@@ -109,6 +109,7 @@ Captured with [`widgets_to_image`](https://pub.dev/packages/widgets_to_image) (`
 | **Motion** | `safaehResolvedMotion` zeros durations when animations are disabled |
 | **Nav** | `SafaehSidenav` temporary drawer (`asDrawer: true`), clipping rail, or overlay rail (`overlay: true`); `SafaehFloatingNavBar` (same `SafaehSidenavDestination`); keyboard-aware bottom-nav metrics and FAB placement |
 | **Page index** | `SafaehPageIndex`, overlay, `scrollToPageSection`, `safaehActivePageSectionId` (ids + keys only — no `.tr()` on scroll) |
+| **App bar** | `SafaehMorphingAppBar`, `SafaehMorphingAppBarAction`, `SafaehMorphingAppBarBottom` for page-aware title, action, and bottom chrome morphing |
 | **Content** | `safaehBandMetrics`, `SafaehContentBand`, `SafaehEndAsideLayout`, `SafaehContentAlignedAppBar`, `SafaehContentAlignedFabLocation` |
 | **Camera** | `showSafaehCameraSheet` / `SafaehCameraSheetHost` paper-roll compact ↔ full |
 | **QR chrome** | `SafaehQrScannerOverlay` (optional host `preview`), `SafaehQrTopBar`, `SafaehQrMessageBody`, `SafaehQrFramePainter` |
@@ -122,7 +123,7 @@ Captured with [`widgets_to_image`](https://pub.dev/packages/widgets_to_image) (`
 
 ```yaml
 dependencies:
-  safaeh: ^0.3.0
+  safaeh: ^0.4.0
 ```
 
 Or:
@@ -138,14 +139,14 @@ dependencies:
   safaeh:
     git:
       url: https://github.com/Zyzto/Safaeh.git
-      ref: v0.3.0
+      ref: v0.4.0
 ```
 
 ```dart
 import 'package:safaeh/safaeh.dart';
 ```
 
-Current version: **0.3.0**.
+Current version: **0.4.0**.
 
 ---
 
@@ -358,7 +359,60 @@ content insets for custom layouts.
 narrow (`SafaehThemeData.isWide`). Hosts with a sibling shell rail keep their
 own `leftOffset` / `bandWidth` math and use `SafaehEndAsideLayout`.
 
-### 9. Shared feedback
+### 9. Morphing app bar
+
+Drive one shell app bar from the live `PageController.page`. Safaeh
+crossfades adjacent host-provided titles, keeps a stable action slot, and
+lets the host fade actions or bottom chrome at the same page position:
+
+```dart
+SafaehMorphingAppBar(
+  page: pageController.page ?? 0,
+  titles: const [
+    Text('Home'),
+    Text('Statistics'),
+    Text('Settings'),
+  ],
+  // Reserve the leading slot when actions should not move the title.
+  leading: const SizedBox(width: kToolbarHeight),
+  actionsBuilder: (context, page) => Stack(
+    alignment: AlignmentDirectional.center,
+    children: [
+      SafaehMorphingAppBarAction(
+        page: page,
+        targetPage: 0,
+        child: IconButton(
+          onPressed: openHome,
+          icon: const Icon(Icons.home_outlined),
+        ),
+      ),
+      SafaehMorphingAppBarAction(
+        page: page,
+        targetPage: 2,
+        child: IconButton(
+          onPressed: openSettings,
+          icon: const Icon(Icons.settings_outlined),
+        ),
+      ),
+    ],
+  ),
+  bottom: SafaehMorphingAppBarBottom(
+    factor: (2 - (pageController.page ?? 0)).clamp(0.0, 1.0).toDouble(),
+    height: 48,
+    child: const Center(child: Text('Range controls')),
+  ),
+);
+```
+
+`titles` and all action text stay in the host, so localization and routing do
+not enter Safaeh. `page` is clamped to the title range before the action
+builder runs. `SafaehMorphingAppBarAction` uses linear page distance for its
+opacity and ignores taps below its interactive threshold. The bottom helper
+clips and resizes its child while reporting the matching preferred height.
+See [host integration](doc/host-integration.md#pinned-morphing-app-bar) and
+the `Morphing app bar` catalog entry in `example/`.
+
+### 10. Shared feedback
 
 Mount one host around the app navigator. The host owns the feedback overlay,
 surface treatment, animation, safe-area handling, and optional bottom-nav
@@ -411,7 +465,7 @@ SafaehContentAlignedFabLocation.resolve(
 
 See [doc/host-integration.md](doc/host-integration.md).
 
-### 10. Overlay sidenav
+### 11. Overlay sidenav
 
 For a sidenav that expands over the page without reserving layout width, put
 the overlay rail above the host content in a `Stack`:
@@ -440,7 +494,7 @@ Stack(
 The overlay inherits `SafaehThemeData.floatingAppearance` when the direct
 value is omitted. Its scrim, if needed, remains host-owned.
 
-### 11. Shared floating-surface appearance
+### 12. Shared floating-surface appearance
 
 Package-owned floating chrome can inherit one appearance from
 `SafaehThemeData`, or override it on an individual widget or call:
@@ -499,7 +553,7 @@ wide page-index rails, and host-owned FABs remain unchanged. With no appearance
 configured, existing rendering is retained, including the floating nav's
 transparent default.
 
-### 12. Camera / QR chrome
+### 13. Camera / QR chrome
 
 ```dart
 await showSafaehCameraSheet<void>(
@@ -541,7 +595,7 @@ Keep `mobile_scanner` in the app.
 
 **QR:** `SafaehQrScannerOverlay`, `SafaehQrTopBar`, `SafaehQrMessageBody`, `SafaehQrFramePainter`
 
-**Shell:** `SafaehSidenav`, `SafaehSidenavDestination`, `SafaehSidenavProfile`, `SafaehSidenavAvatar`, `SafaehFloatingNavBar`, `SafaehPageIndex`, `SafaehPageIndexOverlay`, `scrollToPageSection`, `safaehActivePageSectionId`, `safaehBandMetrics`, `SafaehContentBand`, `SafaehEndAsideLayout`, `SafaehContentAlignedAppBar`, `SafaehContentAlignedFabLocation`
+**Shell:** `SafaehSidenav`, `SafaehSidenavDestination`, `SafaehSidenavProfile`, `SafaehSidenavAvatar`, `SafaehFloatingNavBar`, `SafaehPageIndex`, `SafaehPageIndexOverlay`, `scrollToPageSection`, `safaehActivePageSectionId`, `SafaehMorphingAppBar`, `SafaehMorphingAppBarAction`, `SafaehMorphingAppBarBottom`, `safaehBandMetrics`, `SafaehContentBand`, `SafaehEndAsideLayout`, `SafaehContentAlignedAppBar`, `SafaehContentAlignedFabLocation`
 
 **Tokens:** `SafaehTheme`, `SafaehThemeData`, `SafaehThemeData.copyWith`, `safaehResolvedMotion`, `kSafaehCameraCompactHeightFraction`
 

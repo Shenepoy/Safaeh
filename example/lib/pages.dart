@@ -1460,6 +1460,118 @@ class AlignedChromeDemo extends StatelessWidget {
   }
 }
 
+class MorphingAppBarDemo extends StatefulWidget {
+  const MorphingAppBarDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  State<MorphingAppBarDemo> createState() => _MorphingAppBarDemoState();
+}
+
+class _MorphingAppBarDemoState extends State<MorphingAppBarDemo> {
+  final _pageController = PageController();
+  var _page = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController.addListener(_onPageChanged);
+  }
+
+  @override
+  void dispose() {
+    _pageController
+      ..removeListener(_onPageChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged() {
+    final page = _pageController.page;
+    if (page != null && page != _page) setState(() => _page = page);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = widget.t;
+    const pageCount = 4;
+    final settingsPage = (pageCount - 1).toDouble();
+    final rangeFactor = (settingsPage - _page).clamp(0.0, 1.0).toDouble();
+    return Scaffold(
+      key: const ValueKey('morphing_app_bar_demo'),
+      appBar: SafaehMorphingAppBar(
+        page: _page,
+        titles: [
+          Text(t('morphing_home')),
+          Text(t('morphing_weight')),
+          Text(t('morphing_statistics')),
+          Text(t('morphing_settings')),
+        ],
+        leading: const SizedBox(width: kToolbarHeight),
+        actionsBuilder: (context, page) => Stack(
+          alignment: AlignmentDirectional.center,
+          children: [
+            SafaehMorphingAppBarAction(
+              page: page,
+              targetPage: 0,
+              child: IconButton(
+                tooltip: t('morphing_home'),
+                onPressed: () => _pageController.animateToPage(
+                  0,
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeOutCubic,
+                ),
+                icon: const Icon(Icons.home_outlined),
+              ),
+            ),
+            SafaehMorphingAppBarAction(
+              page: page,
+              targetPage: settingsPage,
+              child: IconButton(
+                tooltip: t('morphing_settings'),
+                onPressed: () => _pageController.animateToPage(
+                  settingsPage.toInt(),
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeOutCubic,
+                ),
+                icon: const Icon(Icons.settings_outlined),
+              ),
+            ),
+          ],
+        ),
+        bottom: SafaehMorphingAppBarBottom(
+          factor: rangeFactor,
+          height: 44,
+          child: ColoredBox(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: Center(child: Text(t('morphing_range'))),
+          ),
+        ),
+      ),
+      body: PageView(
+        key: const ValueKey('morphing_app_bar_page_view'),
+        controller: _pageController,
+        children: [
+          _morphingPage(t('morphing_home'), Icons.home_outlined),
+          _morphingPage(t('morphing_weight'), Icons.scale_outlined),
+          _morphingPage(t('morphing_statistics'), Icons.insights_outlined),
+          _morphingPage(t('morphing_settings'), Icons.settings_outlined),
+        ],
+      ),
+    );
+  }
+}
+
+Widget _morphingPage(String title, IconData icon) {
+  return Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [Icon(icon, size: 42), const SizedBox(height: 8), Text(title)],
+    ),
+  );
+}
+
 class CameraDemo extends StatelessWidget {
   const CameraDemo({super.key, required this.t, this.onDismiss});
 

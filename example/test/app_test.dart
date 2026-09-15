@@ -105,6 +105,34 @@ void main() {
     }
   });
 
+  testWidgets('morphing app bar demo follows the page view', (tester) async {
+    await pumpExampleApp(tester);
+
+    await _reveal(tester, 'morphing_app_bar');
+    final demo = find.byKey(const ValueKey('morphing_app_bar_demo'));
+    final appBar = find.descendant(
+      of: demo,
+      matching: find.byType(SafaehMorphingAppBar),
+    );
+    expect(demo, findsOneWidget);
+    expect(appBar, findsOneWidget);
+    expect(
+      find.descendant(of: appBar, matching: find.text('Home')),
+      findsOneWidget,
+    );
+
+    await tester.drag(
+      find.byKey(const ValueKey('morphing_app_bar_page_view')),
+      const Offset(-300, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(of: appBar, matching: find.text('Weight')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
     'floating appearance fixture renders every preset over contrast',
     (tester) async {
