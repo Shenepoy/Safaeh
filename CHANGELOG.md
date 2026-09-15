@@ -8,12 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Tags are `vX.Y.Z` and must match `version:` in [`pubspec.yaml`](pubspec.yaml).
 See [VERSIONING.md](VERSIONING.md).
 
-## [Unreleased]
+## [0.3.2] - 2026-09-15
 
 ### Added
 
 - Added `SafaehAnchoredDropdownChip` and `SafaehDropdownOption` for reusable
   anchored menus with trigger-width sizing and host styling hooks.
+
+### Changed
+
+- Anchored dropdown menus now size from the rendered trigger, while still
+  allowing longer option labels to expand within the menu limit.
 
 ## [0.3.1] - 2026-09-14
 
