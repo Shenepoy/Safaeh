@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Tags are `vX.Y.Z` and must match `version:` in [`pubspec.yaml`](pubspec.yaml).
 See [VERSIONING.md](VERSIONING.md).
 
+## [0.4.2] - 2026-09-18
+
+### Fixed
+
+- Phone sheets keep their body mounted when the IME opens or closes. Swapping
+  the home-indicator padding widget remounted text fields, re-ran autofocus,
+  and brought the keyboard back so focus could not be dismissed.
+
 ## [0.4.1] - 2026-09-17
 
 ### Added

@@ -731,15 +731,17 @@ class _AdaptiveSheetHost extends StatelessWidget {
       ],
     );
 
+    // Keep this Padding mounted even when the inset is 0. Inserting or
+    // removing it when the IME appears remounts text fields, which re-runs
+    // autofocus and pops the keyboard back up.
+    //
     // Keep the safe-area padding inside the painted panel. Wrapping the
     // entire panel in SafeArea would shrink the panel above the home-indicator
     // inset and leave the underlying page visible beneath it.
-    final panelContent = phoneBottomInset > 0
-        ? Padding(
-            padding: EdgeInsets.only(bottom: phoneBottomInset),
-            child: panelBody,
-          )
-        : panelBody;
+    final panelContent = Padding(
+      padding: EdgeInsets.only(bottom: phoneBottomInset),
+      child: panelBody,
+    );
 
     final fill = cs.surfaceContainerLow;
     final outline = cs.outline;

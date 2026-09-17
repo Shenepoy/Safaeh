@@ -17,6 +17,26 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
   }
 
+  bool fieldHasFocus(WidgetTester tester) {
+    return tester
+        .state<EditableTextState>(find.byType(EditableText))
+        .widget
+        .focusNode
+        .hasFocus;
+  }
+
+  Future<void> pumpImeVisible(WidgetTester tester) async {
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    tester.view.padding = FakeViewPadding.zero;
+    await tester.pump();
+  }
+
+  Future<void> pumpImeHidden(WidgetTester tester) async {
+    tester.view.viewInsets = FakeViewPadding.zero;
+    tester.view.padding = const FakeViewPadding(bottom: 34);
+    await tester.pump();
+  }
+
   testWidgets('showSafaeh is a phone sheet that morphs into a tablet dialog', (
     tester,
   ) async {
@@ -370,6 +390,110 @@ void main() {
     await tester.pumpAndSettle();
     expect(value, isNull);
   });
+
+  testWidgets(
+    'phone text field unfocus stays unfocused while IME inset collapses',
+    (tester) async {
+      await setPhone(tester);
+      tester.view.padding = const FakeViewPadding(bottom: 34);
+      tester.view.viewPadding = const FakeViewPadding(bottom: 34);
+      addTearDown(tester.view.resetPadding);
+      addTearDown(tester.view.resetViewPadding);
+      addTearDown(tester.view.resetViewInsets);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showSafaehTextInput(
+                context: context,
+                title: 'Tag',
+                doneLabel: 'Done',
+                cancelLabel: 'Cancel',
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(fieldHasFocus(tester), isTrue);
+
+      await tester.enterText(find.byType(TextField), 'keep-me');
+      await pumpImeVisible(tester);
+      expect(find.text('keep-me'), findsOneWidget);
+      expect(fieldHasFocus(tester), isTrue);
+
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pump();
+      expect(fieldHasFocus(tester), isFalse);
+
+      await pumpImeHidden(tester);
+      expect(find.text('keep-me'), findsOneWidget);
+      expect(
+        fieldHasFocus(tester),
+        isFalse,
+        reason: 'IME hide must not remount autofocus and reopen the keyboard',
+      );
+    },
+  );
+
+  testWidgets(
+    'phone sheet host field unfocus stays unfocused while IME inset collapses',
+    (tester) async {
+      await setPhone(tester);
+      tester.view.padding = const FakeViewPadding(bottom: 34);
+      tester.view.viewPadding = const FakeViewPadding(bottom: 34);
+      addTearDown(tester.view.resetPadding);
+      addTearDown(tester.view.resetViewPadding);
+      addTearDown(tester.view.resetViewInsets);
+
+      final focusNode = FocusNode();
+      addTearDown(focusNode.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showSafaeh<void>(
+                context: context,
+                title: 'Rename',
+                child: Padding(
+                  padding: kSheetContentPadding,
+                  child: TextField(focusNode: focusNode),
+                ),
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      focusNode.requestFocus();
+      await tester.pump();
+      expect(focusNode.hasFocus, isTrue);
+
+      await tester.enterText(find.byType(TextField), 'keep-me');
+      await pumpImeVisible(tester);
+      expect(focusNode.hasFocus, isTrue);
+      expect(find.text('keep-me'), findsOneWidget);
+
+      focusNode.unfocus();
+      await tester.pump();
+      expect(focusNode.hasFocus, isFalse);
+
+      await pumpImeHidden(tester);
+      expect(find.text('keep-me'), findsOneWidget);
+      expect(
+        focusNode.hasFocus,
+        isFalse,
+        reason: 'IME hide must not restore focus on a host text field',
+      );
+    },
+  );
 
   testWidgets('picker disabled option does not pop', (tester) async {
     await setPhone(tester);
