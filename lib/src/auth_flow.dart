@@ -523,29 +523,35 @@ class _AuthSurface extends StatelessWidget {
       SafaehOnboardingDesign.zen => 2.0,
       _ => 24.0,
     };
-    final inner = SingleChildScrollView(
+    final inner = ListView(
+      // Unlike SingleChildScrollView, a shrink-wrapped ListView sizes the
+      // wide auth panel to its content while retaining scrolling for short
+      // viewports.
+      shrinkWrap: true,
       padding: const EdgeInsets.all(24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (brand != null) ...[brand!, const SizedBox(height: 16)],
-            DefaultTextStyle(
-              style: theme.textTheme.headlineSmall!.copyWith(
-                fontWeight: FontWeight.w800,
+      children: [
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (brand != null) ...[brand!, const SizedBox(height: 16)],
+              DefaultTextStyle(
+                style: theme.textTheme.headlineSmall!.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+                child: title,
               ),
-              child: title,
-            ),
-            if (error != null) ...[
-              const SizedBox(height: 14),
-              Text(error!, style: TextStyle(color: cs.error)),
+              if (error != null) ...[
+                const SizedBox(height: 14),
+                Text(error!, style: TextStyle(color: cs.error)),
+              ],
+              const SizedBox(height: 22),
+              child,
             ],
-            const SizedBox(height: 22),
-            child,
-          ],
+          ),
         ),
-      ),
+      ],
     );
     final decorated = switch (design) {
       SafaehOnboardingDesign.zen => inner,
@@ -582,6 +588,7 @@ class _AuthSurface extends StatelessWidget {
     };
     return Align(
       alignment: Alignment.topCenter,
+      heightFactor: 1,
       child: Padding(padding: const EdgeInsets.all(16), child: decorated),
     );
   }

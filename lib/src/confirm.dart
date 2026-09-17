@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'adaptive_sheet.dart';
+import 'content_panel.dart';
 import 'sheet_shell.dart';
 import 'theme.dart';
 
@@ -54,18 +55,10 @@ class SafaehConfirmSheet extends StatelessWidget {
       title:
           titleBuilder?.call(context, titleStyle) ??
           Text(title, style: titleStyle),
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerLow,
-          borderRadius: radius,
-          border: Border.all(color: cs.outline),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child:
-              contentBuilder?.call(context, contentStyle) ??
-              Text(content, style: contentStyle),
-        ),
+      body: SafaehContentPanel(
+        child:
+            contentBuilder?.call(context, contentStyle) ??
+            Text(content, style: contentStyle),
       ),
       actions: [
         if (!isWide)

@@ -1,5 +1,6 @@
 import 'dart:ui' show ImageFilter;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'rtl.dart';
@@ -10,6 +11,9 @@ import 'theme.dart';
 /// The value is intentionally stable so hosts can persist it as a string
 /// without coupling themselves to Safaeh's private implementation classes.
 enum SafaehOnboardingDesign { meadow, orbit, paper, atelier, zen, prism }
+
+/// Visual treatment for the onboarding page indicator.
+enum SafaehOnboardingTrackerStyle { design, legacyDots }
 
 /// Placement of host-provided language and theme controls.
 enum SafaehOnboardingControlPlacement { top, bottomCenter }
@@ -192,11 +196,13 @@ class SafaehOnboarding extends StatefulWidget {
     this.actions = const SafaehOnboardingHostActions(),
     this.controlPlacement = SafaehOnboardingControlPlacement.top,
     this.skipPlacement = SafaehOnboardingSkipPlacement.topEnd,
+    this.contentMaxWidth,
     this.onStepChanged,
     this.backgroundBuilder,
     this.showSkip = false,
     this.showTopBar = true,
     this.showTracker = true,
+    this.trackerStyle = SafaehOnboardingTrackerStyle.design,
     this.showActions = true,
   });
 
@@ -207,11 +213,16 @@ class SafaehOnboarding extends StatefulWidget {
   final SafaehOnboardingHostActions actions;
   final SafaehOnboardingControlPlacement controlPlacement;
   final SafaehOnboardingSkipPlacement skipPlacement;
+
+  /// Optional max width for the tracker and action chrome on wide screens.
+  /// The background remains full-bleed; null preserves the original layout.
+  final double? contentMaxWidth;
   final ValueChanged<int>? onStepChanged;
   final SafaehOnboardingBackgroundBuilder? backgroundBuilder;
   final bool showSkip;
   final bool showTopBar;
   final bool showTracker;
+  final SafaehOnboardingTrackerStyle trackerStyle;
   final bool showActions;
 
   @override
@@ -336,6 +347,21 @@ class _SafaehOnboardingState extends State<SafaehOnboarding> {
     final canShowSkip = widget.showSkip && actions.onSkip != null;
     final skipAtTop = canShowSkip && widget.skipPlacement.isTop;
     final skipAtBottom = canShowSkip && widget.skipPlacement.isBottom;
+
+    Widget constrainWideContent(Widget child) {
+      final maxWidth = widget.contentMaxWidth;
+      if (maxWidth == null || MediaQuery.sizeOf(context).width <= maxWidth) {
+        return child;
+      }
+      return Align(
+        alignment: Alignment.center,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: child,
+        ),
+      );
+    }
+
     return Semantics(
       container: true,
       label: widget.labels.progress(_currentStep + 1, widget.steps.length),
@@ -380,12 +406,15 @@ class _SafaehOnboardingState extends State<SafaehOnboarding> {
                   ),
                 ),
                 if (widget.showTracker)
-                  SafaehOnboardingTracker(
-                    currentStep: _currentStep,
-                    totalSteps: widget.steps.length,
-                    design: widget.design,
-                    labels: widget.labels,
-                    onStepSelected: busy ? null : _goTo,
+                  constrainWideContent(
+                    SafaehOnboardingTracker(
+                      currentStep: _currentStep,
+                      totalSteps: widget.steps.length,
+                      design: widget.design,
+                      style: widget.trackerStyle,
+                      labels: widget.labels,
+                      onStepSelected: busy ? null : _goTo,
+                    ),
                   ),
                 if (widget.showActions)
                   SafaehOnboardingActionBar(
@@ -401,6 +430,7 @@ class _SafaehOnboardingState extends State<SafaehOnboarding> {
                     leadingAction: actions.secondaryAction,
                     trailingAction: actions.completionProgress,
                     bottomCenterAction: bottomCenterControls,
+                    contentMaxWidth: widget.contentMaxWidth,
                     onSkip: skipAtBottom ? actions.onSkip : null,
                     skipLabel: widget.labels.skip,
                     skipPlacement: widget.skipPlacement,
@@ -421,6 +451,7 @@ class SafaehOnboardingTracker extends StatelessWidget {
     required this.currentStep,
     required this.totalSteps,
     this.design = SafaehOnboardingDesign.zen,
+    this.style = SafaehOnboardingTrackerStyle.design,
     this.labels = const SafaehOnboardingLabels(),
     this.onStepSelected,
   });
@@ -428,6 +459,7 @@ class SafaehOnboardingTracker extends StatelessWidget {
   final int currentStep;
   final int totalSteps;
   final SafaehOnboardingDesign design;
+  final SafaehOnboardingTrackerStyle style;
   final SafaehOnboardingLabels labels;
   final ValueChanged<int>? onStepSelected;
 
@@ -440,39 +472,41 @@ class SafaehOnboardingTracker extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final label = labels.progress(current + 1, total);
 
-    final tracker = switch (design) {
-      SafaehOnboardingDesign.meadow => _MeadowTracker(
-        current: current,
-        total: total,
-        colors: colors,
-        onSelected: onStepSelected,
-      ),
-      SafaehOnboardingDesign.orbit => _OrbitTracker(
-        current: current,
-        total: total,
-        progress: progress,
-        colors: colors,
-      ),
-      SafaehOnboardingDesign.paper => _PaperTracker(
-        current: current,
-        total: total,
-        colors: colors,
-      ),
-      SafaehOnboardingDesign.atelier => _AtelierTracker(
-        current: current,
-        total: total,
-        colors: colors,
-      ),
-      SafaehOnboardingDesign.zen => _ZenTracker(
-        progress: progress,
-        colors: colors,
-      ),
-      SafaehOnboardingDesign.prism => _PrismTracker(
-        current: current,
-        total: total,
-        colors: colors,
-      ),
-    };
+    final tracker = style == SafaehOnboardingTrackerStyle.legacyDots
+        ? _LegacyDotsTracker(current: current, total: total, colors: colors)
+        : switch (design) {
+            SafaehOnboardingDesign.meadow => _MeadowTracker(
+              current: current,
+              total: total,
+              colors: colors,
+              onSelected: onStepSelected,
+            ),
+            SafaehOnboardingDesign.orbit => _OrbitTracker(
+              current: current,
+              total: total,
+              progress: progress,
+              colors: colors,
+            ),
+            SafaehOnboardingDesign.paper => _PaperTracker(
+              current: current,
+              total: total,
+              colors: colors,
+            ),
+            SafaehOnboardingDesign.atelier => _AtelierTracker(
+              current: current,
+              total: total,
+              colors: colors,
+            ),
+            SafaehOnboardingDesign.zen => _ZenTracker(
+              progress: progress,
+              colors: colors,
+            ),
+            SafaehOnboardingDesign.prism => _PrismTracker(
+              current: current,
+              total: total,
+              colors: colors,
+            ),
+          };
 
     return Semantics(
       container: true,
@@ -501,6 +535,7 @@ class SafaehOnboardingActionBar extends StatelessWidget {
     this.leadingAction,
     this.trailingAction,
     this.bottomCenterAction,
+    this.contentMaxWidth,
     this.onSkip,
     this.skipLabel = 'Skip',
     this.skipPlacement = SafaehOnboardingSkipPlacement.bottomEnd,
@@ -522,6 +557,9 @@ class SafaehOnboardingActionBar extends StatelessWidget {
   /// action bar. The onboarding shell uses this for language and theme
   /// controls when [SafaehOnboardingControlPlacement.bottomCenter] is set.
   final Widget? bottomCenterAction;
+
+  /// Optional max width for controls while the footer surface stays full-bleed.
+  final double? contentMaxWidth;
   final VoidCallback? onSkip;
   final String skipLabel;
   final SafaehOnboardingSkipPlacement skipPlacement;
@@ -613,6 +651,20 @@ class SafaehOnboardingActionBar extends StatelessWidget {
         if (bottomCenterAction != null) Center(child: bottomCenterAction!),
       ],
     );
+    final actionContent = Padding(
+      padding: EdgeInsetsDirectional.fromSTEB(20, 8, 20, 20 + bottomInset),
+      child: splitActions,
+    );
+    final constrainedActionContent = contentMaxWidth == null
+        ? actionContent
+        : Align(
+            alignment: Alignment.center,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: contentMaxWidth!),
+              child: actionContent,
+            ),
+          );
+
     return DecoratedBox(
       key: const ValueKey('safaeh-onboarding-action-bar-surface'),
       decoration: BoxDecoration(
@@ -625,10 +677,7 @@ class SafaehOnboardingActionBar extends StatelessWidget {
           ],
         ),
       ),
-      child: Padding(
-        padding: EdgeInsetsDirectional.fromSTEB(20, 8, 20, 20 + bottomInset),
-        child: splitActions,
-      ),
+      child: constrainedActionContent,
     );
   }
 }
@@ -926,7 +975,10 @@ class _OnboardingTopBar extends StatelessWidget {
         themeControl == null &&
         leadingAction == null) {
       return SizedBox(
-        height: 12,
+        // The TextButton's 48 px minimum must be part of the top-bar layout.
+        // If it overflows this slot, the PageView below wins hit testing over
+        // the visible lower portion of Skip.
+        height: 48,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -981,7 +1033,7 @@ class _SafaehStepMotion extends StatelessWidget {
         final distance = offset.abs();
         final progress = 1 - distance;
 
-        return switch (design) {
+        final motion = switch (design) {
           SafaehOnboardingDesign.meadow => Opacity(
             opacity: 0.78 + progress * 0.22,
             child: Transform.translate(
@@ -1016,6 +1068,17 @@ class _SafaehStepMotion extends StatelessWidget {
             child: Transform.rotate(angle: offset * 0.02, child: child),
           ),
         };
+
+        if (!kIsWeb) return motion;
+
+        // Web onboarding keeps the existing design motion, but also fades
+        // each step with its distance from the viewport. This makes the
+        // outgoing step fade out while the incoming step fades in during a
+        // swipe or page change.
+        return Opacity(
+          opacity: Curves.easeInOutCubic.transform(progress),
+          child: motion,
+        );
       },
     );
   }
@@ -1342,6 +1405,44 @@ class _BackdropPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _BackdropPainter oldDelegate) =>
       oldDelegate.design != design || oldDelegate.color != color;
+}
+
+class _LegacyDotsTracker extends StatelessWidget {
+  const _LegacyDotsTracker({
+    required this.current,
+    required this.total,
+    required this.colors,
+  });
+
+  final int current;
+  final int total;
+  final ColorScheme colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (var i = 0; i < total; i++)
+          AnimatedContainer(
+            duration: safaehResolvedMotion(
+              context,
+              const Duration(milliseconds: 150),
+            ),
+            curve: SafaehTheme.of(context).enterCurve,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            width: i == current ? 28 : 8,
+            height: i == current ? 8 : 7,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              color: i == current
+                  ? colors.primary
+                  : colors.outline.withValues(alpha: 0.70),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 class _MeadowTracker extends StatelessWidget {

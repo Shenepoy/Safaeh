@@ -102,9 +102,9 @@ Captured with [`widgets_to_image`](https://pub.dev/packages/widgets_to_image) (`
 | Area | What you get |
 |------|----------------|
 | **Onboarding** | Six public presets through `SafaehOnboardingDesign`; `SafaehOnboarding`, design catalog metadata, host-owned steps, trackers, action bars, list items, and generic `SafaehAuthFlow` |
-| **Sheets** | `showSafaeh` morphs phone sheet ↔ tablet dialog; `showSafaehPicker` / `SafaehOption` (cards, `enabled`); `showSafaehTilePicker` / `SafaehTileOption` (list rows, search); `showSafaehMultiTilePicker` (multi-select); `showSafaehConfirm`, `showSafaehTextInput`, `SafaehStatusBody`, `buildSafaehSheetShell`, `SafaehOptionList`, `SafaehOptionTile` |
+| **Sheets** | `showSafaeh` morphs phone sheet ↔ tablet dialog; `showSafaehPicker` / `SafaehOption` (cards, `enabled`); `showSafaehTilePicker` / `SafaehTileOption` (list rows, search); `showSafaehMultiTilePicker` (multi-select); `showSafaehActionSheet`; `showSafaehInfo`; `showSafaehConfirm`, `showSafaehTimedConfirm`, `showSafaehTextInput`, `SafaehStatusBody`, `SafaehContentPanel`, `buildSafaehSheetShell`, `SafaehOptionList`, `SafaehOptionTile` |
 | **Dropdown** | `SafaehAnchoredDropdownChip` / `SafaehDropdownOption` for anchored menus that match the trigger width, with host label and selection-color hooks |
-| **Dialog** | `showSafaehDialog` centered panel with optional `railWidthOf` |
+| **Dialog** | `showSafaehDialog` centered panel (`railWidthOf` is ignored for alignment) |
 | **Theme** | `SafaehTheme` / `SafaehThemeData` for breakpoint, motion, radius, rail widths, camera compact height, `contentMaxWidth`, `floatingAppearance`; `copyWith` |
 | **Motion** | `safaehResolvedMotion` zeros durations when animations are disabled |
 | **Nav** | `SafaehSidenav` temporary drawer (`asDrawer: true`), clipping rail, or overlay rail (`overlay: true`); `SafaehFloatingNavBar` (same `SafaehSidenavDestination`); keyboard-aware bottom-nav metrics and FAB placement |
@@ -298,7 +298,6 @@ final name = await showSafaehTextInput(
 ```dart
 await showSafaehDialog<void>(
   context: context,
-  railWidthOf: (context) => 0,
   builder: (context) => const Card(child: Text('Hello')),
 );
 ```
@@ -578,7 +577,7 @@ Keep `mobile_scanner` in the app.
 | Concern | Stays in the app |
 |---------|------------------|
 | Copy | `easy_localization`, `UserText`, `titleBuilder` |
-| Routing | `go_router`, reserved rail width via `railWidthOf` |
+| Routing | `go_router`; floating sheets stay viewport-centered |
 | Camera | `mobile_scanner`, permissions, `SystemChrome` orientation lock |
 | State | Riverpod / whatever the app already uses |
 | Tiles | `UserText` + optional accent colors on `SafaehOptionTile` |

@@ -1416,7 +1416,7 @@ void main() {
     expect(find.text('Groups'), findsNothing);
   });
 
-  testWidgets('collapsed sidenav tooltip uses labelBuilder text', (
+  testWidgets('collapsed sidenav tooltip uses the navigation label', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1280, 800);
@@ -1453,13 +1453,13 @@ void main() {
 
     expect(
       find.byWidgetPredicate(
-        (widget) => widget is Tooltip && widget.message == 'built-Groups',
+        (widget) => widget is Tooltip && widget.message == 'Groups',
       ),
       findsOneWidget,
     );
     expect(
       find.byWidgetPredicate(
-        (widget) => widget is Tooltip && widget.message == 'Groups',
+        (widget) => widget is Tooltip && widget.message == 'built-Groups',
       ),
       findsNothing,
     );

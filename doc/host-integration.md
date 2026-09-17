@@ -109,16 +109,19 @@ for OAuth, sessions, errors, and routing.
 
 ## `railWidthOf`
 
-`showSafaeh` and `showSafaehDialog` take an optional
+`showSafaeh` and `showSafaehDialog` still accept
 
 ```dart
 double Function(BuildContext context)? railWidthOf
 ```
 
-On tablet+ the panel is shifted by that start inset so a permanent sidenav
-does not cover the dialog. Return `0` to center in the full viewport (Hisab
-`centerInFullViewport: true`). Do not bake GoRouter or shell layout into the
-package — pass a closure.
+for API compatibility with older hosts. Floating sheets and dialogs stay
+centered in the **full viewport**. A permanent rail, overlay sidenav, or
+temporary drawer must not shift the panel, and later rail changes must not
+move an already-open sheet.
+
+Camera / QR paper-roll sheets still use `railWidthOf` to keep the roll
+beside a host rail.
 
 Phone sheets ignore `railWidthOf`.
 
@@ -415,7 +418,7 @@ Hisab still passes `shell_nav_*` keys into `SafaehSidenav` (`railKey`,
 | Concern | Host |
 |---------|------|
 | Copy | `easy_localization`, `UserText`, every label argument |
-| Routing | `go_router`, reserved rail via `railWidthOf` |
+| Routing | `go_router`; floating sheets ignore reserved rail width |
 | Camera | `mobile_scanner`, permissions, `SystemChrome` |
 | State | Riverpod / whatever the app already uses |
 | Scroll sheets | Hisab `showResponsiveSheet` `isScrollControlled` (unused flag, kept for call sites) |
@@ -436,9 +439,11 @@ Prefer a host function that maps app types onto package types, then calls
 `showSafaeh` or mounts `SafaehTilePickerBody` as the child of the host route.
 Do not fork panel layout back into the app.
 
-Multi-select + search live on `showSafaehMultiTilePicker` /
-`SafaehTilePickerBody` (`searchHint`, `searchEmptyLabel`, `searchMatches`,
-`confirmLabel`).
+Action menus, info panels, and timed confirms live on `showSafaehActionSheet`,
+`showSafaehInfo`, and `showSafaehTimedConfirm`. Host `tileBuilder` rows are
+visual only — tap/pop stay on the sheet. Multi-select + search live on
+`showSafaehMultiTilePicker` / `SafaehTilePickerBody` (`searchHint`,
+`searchEmptyLabel`, `searchMatches`, `confirmLabel`, optional `cancelLabel`).
 Empty / busy / error chrome for light sheets is `SafaehStatusBody` (optional
 determinate `progress`). Camera permission copy stays on
 `SafaehQrMessageBody`. Camera sheets take `railWidthOf`, `motion`,

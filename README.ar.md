@@ -114,7 +114,7 @@
 | المجال | ماذا تحصل |
 |--------|-----------|
 | **Sheets** | <span dir="ltr"><code>showSafaeh</code></span> يحوّل sheet الهاتف ↔ dialog الجهاز اللوحي؛ <span dir="ltr"><code>showSafaehPicker</code></span> / <span dir="ltr"><code>SafaehOption</code></span> (بطاقات، <span dir="ltr"><code>enabled</code></span>)؛ <span dir="ltr"><code>showSafaehTilePicker</code></span> / <span dir="ltr"><code>SafaehTileOption</code></span> (صفوف قائمة، بحث)؛ <span dir="ltr"><code>showSafaehMultiTilePicker</code></span> (اختيار متعدد)؛ <span dir="ltr"><code>showSafaehConfirm</code></span>، <span dir="ltr"><code>showSafaehTextInput</code></span>، <span dir="ltr"><code>SafaehStatusBody</code></span>، <span dir="ltr"><code>buildSafaehSheetShell</code></span>، <span dir="ltr"><code>SafaehOptionList</code></span>، <span dir="ltr"><code>SafaehOptionTile</code></span> |
-| **Dialog** | <span dir="ltr"><code>showSafaehDialog</code></span> لوحة متمركزة مع <span dir="ltr"><code>railWidthOf</code></span> اختياري |
+| **Dialog** | <span dir="ltr"><code>showSafaehDialog</code></span> لوحة متمركزة في كامل الشاشة |
 | **Theme** | <span dir="ltr"><code>SafaehTheme</code></span> / <span dir="ltr"><code>SafaehThemeData</code></span> لنقطة العرض والحركة ونصف القطر وعرض الـ rail وارتفاع الكاميرا المضغوط و<span dir="ltr"><code>contentMaxWidth</code></span>؛ <span dir="ltr"><code>copyWith</code></span> |
 | **Motion** | <span dir="ltr"><code>safaehResolvedMotion</code></span> يصفر المدد عندما تُعطَّل الحركات |
 | **Nav** | <span dir="ltr"><code>SafaehSidenav</code></span> درج مؤقت (<span dir="ltr"><code>asDrawer: true</code></span>) أو rail قصّ؛ <span dir="ltr"><code>SafaehFloatingNavBar</code></span> (نفس <span dir="ltr"><code>SafaehSidenavDestination</code></span>) |
@@ -300,7 +300,6 @@ final name = await showSafaehTextInput(
 ```dart
 await showSafaehDialog<void>(
   context: context,
-  railWidthOf: (context) => 0,
   builder: (context) => const Card(child: Text('Hello')),
 );
 ```
@@ -431,7 +430,7 @@ await showSafaehCameraSheet<void>(
 | المجال | يبقى في التطبيق |
 |--------|-----------------|
 | النصوص | <span dir="ltr"><code>easy_localization</code></span>، <span dir="ltr"><code>UserText</code></span>، <span dir="ltr"><code>titleBuilder</code></span> |
-| التوجيه | <span dir="ltr"><code>go_router</code></span>، عرض الـ rail المحجوز عبر <span dir="ltr"><code>railWidthOf</code></span> |
+| التوجيه | <span dir="ltr"><code>go_router</code></span>؛ الـ sheets العائمة تبقى في وسط الشاشة |
 | الكاميرا | <span dir="ltr"><code>mobile_scanner</code></span>، الصلاحيات، قفل الاتجاه عبر <span dir="ltr"><code>SystemChrome</code></span> |
 | الحالة | Riverpod / ما يستخدمه التطبيق أصلاً |
 | Tiles | <span dir="ltr"><code>UserText</code></span> + ألوان لكنة اختيارية على <span dir="ltr"><code>SafaehOptionTile</code></span> |

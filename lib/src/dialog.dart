@@ -5,7 +5,8 @@ import 'floating_surface.dart';
 import 'floating_surface_renderer.dart';
 import 'theme.dart';
 
-/// Centered dialog. Optional [railWidthOf] shifts the panel off a host rail.
+/// Centered dialog. [railWidthOf] is accepted for API compatibility and does
+/// not shift the panel — floating dialogs stay in the full viewport.
 ///
 /// Unlike [showSafaeh], this does not morph into a phone bottom sheet.
 /// [SafaehRouteOptions.slideUp], [SafaehRouteOptions.phonePlacement], and
@@ -91,6 +92,9 @@ class _SafaehDialogHost extends StatelessWidget {
   final Duration motion;
   final Curve enterCurve;
   final Curve exitCurve;
+  // Hosts still pass this; floating dialogs ignore it so a sidenav cannot
+  // de-center the panel.
+  // ignore: unused_field
   final double Function(BuildContext context)? railWidthOf;
   final double? maxWidth;
   final double? maxHeight;
@@ -102,8 +106,6 @@ class _SafaehDialogHost extends StatelessWidget {
   Widget build(BuildContext context) {
     final viewInsets = MediaQuery.viewInsetsOf(context);
     final tokens = SafaehTheme.of(context);
-    final isWide = tokens.isWide(context);
-    final railWidth = isWide ? (railWidthOf?.call(context) ?? 0.0) : 0.0;
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final appearance = floatingAppearance ?? tokens.floatingAppearance;
@@ -148,12 +150,7 @@ class _SafaehDialogHost extends StatelessWidget {
               ),
             Padding(
               padding: EdgeInsets.only(bottom: viewInsets.bottom),
-              child: AnimatedPadding(
-                duration: motion,
-                curve: enterCurve,
-                padding: EdgeInsetsDirectional.only(start: railWidth),
-                child: SafeArea(child: entering),
-              ),
+              child: SafeArea(child: entering),
             ),
           ],
         ),

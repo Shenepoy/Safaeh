@@ -8,6 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Tags are `vX.Y.Z` and must match `version:` in [`pubspec.yaml`](pubspec.yaml).
 See [VERSIONING.md](VERSIONING.md).
 
+## [0.4.1] - 2026-09-17
+
+### Added
+
+- Added `showSafaehActionSheet` / `SafaehAction` for list-row action menus.
+- Added `showSafaehInfo` / `SafaehInfoSheet` for informational panels.
+- Added `showSafaehTimedConfirm` / `SafaehTimedConfirmSheet` for countdown
+  confirms, plus shared `SafaehContentPanel`.
+- Tile options accept an optional `trailing` widget; multi-select can show a
+  phone cancel control.
+- Onboarding trackers can use `SafaehOnboardingTrackerStyle.legacyDots` and an
+  optional `contentMaxWidth` for wide chrome.
+
+### Changed
+
+- Custom `showSafaehActionSheet` rows no longer own tap/pop. The sheet wraps
+  `tileBuilder` output and pops the action value, matching tile pickers.
+
+### Fixed
+
+- Floating `showSafaeh` / `showSafaehDialog` panels stay centered in the full
+  viewport. `railWidthOf` no longer shifts them when a host sidenav is open,
+  collapsed, or opened after the sheet.
+- Sidenav profile and footer chrome stay stable while the rail width animates.
+- Wide auth surfaces size to their content instead of stretching the panel.
+
 ## [0.4.0] - 2026-09-15
 
 ### Added

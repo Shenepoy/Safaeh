@@ -131,6 +131,35 @@ void main() {
     },
   );
 
+  testWidgets('constrains wide-screen onboarding chrome when requested', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      _host(
+        SafaehOnboarding(
+          contentMaxWidth: 640,
+          steps: _steps(),
+          actions: SafaehOnboardingHostActions(
+            onComplete: () async => SafaehOnboardingResult.completed,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final tracker = tester.getRect(find.byType(LinearProgressIndicator));
+    final next = tester.getRect(find.text('Next'));
+    expect(tracker.width, lessThan(640));
+    expect(tracker.center.dx, closeTo(600, 1));
+    expect(next.right, lessThanOrEqualTo(920));
+    expect(next.right, greaterThan(500));
+  });
+
   testWidgets('skip defaults to top end and supports every placement', (
     tester,
   ) async {
@@ -169,6 +198,37 @@ void main() {
     await pumpPlacement(SafaehOnboardingSkipPlacement.bottomStart);
     expect(tester.getCenter(skip).dx, lessThan(180));
     expect(tester.getCenter(skip).dy, greaterThan(500));
+  });
+
+  testWidgets('top skip keeps its full hit target above the page', (
+    tester,
+  ) async {
+    var skipCount = 0;
+    await tester.pumpWidget(
+      _host(
+        SizedBox(
+          width: 480,
+          height: 760,
+          child: SafaehOnboarding(
+            showSkip: true,
+            steps: _steps(),
+            actions: SafaehOnboardingHostActions(onSkip: () => skipCount++),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final shell = tester.getRect(find.byType(SafaehOnboarding));
+    final skip = find.widgetWithText(TextButton, 'Skip');
+    final skipRect = tester.getRect(skip);
+    expect(skipRect.height, greaterThanOrEqualTo(48));
+    expect(skipRect.left, greaterThanOrEqualTo(shell.left));
+    expect(skipRect.right, lessThanOrEqualTo(shell.right));
+    expect(skipRect.top, greaterThanOrEqualTo(shell.top));
+
+    await tester.tap(skip, warnIfMissed: false);
+    expect(skipCount, 1);
   });
 
   testWidgets('back action is transparent and uses white foreground', (
@@ -249,6 +309,30 @@ void main() {
     expect(progress.backgroundColor, isNotNull);
     expect(progress.backgroundColor!.a, greaterThanOrEqualTo(0.7));
     expect(progress.minHeight, greaterThanOrEqualTo(3));
+  });
+
+  testWidgets('legacy dots tracker preserves the compact page indicator', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SafaehOnboardingTracker(
+            currentStep: 1,
+            totalSteps: 4,
+            style: SafaehOnboardingTrackerStyle.legacyDots,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    final dots = find.byType(AnimatedContainer);
+    expect(dots, findsNWidgets(4));
+    expect(tester.getRect(dots.at(1)).width, 36);
+    expect(tester.getRect(dots.at(1)).height, 8);
+    expect(tester.getRect(dots.first).width, 16);
+    expect(tester.getRect(dots.first).height, 7);
   });
 
   testWidgets('host can switch designs without losing the current step', (

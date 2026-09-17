@@ -188,6 +188,7 @@ class SafaehSidenav extends StatelessWidget {
     final cs = theme.colorScheme;
     final chrome = (fill: cs.surfaceContainerLow, onFill: cs.onSurface);
     final width = collapsed ? compact : expanded;
+    final railCollapsed = !asDrawer && collapsed;
     final motion = safaehResolvedMotion(context, duration ?? tokens.navMotion);
 
     final body = SafeArea(
@@ -215,7 +216,7 @@ class SafaehSidenav extends StatelessWidget {
                   ? destinations[i].selectedIcon
                   : destinations[i].icon,
               selected: selectedIndex == i,
-              collapsed: !asDrawer && collapsed,
+              collapsed: railCollapsed,
               fill: chrome.fill,
               onFill: chrome.onFill,
               iconColumnWidth: compact,
@@ -229,7 +230,8 @@ class SafaehSidenav extends StatelessWidget {
               label: profile!.label,
               subtitle: profile!.subtitle,
               selected: profile!.selected,
-              collapsed: !asDrawer && collapsed,
+              collapsed: railCollapsed,
+              reserveCollapsedHeight: true,
               fill: chrome.fill,
               onFill: chrome.onFill,
               iconColumnWidth: compact,
@@ -244,14 +246,27 @@ class SafaehSidenav extends StatelessWidget {
               onTap: profile!.onTap,
             ),
           if (footer != null)
-            Padding(
-              padding: EdgeInsetsDirectional.only(
-                start: compact,
-                end: 16,
-                top: 4,
-                bottom: 12,
+            // The rail width is animated, so laying out the footer against the
+            // current width can briefly give it zero width. Text then grows
+            // vertically and the Spacer moves the profile tile. Keep this
+            // small chrome slot fixed while the rail changes width.
+            SizedBox(
+              height: 36,
+              child: Padding(
+                padding: EdgeInsetsDirectional.only(
+                  start: railCollapsed ? 0 : compact,
+                  end: 16,
+                  top: 4,
+                  bottom: 12,
+                ),
+                child: railCollapsed
+                    ? IgnorePointer(
+                        child: ExcludeSemantics(
+                          child: Opacity(opacity: 0, child: footer),
+                        ),
+                      )
+                    : footer,
               ),
-              child: footer,
             ),
         ],
       ),
@@ -392,6 +407,7 @@ class _NavTile extends StatelessWidget {
     this.subtitle,
     this.labelBuilder,
     this.iconColumnWidth,
+    this.reserveCollapsedHeight = false,
   });
 
   final Key tileKey;
@@ -407,6 +423,7 @@ class _NavTile extends StatelessWidget {
   final VoidCallback onTap;
   final SafaehLabelBuilder? labelBuilder;
   final double? iconColumnWidth;
+  final bool reserveCollapsedHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -470,13 +487,22 @@ class _NavTile extends StatelessWidget {
                         width: slotWidth,
                         child: Center(child: mark),
                       ),
-                      if (!collapsed)
+                      if (!collapsed || reserveCollapsedHeight)
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsetsDirectional.only(
                               start: 12,
                             ),
-                            child: labelColumn,
+                            child: collapsed
+                                ? ExcludeSemantics(
+                                    child: IgnorePointer(
+                                      child: Opacity(
+                                        opacity: 0,
+                                        child: labelColumn,
+                                      ),
+                                    ),
+                                  )
+                                : labelColumn,
                           ),
                         ),
                       if (!collapsed &&
@@ -522,27 +548,10 @@ class _NavTile extends StatelessWidget {
     );
 
     if (collapsed) {
-      final built = labelBuilder?.call(label, theme.textTheme.bodyMedium);
-      final plain = built is Text
-          ? (built.data ?? built.textSpan?.toPlainText())
-          : null;
-      if (built != null && (plain == null || plain.isEmpty)) {
-        return Semantics(
-          button: true,
-          selected: selected,
-          child: Tooltip(
-            richMessage: WidgetSpan(
-              alignment: PlaceholderAlignment.middle,
-              child: built,
-            ),
-            child: tile,
-          ),
-        );
-      }
       return Semantics(
         button: true,
         selected: selected,
-        child: Tooltip(message: plain ?? label, child: tile),
+        child: Tooltip(message: label, child: tile),
       );
     }
     return Semantics(button: true, selected: selected, child: tile);

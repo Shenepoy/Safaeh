@@ -24,7 +24,7 @@ Prefer **pub.dev**:
 
 ```yaml
 dependencies:
-  safaeh: ^0.4.0
+  safaeh: ^0.4.1
 ```
 
 Or pin a **git tag** (not `main` or a raw commit):
@@ -34,7 +34,7 @@ dependencies:
   safaeh:
     git:
       url: https://github.com/Zyzto/Safaeh.git
-      ref: v0.4.0
+      ref: v0.4.1
 ```
 
 ## Release checklist

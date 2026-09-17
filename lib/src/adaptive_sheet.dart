@@ -557,6 +557,9 @@ class _AdaptiveSheetHost extends StatelessWidget {
   final Curve enterCurve;
   final Curve exitCurve;
   final double radius;
+  // Hosts still pass this; floating chrome ignores it so a sidenav cannot
+  // de-center the panel.
+  // ignore: unused_field
   final double Function(BuildContext context)? railWidthOf;
   final SafaehTransition? fadeScale;
   final SafaehTransition? slideUp;
@@ -580,9 +583,10 @@ class _AdaptiveSheetHost extends StatelessWidget {
     final phoneBottomInset = !isWide && useSafeArea && viewInsets.bottom <= 0
         ? MediaQuery.paddingOf(context).bottom
         : 0.0;
-    final railWidth = isWide ? (railWidthOf?.call(context) ?? 0.0) : 0.0;
-
-    final availableWidth = math.max(0.0, size.width - railWidth);
+    // [railWidthOf] is host API for camera / older call sites. Floating
+    // sheets stay centered in the full viewport and never shift with a
+    // sidenav open, collapse, or overlay drawer.
+    final availableWidth = size.width;
     final dialogMax = maxWidth ?? dialogMaxWidth;
     final panelWidth = isWide
         ? math.min(dialogMax, math.max(0.0, availableWidth - 48))
@@ -864,19 +868,14 @@ class _AdaptiveSheetHost extends StatelessWidget {
               ),
             Padding(
               padding: EdgeInsets.only(bottom: viewInsets.bottom),
-              child: AnimatedPadding(
-                duration: motion,
-                curve: enterCurve,
-                padding: EdgeInsetsDirectional.only(start: railWidth),
-                child: SafeArea(
-                  top: useSafeArea && isWide,
-                  // Phone bottom padding is applied inside [panelContent] so
-                  // the surface itself remains flush with the viewport.
-                  bottom: false,
-                  left: false,
-                  right: false,
-                  child: entering,
-                ),
+              child: SafeArea(
+                top: useSafeArea && isWide,
+                // Phone bottom padding is applied inside [panelContent] so
+                // the surface itself remains flush with the viewport.
+                bottom: false,
+                left: false,
+                right: false,
+                child: entering,
               ),
             ),
           ],

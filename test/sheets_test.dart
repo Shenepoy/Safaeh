@@ -711,7 +711,7 @@ void main() {
     expect(titleTop - panelTop, lessThan(32));
   });
 
-  testWidgets('railWidthOf shifts the tablet dialog off the start rail', (
+  testWidgets('railWidthOf does not shift the tablet dialog off-center', (
     tester,
   ) async {
     await setTablet(tester);
@@ -760,42 +760,77 @@ void main() {
     withoutRail = tester
         .getTopLeft(find.byKey(const ValueKey('safaeh_panel')))
         .dx;
-    expect(withRail, closeTo(withoutRail + 40, 8));
+    expect(withRail, closeTo(withoutRail, 1));
+    final panel = tester.getRect(find.byKey(const ValueKey('safaeh_panel')));
+    expect(panel.center.dx, closeTo(tester.view.physicalSize.width / 2, 1));
   });
 
-  testWidgets('SafaehRouteOptions railWidthOf shifts the tablet dialog', (
+  testWidgets('opening a host rail later does not move an open tablet sheet', (
     tester,
   ) async {
     await setTablet(tester);
-    Future<double> openWithRail(double rail) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) => TextButton(
-              onPressed: () => showSafaeh<void>(
-                context: context,
-                title: 'Rename',
-                route: SafaehRouteOptions(railWidthOf: (_) => rail),
-                child: const Text('sheet-body'),
-              ),
-              child: const Text('open'),
+    final rail = ValueNotifier<double>(0);
+    addTearDown(rail.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSafaeh<void>(
+              context: context,
+              title: 'Rename',
+              railWidthOf: (_) => rail.value,
+              child: const Text('sheet-body'),
             ),
+            child: const Text('open'),
           ),
         ),
-      );
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-      return tester.getTopLeft(find.byKey(const ValueKey('safaeh_panel'))).dx;
-    }
-
-    final withRail = await openWithRail(80);
-    await tester.tap(find.byIcon(Icons.close));
+      ),
+    );
+    await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    final withoutRail = await openWithRail(0);
-    expect(withRail, closeTo(withoutRail + 40, 8));
+    final before = tester.getRect(find.byKey(const ValueKey('safaeh_panel')));
+    rail.value = 240;
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(tester.getRect(find.byKey(const ValueKey('safaeh_panel'))), before);
   });
 
-  testWidgets('showSafaehDialog railWidthOf shifts the panel', (tester) async {
+  testWidgets(
+    'SafaehRouteOptions railWidthOf does not shift the tablet dialog',
+    (tester) async {
+      await setTablet(tester);
+      Future<double> openWithRail(double rail) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => showSafaeh<void>(
+                  context: context,
+                  title: 'Rename',
+                  route: SafaehRouteOptions(railWidthOf: (_) => rail),
+                  child: const Text('sheet-body'),
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
+        return tester.getTopLeft(find.byKey(const ValueKey('safaeh_panel'))).dx;
+      }
+
+      final withRail = await openWithRail(80);
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+      final withoutRail = await openWithRail(0);
+      expect(withRail, closeTo(withoutRail, 1));
+    },
+  );
+
+  testWidgets('showSafaehDialog railWidthOf does not shift the panel', (
+    tester,
+  ) async {
     await setTablet(tester);
     Future<double> openWithRail(double rail) async {
       await tester.pumpWidget(
@@ -827,7 +862,7 @@ void main() {
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
     final withoutRail = await openWithRail(0);
-    expect(withRail, greaterThan(withoutRail));
+    expect(withRail, closeTo(withoutRail, 1));
   });
 
   testWidgets('tabletTopBarAction is shown next to close', (tester) async {
@@ -1127,44 +1162,44 @@ void main() {
     expect(find.byKey(const ValueKey('safaeh_drag_handle')), findsNothing);
   });
 
-  testWidgets('railWidthOf in RTL shifts the tablet dialog off the start edge', (
-    tester,
-  ) async {
-    await setTablet(tester);
-    Future<double> openWithRail(double rail) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          builder: (context, child) {
-            return Directionality(
-              textDirection: TextDirection.rtl,
-              child: child!,
-            );
-          },
-          home: Builder(
-            builder: (context) => TextButton(
-              onPressed: () => showSafaeh<void>(
-                context: context,
-                title: 'Rename',
-                railWidthOf: (_) => rail,
-                child: const Text('sheet-body'),
+  testWidgets(
+    'railWidthOf in RTL still keeps the tablet dialog viewport-centered',
+    (tester) async {
+      await setTablet(tester);
+      Future<double> openWithRail(double rail) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            builder: (context, child) {
+              return Directionality(
+                textDirection: TextDirection.rtl,
+                child: child!,
+              );
+            },
+            home: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => showSafaeh<void>(
+                  context: context,
+                  title: 'Rename',
+                  railWidthOf: (_) => rail,
+                  child: const Text('sheet-body'),
+                ),
+                child: const Text('open'),
               ),
-              child: const Text('open'),
             ),
           ),
-        ),
-      );
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-      return tester.getTopLeft(find.byKey(const ValueKey('safaeh_panel'))).dx;
-    }
+        );
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
+        return tester.getTopLeft(find.byKey(const ValueKey('safaeh_panel'))).dx;
+      }
 
-    final withRail = await openWithRail(80);
-    await tester.tap(find.byIcon(Icons.close));
-    await tester.pumpAndSettle();
-    final withoutRail = await openWithRail(0);
-    // Start inset is on the right in RTL, so the panel's left edge moves left.
-    expect(withRail, closeTo(withoutRail - 40, 8));
-  });
+      final withRail = await openWithRail(80);
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+      final withoutRail = await openWithRail(0);
+      expect(withRail, closeTo(withoutRail, 1));
+    },
+  );
 
   testWidgets('phone sheet lists scroll; handle drag dismisses', (
     tester,
@@ -1761,6 +1796,135 @@ void main() {
         matching: find.byKey(const ValueKey('safaeh_dialog_constraints')),
       ),
       findsOneWidget,
+    );
+  });
+
+  testWidgets('showSafaehActionSheet pops the selected value', (tester) async {
+    await setPhone(tester);
+    String? chosen;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () async {
+              chosen = await showSafaehActionSheet<String>(
+                context: context,
+                title: 'Actions',
+                actions: const [
+                  SafaehAction(value: 'edit', label: 'Edit'),
+                  SafaehAction(
+                    value: 'delete',
+                    label: 'Delete',
+                    destructive: true,
+                  ),
+                ],
+              );
+            },
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+    expect(chosen, 'edit');
+  });
+
+  testWidgets('showSafaehActionSheet pops from custom tiles without onTap', (
+    tester,
+  ) async {
+    await setPhone(tester);
+    String? chosen;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () async {
+              chosen = await showSafaehActionSheet<String>(
+                context: context,
+                title: 'Actions',
+                actions: const [SafaehAction(value: 'edit', label: 'Edit')],
+                tileBuilder: (context, action) =>
+                    SizedBox(height: 48, child: Text(action.label)),
+              );
+            },
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(GestureDetector, 'Edit'));
+    await tester.pumpAndSettle();
+    expect(chosen, 'edit');
+  });
+
+  testWidgets('showSafaehInfo returns true from the primary action', (
+    tester,
+  ) async {
+    await setPhone(tester);
+    bool? accepted;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () async {
+              accepted = await showSafaehInfo(
+                context: context,
+                title: 'Permission needed',
+                content: 'Open system settings to continue.',
+                primaryLabel: 'Open settings',
+              );
+            },
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.byType(SafaehContentPanel), findsOneWidget);
+    await tester.tap(find.text('Open settings'));
+    await tester.pumpAndSettle();
+    expect(accepted, isTrue);
+  });
+
+  testWidgets('timed confirm enables only after its delay', (tester) async {
+    await setPhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSafaehTimedConfirm(
+              context: context,
+              title: 'Delete item',
+              content: 'Wait before deleting.',
+              confirmLabel: 'Delete',
+              isDestructive: true,
+              seconds: 2,
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('safaeh_confirm')))
+          .onPressed,
+      isNull,
+    );
+    await tester.pump(const Duration(seconds: 2));
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('safaeh_confirm')))
+          .onPressed,
+      isNotNull,
     );
   });
 }

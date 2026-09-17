@@ -16,6 +16,7 @@ class SafaehTileOption<T> {
     required this.label,
     this.subtitle,
     this.leading,
+    this.trailing,
     this.enabled = true,
   });
 
@@ -23,6 +24,7 @@ class SafaehTileOption<T> {
   final String label;
   final String? subtitle;
   final Widget? leading;
+  final Widget? trailing;
   final bool enabled;
 }
 
@@ -63,6 +65,7 @@ class SafaehTilePickerBody<T> extends StatefulWidget {
     this.searchEmptyLabel,
     this.searchMatches,
     this.confirmLabel,
+    this.cancelLabel,
     this.onSelected,
   });
 
@@ -80,6 +83,7 @@ class SafaehTilePickerBody<T> extends StatefulWidget {
   final String? searchEmptyLabel;
   final SafaehTileSearchMatch<T>? searchMatches;
   final String? confirmLabel;
+  final String? cancelLabel;
   final ValueChanged<T>? onSelected;
 
   @override
@@ -146,6 +150,7 @@ class _SafaehTilePickerBodyState<T> extends State<SafaehTilePickerBody<T>> {
       title: Text(opt.label),
       subtitle: opt.subtitle != null ? Text(opt.subtitle!) : null,
       leading: opt.leading,
+      trailing: opt.trailing,
       enabled: opt.enabled,
       selected: selected,
       onTap: opt.enabled ? () => _onOptionTap(opt) : null,
@@ -242,13 +247,22 @@ class _SafaehTilePickerBodyState<T> extends State<SafaehTilePickerBody<T>> {
               if (widget.multiSelect && widget.confirmLabel != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Align(
-                    alignment: AlignmentDirectional.centerEnd,
-                    child: FilledButton(
-                      key: const ValueKey('safaeh_multi_done'),
-                      onPressed: () => _popRoot(List<T>.from(_selected)),
-                      child: Text(widget.confirmLabel!),
-                    ),
+                  child: OverflowBar(
+                    alignment: MainAxisAlignment.end,
+                    spacing: 8,
+                    children: [
+                      if (widget.cancelLabel != null && showInBodyTitle)
+                        TextButton(
+                          key: const ValueKey('safaeh_cancel'),
+                          onPressed: () => _popRoot(null),
+                          child: Text(widget.cancelLabel!),
+                        ),
+                      FilledButton(
+                        key: const ValueKey('safaeh_multi_done'),
+                        onPressed: () => _popRoot(List<T>.from(_selected)),
+                        child: Text(widget.confirmLabel!),
+                      ),
+                    ],
                   ),
                 ),
             ],
@@ -328,6 +342,7 @@ Future<List<T>?> showSafaehMultiTilePicker<T>({
   required BuildContext context,
   required List<SafaehTileOption<T>> options,
   required String confirmLabel,
+  String? cancelLabel,
   String? title,
   SafaehTitleBuilder? titleBuilder,
   Widget? header,
@@ -385,6 +400,7 @@ Future<List<T>?> showSafaehMultiTilePicker<T>({
       searchEmptyLabel: searchEmptyLabel,
       searchMatches: searchMatches,
       confirmLabel: confirmLabel,
+      cancelLabel: cancelLabel,
     ),
   );
 }
