@@ -238,6 +238,34 @@ Widget galleryPreview(String id, String Function(String key) t) {
       return StatusBodyDemo(t: t);
     case 'feedback':
       return SizedBox(height: 300, child: FeedbackDemo(t: t));
+    case 'empty_state':
+      return EmptyStateDemo(t: t);
+    case 'inline_banner':
+      return InlineBannerDemo(t: t);
+    case 'meta_chip':
+      return MetaChipDemo(t: t);
+    case 'glyph_avatar':
+      return GlyphAvatarDemo(t: t);
+    case 'kpi_card':
+      return KpiCardDemo(t: t);
+    case 'bordered_list':
+      return BorderedListDemo(t: t);
+    case 'section_header':
+      return SectionHeaderDemo(t: t);
+    case 'async_error':
+      return AsyncErrorDemo(t: t);
+    case 'user_text':
+      return UserTextDemo(t: t);
+    case 'accent_surfaces':
+      return AccentSurfacesDemo(t: t);
+    case 'material_chrome':
+      return MaterialChromeDemo(t: t);
+    case 'debug_menu':
+      return SizedBox(height: 160, child: DebugMenuDemo(t: t));
+    case 'l10n_editor':
+      return L10nEditorDemo(t: t);
+    case 'sheet_padding':
+      return SizedBox(height: 320, child: SheetPaddingDemo(t: t));
     case 'confirm':
       return ConfirmDemo(t: t);
     case 'text_input':

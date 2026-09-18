@@ -8,6 +8,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Tags are `vX.Y.Z` and must match `version:` in [`pubspec.yaml`](pubspec.yaml).
 See [VERSIONING.md](VERSIONING.md).
 
+## [0.5.0] - 2026-09-18
+
+### Added
+
+- Shared list and status chrome: `SafaehEmptyState`, `SafaehInlineBanner`,
+  `SafaehMetaChip`, `SafaehGlyphAvatar`, `SafaehKpiCard`,
+  `SafaehBorderedListChrome`, `SafaehSectionHeader`, `SafaehLtrText`,
+  `SafaehUserText`, `SafaehAsyncBody` / `SafaehLoadingBody`,
+  `SafaehErrorBody`, and `SafaehSemanticStatus`.
+- Accent and theme seams: `SafaehAccentStyle`, `SafaehAccentSurfaces`,
+  `applySafaehMaterialChrome`, and `scaleSafaehTextTheme`.
+- Rail-aware content band: `desktopBreakpoint`, `contentMaxWidthDesktop`,
+  `safaehRailAwareBandMetrics`, `SafaehContentBand.railAware`,
+  `SafaehContentAlignedPage`, `SafaehContentAlignedAppBar.forContentArea`,
+  `SafaehContentAlignedFabLocation.of`.
+- Debug shell: `showSafaehDebugMenu`, `SafaehDebugMenuFab`, section/action
+  chrome, and `SafaehL10nEditOverlay` behind `SafaehL10nBackend` /
+  `SafaehL10nOverrideStore`.
+- `SafaehThemeData.sheetBodyInset` / `sheetBodyInsetWide` as the default
+  adaptive-sheet `contentPadding` under the title bar.
+
+### Docs
+
+- Added [doc/chrome.md](doc/chrome.md) and
+  [doc/debug-menu.md](doc/debug-menu.md), plus catalog demos for the new
+  widgets.
+
 ## [0.4.2] - 2026-09-18
 
 ### Fixed

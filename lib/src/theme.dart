@@ -9,10 +9,12 @@ const double kSafaehCameraCompactHeightFraction = 0.65;
 class SafaehThemeData {
   const SafaehThemeData({
     this.tabletBreakpoint = 600,
+    this.desktopBreakpoint = 840,
     this.dialogMaxWidth = 560,
     this.motion = const Duration(milliseconds: 320),
     this.enterCurve = Curves.easeOutCubic,
     this.radius = 16,
+    this.listRadius = 12,
     this.compactNavWidth = 72,
     this.expandedNavWidth = 240,
     this.navMotion = const Duration(milliseconds: 280),
@@ -22,16 +24,26 @@ class SafaehThemeData {
     this.exitCurve = Curves.easeInCubic,
     this.cameraCompactHeightFraction = kSafaehCameraCompactHeightFraction,
     this.contentMaxWidth = 600,
+    this.contentMaxWidthDesktop = 720,
+    this.sheetBodyInset = const EdgeInsets.fromLTRB(20, 16, 20, 20),
+    this.sheetBodyInsetWide = const EdgeInsets.fromLTRB(24, 16, 24, 20),
     this.floatingAppearance,
   });
 
   static const fallback = SafaehThemeData();
 
   final double tabletBreakpoint;
+
+  /// Width at which a host with a pinned shell rail uses the desktop band.
+  final double desktopBreakpoint;
   final double dialogMaxWidth;
   final Duration motion;
   final Curve enterCurve;
   final double radius;
+
+  /// Corner radius for list cards ([SafaehBorderedListChrome]) when
+  /// [ThemeData.cardTheme] does not specify a shape.
+  final double listRadius;
   final double compactNavWidth;
   final double expandedNavWidth;
   final Duration navMotion;
@@ -41,9 +53,17 @@ class SafaehThemeData {
   final Curve exitCurve;
   final double cameraCompactHeightFraction;
 
-  /// Max width of the simple content band on wide viewports. Hosts with a shell
-  /// rail (Hisab) keep their own band metrics and only use this as a token.
+  /// Max width of the simple content band on tablet-or-wider viewports.
   final double contentMaxWidth;
+
+  /// Max width of the content band on desktop-or-wider viewports.
+  final double contentMaxWidthDesktop;
+
+  /// Default body inset under a sheet title bar (phone).
+  final EdgeInsets sheetBodyInset;
+
+  /// Default body inset under a wide-screen dialog title bar.
+  final EdgeInsets sheetBodyInsetWide;
 
   /// Default appearance for package-owned floating and overlay surfaces.
   ///
@@ -53,10 +73,12 @@ class SafaehThemeData {
   /// Copies this theme, replacing any non-null arguments.
   SafaehThemeData copyWith({
     double? tabletBreakpoint,
+    double? desktopBreakpoint,
     double? dialogMaxWidth,
     Duration? motion,
     Curve? enterCurve,
     double? radius,
+    double? listRadius,
     double? compactNavWidth,
     double? expandedNavWidth,
     Duration? navMotion,
@@ -66,14 +88,19 @@ class SafaehThemeData {
     Curve? exitCurve,
     double? cameraCompactHeightFraction,
     double? contentMaxWidth,
+    double? contentMaxWidthDesktop,
+    EdgeInsets? sheetBodyInset,
+    EdgeInsets? sheetBodyInsetWide,
     SafaehFloatingAppearance? floatingAppearance,
   }) {
     return SafaehThemeData(
       tabletBreakpoint: tabletBreakpoint ?? this.tabletBreakpoint,
+      desktopBreakpoint: desktopBreakpoint ?? this.desktopBreakpoint,
       dialogMaxWidth: dialogMaxWidth ?? this.dialogMaxWidth,
       motion: motion ?? this.motion,
       enterCurve: enterCurve ?? this.enterCurve,
       radius: radius ?? this.radius,
+      listRadius: listRadius ?? this.listRadius,
       compactNavWidth: compactNavWidth ?? this.compactNavWidth,
       expandedNavWidth: expandedNavWidth ?? this.expandedNavWidth,
       navMotion: navMotion ?? this.navMotion,
@@ -84,6 +111,10 @@ class SafaehThemeData {
       cameraCompactHeightFraction:
           cameraCompactHeightFraction ?? this.cameraCompactHeightFraction,
       contentMaxWidth: contentMaxWidth ?? this.contentMaxWidth,
+      contentMaxWidthDesktop:
+          contentMaxWidthDesktop ?? this.contentMaxWidthDesktop,
+      sheetBodyInset: sheetBodyInset ?? this.sheetBodyInset,
+      sheetBodyInsetWide: sheetBodyInsetWide ?? this.sheetBodyInsetWide,
       floatingAppearance: floatingAppearance ?? this.floatingAppearance,
     );
   }
@@ -91,15 +122,24 @@ class SafaehThemeData {
   bool isWide(BuildContext context) =>
       MediaQuery.sizeOf(context).width >= tabletBreakpoint;
 
+  bool isDesktop(BuildContext context) =>
+      MediaQuery.sizeOf(context).width >= desktopBreakpoint;
+
+  /// Tablet band width, or [contentMaxWidthDesktop] on desktop.
+  double contentMaxWidthFor(BuildContext context) =>
+      isDesktop(context) ? contentMaxWidthDesktop : contentMaxWidth;
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is SafaehThemeData &&
             tabletBreakpoint == other.tabletBreakpoint &&
+            desktopBreakpoint == other.desktopBreakpoint &&
             dialogMaxWidth == other.dialogMaxWidth &&
             motion == other.motion &&
             enterCurve == other.enterCurve &&
             radius == other.radius &&
+            listRadius == other.listRadius &&
             compactNavWidth == other.compactNavWidth &&
             expandedNavWidth == other.expandedNavWidth &&
             navMotion == other.navMotion &&
@@ -109,16 +149,21 @@ class SafaehThemeData {
             exitCurve == other.exitCurve &&
             cameraCompactHeightFraction == other.cameraCompactHeightFraction &&
             contentMaxWidth == other.contentMaxWidth &&
+            contentMaxWidthDesktop == other.contentMaxWidthDesktop &&
+            sheetBodyInset == other.sheetBodyInset &&
+            sheetBodyInsetWide == other.sheetBodyInsetWide &&
             floatingAppearance == other.floatingAppearance;
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     tabletBreakpoint,
+    desktopBreakpoint,
     dialogMaxWidth,
     motion,
     enterCurve,
     radius,
+    listRadius,
     compactNavWidth,
     expandedNavWidth,
     navMotion,
@@ -128,8 +173,11 @@ class SafaehThemeData {
     exitCurve,
     cameraCompactHeightFraction,
     contentMaxWidth,
+    contentMaxWidthDesktop,
+    sheetBodyInset,
+    sheetBodyInsetWide,
     floatingAppearance,
-  );
+  ]);
 }
 
 /// Provides [SafaehThemeData] to sheets, page index, and sidenav.

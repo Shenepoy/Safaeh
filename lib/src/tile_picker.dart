@@ -201,7 +201,7 @@ class _SafaehTilePickerBodyState<T> extends State<SafaehTilePickerBody<T>> {
         child: Padding(
           padding: EdgeInsets.only(
             top: widget.showTitleInBody ? (showTitle ? 0 : 16) : 0,
-            bottom: 16,
+            bottom: widget.showTitleInBody ? 16 : 0,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

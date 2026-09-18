@@ -131,6 +131,14 @@ Phone sheets ignore `railWidthOf`.
 (`center`) sheets count that title as handle chrome so the first host
 child still lines up with the phone center.
 
+When `contentPadding` is omitted, the adaptive host applies
+`SafaehThemeData.sheetBodyInset` (phone) or `sheetBodyInsetWide`
+(tablet+ dialog) so tile pickers, option lists, and custom children
+share one inset under the title bar. Pass
+`contentPadding: EdgeInsets.zero` for edge-to-edge bodies (camera, QR).
+See [chrome.md](chrome.md) for list/status widgets and
+[debug-menu.md](debug-menu.md) for the debug shell.
+
 ## Phone sheet placement
 
 `showSafaeh` (and confirm / text / pickers that go through it) accepts
@@ -402,10 +410,13 @@ and constraints already exclude it, leave this at 0.
 - `SafaehContentAlignedAppBar`
 - `SafaehContentAlignedFabLocation` (or `.resolve` when `endFree` is tight)
 
-Hisab `ConstrainedContent` / `ContentAlignedAppBar` / `ContentAlignedFabLocation`
-keep `LayoutBreakpoints` because they center in the **full viewport** while a
-sibling shell rail eats width (RTL-aware). Do not replace that with
-`safaehBandMetrics`.
+Rail-aware hosts should use `safaehRailAwareBandMetrics`,
+`SafaehContentBand(railAware: true)`,
+`SafaehContentAlignedAppBar.forContentArea`, and
+`SafaehContentAlignedFabLocation.of`. Those center the band in the **full
+viewport** while a sibling shell rail eats width (RTL-aware), using
+`desktopBreakpoint` / `contentMaxWidthDesktop`. Plain
+`safaehBandMetrics` stays the simpler tablet band.
 
 ## Keys the host owns
 
@@ -417,7 +428,7 @@ Hisab still passes `shell_nav_*` keys into `SafaehSidenav` (`railKey`,
 
 | Concern | Host |
 |---------|------|
-| Copy | `easy_localization`, `UserText`, every label argument |
+| Copy | `easy_localization`, `SafaehUserText`, every label argument |
 | Routing | `go_router`; floating sheets ignore reserved rail width |
 | Camera | `mobile_scanner`, permissions, `SystemChrome` |
 | State | Riverpod / whatever the app already uses |

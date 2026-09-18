@@ -1,5 +1,24 @@
 import 'package:flutter/material.dart';
 
+import 'content_band.dart';
+import 'theme.dart';
+
+/// Wraps [builder] so [SafaehContentAlignedAppBar] can receive the scaffold
+/// width from a [LayoutBuilder].
+class SafaehContentAlignedPage extends StatelessWidget {
+  const SafaehContentAlignedPage({super.key, required this.builder});
+
+  final Widget Function(BuildContext context, double contentAreaWidth) builder;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) =>
+          builder(context, constraints.maxWidth),
+    );
+  }
+}
+
 /// An app bar that places [title] in a horizontal content band.
 ///
 /// Pass the same [leftOffset] / [bandWidth] used for the body (from
@@ -16,6 +35,31 @@ class SafaehContentAlignedAppBar extends StatelessWidget
     this.actions,
     this.centerTitle = true,
   });
+
+  /// Rail-aware factory: compute [leftOffset] / [bandWidth] from the
+  /// scaffold content area (typically [LayoutBuilder] max width).
+  factory SafaehContentAlignedAppBar.forContentArea(
+    BuildContext context, {
+    Key? key,
+    required double contentAreaWidth,
+    Widget? leading,
+    double? leadingWidth,
+    required Widget title,
+    List<Widget>? actions,
+    bool centerTitle = true,
+  }) {
+    final metrics = safaehRailAwareBandMetrics(context, contentAreaWidth);
+    return SafaehContentAlignedAppBar(
+      key: key,
+      leftOffset: metrics.leftOffset,
+      bandWidth: metrics.bandWidth,
+      leading: leading,
+      leadingWidth: leadingWidth,
+      title: title,
+      actions: actions,
+      centerTitle: centerTitle,
+    );
+  }
 
   /// Physical left inset of the content band.
   final double leftOffset;
@@ -223,4 +267,52 @@ class SafaehContentAlignedFabLocation extends FloatingActionButtonLocation {
   String toString() =>
       'SafaehContentAlignedFabLocation(left: $leftOffset, band: $bandWidth, '
       'dir: $textDirection)';
+
+  /// Resolve a location from the scaffold's content-area width.
+  ///
+  /// Pass the same [contentAreaWidth] used for
+  /// [SafaehContentAlignedAppBar.forContentArea] /
+  /// [SafaehContentBand] (typically `LayoutBuilder` max width).
+  static FloatingActionButtonLocation of(
+    BuildContext context, {
+    required double contentAreaWidth,
+    FloatingActionButtonLocation narrowFallback =
+        FloatingActionButtonLocation.endFloat,
+  }) {
+    if (!SafaehTheme.of(context).isWide(context)) {
+      return narrowFallback;
+    }
+    final metrics = safaehRailAwareBandMetrics(context, contentAreaWidth);
+    return resolve(
+      leftOffset: metrics.leftOffset,
+      bandWidth: metrics.bandWidth,
+      endFree: metrics.endFree,
+      textDirection: Directionality.of(context),
+      narrowFallback: narrowFallback,
+    );
+  }
+}
+
+/// Follows responsive layout offsets without replaying Scaffold's relocation
+/// scale and rotation.
+///
+/// Distinct from [FloatingActionButtonAnimator.noAnimation] so Scaffold can
+/// still run the FAB's genuine initial entrance.
+class SafaehLayoutFollowingFabAnimator extends FloatingActionButtonAnimator {
+  const SafaehLayoutFollowingFabAnimator();
+
+  @override
+  Offset getOffset({
+    required Offset begin,
+    required Offset end,
+    required double progress,
+  }) => end;
+
+  @override
+  Animation<double> getScaleAnimation({required Animation<double> parent}) =>
+      const AlwaysStoppedAnimation<double>(1);
+
+  @override
+  Animation<double> getRotationAnimation({required Animation<double> parent}) =>
+      const AlwaysStoppedAnimation<double>(1);
 }

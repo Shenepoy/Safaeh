@@ -188,7 +188,10 @@ void main() {
 
     await tester.pumpWidget(
       const SafaehTheme(
-        data: SafaehThemeData(contentMaxWidth: 400),
+        data: SafaehThemeData(
+          contentMaxWidth: 400,
+          contentMaxWidthDesktop: 400,
+        ),
         child: MaterialApp(
           home: Scaffold(
             body: SafaehContentBand(
@@ -304,5 +307,69 @@ void main() {
 
     final titleLeft = tester.getTopLeft(find.byKey(titleKey)).dx;
     expect(titleLeft, closeTo(88, 2));
+  });
+
+  testWidgets('safaehRailAwareBandMetrics is a passthrough on phone', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const SafaehTheme(
+        data: SafaehThemeData(),
+        child: MediaQuery(
+          data: MediaQueryData(size: Size(400, 800)),
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: SizedBox.shrink(),
+          ),
+        ),
+      ),
+    );
+    final context = tester.element(find.byType(SizedBox));
+    final metrics = safaehRailAwareBandMetrics(context, 400);
+    expect(metrics.leftOffset, 0);
+    expect(metrics.bandWidth, 400);
+    expect(metrics.endFree, 0);
+  });
+
+  testWidgets('safaehRailAwareBandMetrics centers around an LTR rail', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const SafaehTheme(
+        data: SafaehThemeData(),
+        child: MediaQuery(
+          data: MediaQueryData(size: Size(1200, 800)),
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: SizedBox.shrink(),
+          ),
+        ),
+      ),
+    );
+    final context = tester.element(find.byType(SizedBox));
+    // Desktop: contentMaxWidthDesktop 720, rail 240, content area 960.
+    final metrics = safaehRailAwareBandMetrics(context, 960);
+    expect(metrics.bandWidth, 720);
+    expect(metrics.leftOffset, closeTo(0, 0.1));
+    expect(metrics.endFree, closeTo(240, 0.1));
+  });
+
+  testWidgets('safaehRailAwareBandMetrics is RTL-aware', (tester) async {
+    await tester.pumpWidget(
+      const SafaehTheme(
+        data: SafaehThemeData(),
+        child: MediaQuery(
+          data: MediaQueryData(size: Size(1200, 800)),
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: SizedBox.shrink(),
+          ),
+        ),
+      ),
+    );
+    final context = tester.element(find.byType(SizedBox));
+    final metrics = safaehRailAwareBandMetrics(context, 960);
+    expect(metrics.bandWidth, 720);
+    expect(metrics.endFree, metrics.leftOffset);
   });
 }

@@ -690,9 +690,11 @@ class _AdaptiveSheetHost extends StatelessWidget {
           )
         : const SizedBox(height: 8);
 
-    final contentBody = contentPadding != null
-        ? Padding(padding: contentPadding!, child: child)
-        : child;
+    final tokens = SafaehTheme.of(context);
+    final resolvedContentPadding =
+        contentPadding ??
+        (isWide ? tokens.sheetBodyInsetWide : tokens.sheetBodyInset);
+    final contentBody = Padding(padding: resolvedContentPadding, child: child);
     final sheetContent = !isWide
         ? ScrollConfiguration(
             // The phone sheet consumes a top-edge pull to dismiss itself.

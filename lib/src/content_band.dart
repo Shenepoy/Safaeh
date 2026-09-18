@@ -11,7 +11,7 @@ import 'theme.dart';
 /// exclude it, leave this at 0.
 ///
 /// Does **not** center in the full viewport around a sibling shell rail —
-/// Hisab ConstrainedContent keeps its own LayoutBreakpoints math for that.
+/// use [safaehRailAwareBandMetrics] / [SafaehContentBand.railAware] for that.
 /// Other apps can feed the result into [SafaehEndAsideLayout],
 /// [SafaehContentAlignedAppBar], and [SafaehContentAlignedFabLocation].
 ({double leftOffset, double bandWidth, double endFree}) safaehBandMetrics({
@@ -30,15 +30,56 @@ import 'theme.dart';
   return (leftOffset: leftOffset, bandWidth: bandWidth, endFree: endFree);
 }
 
+/// Centers a content band in the **full viewport** while a sibling shell
+/// rail eats [contentAreaWidth] from one side.
+///
+/// On narrow screens returns `(0, contentAreaWidth, 0)`. [leftOffset] is a
+/// physical left inset; apply it with physical-left layout, not a
+/// direction-flipping Row.
+({double leftOffset, double bandWidth, double endFree})
+safaehRailAwareBandMetrics(BuildContext context, double contentAreaWidth) {
+  final tokens = SafaehTheme.of(context);
+  if (!tokens.isWide(context)) {
+    return (leftOffset: 0.0, bandWidth: contentAreaWidth, endFree: 0.0);
+  }
+  final viewportWidth = MediaQuery.sizeOf(context).width;
+  final maxW = tokens.contentMaxWidthFor(context);
+  final effectiveRailWidth = (viewportWidth - contentAreaWidth) > 5
+      ? (viewportWidth - contentAreaWidth)
+      : 0.0;
+  final isRtl = Directionality.of(context) == TextDirection.rtl;
+  final contentAreaLeftInViewport = isRtl ? 0.0 : effectiveRailWidth;
+  final desiredBandLeftInViewport = (viewportWidth - maxW) / 2;
+  var leftOffset = (desiredBandLeftInViewport - contentAreaLeftInViewport)
+      .clamp(0.0, double.infinity);
+  if (leftOffset > contentAreaWidth) leftOffset = 0.0;
+  final bandWidth = (contentAreaWidth - leftOffset).clamp(0.0, maxW);
+  final rightFree = (contentAreaWidth - leftOffset - bandWidth).clamp(
+    0.0,
+    double.infinity,
+  );
+  final endFree = isRtl ? leftOffset : rightFree;
+  return (leftOffset: leftOffset, bandWidth: bandWidth, endFree: endFree);
+}
+
+/// Whether there is enough end-gutter space for a content aside rail.
+bool safaehCanShowAside(
+  BuildContext context,
+  double contentAreaWidth, {
+  double asideMinGutter = 176,
+}) {
+  if (!SafaehTheme.of(context).isWide(context)) return false;
+  return safaehRailAwareBandMetrics(context, contentAreaWidth).endFree >=
+      asideMinGutter + 8;
+}
+
 /// Centers [child] at [maxWidth] (or [SafaehThemeData.contentMaxWidth]).
 ///
 /// On narrow screens ([SafaehThemeData.isWide] is false) returns [child]
 /// unchanged — [aside] is not built.
 ///
-/// Metrics come from **incoming constraints** only. This does not compensate
-/// for a sibling shell rail. Hosts that center in the full viewport while a
-/// rail eats width (Hisab ConstrainedContent) should keep their own
-/// `leftOffset` / `bandWidth` math and place [SafaehEndAsideLayout] themselves.
+/// Metrics come from **incoming constraints** only unless [railAware] is
+/// true, which centers the band in the full viewport around a sibling rail.
 class SafaehContentBand extends StatelessWidget {
   const SafaehContentBand({
     super.key,
@@ -47,6 +88,7 @@ class SafaehContentBand extends StatelessWidget {
     this.maxWidth,
     this.asideMinGutter = 176,
     this.asideWidth = 200,
+    this.railAware = false,
   });
 
   final Widget child;
@@ -54,6 +96,10 @@ class SafaehContentBand extends StatelessWidget {
   final double? maxWidth;
   final double asideMinGutter;
   final double asideWidth;
+
+  /// When true, center the band in the full viewport around a sibling
+  /// shell rail. When false, metrics come from incoming constraints only.
+  final bool railAware;
 
   @override
   Widget build(BuildContext context) {
@@ -63,10 +109,15 @@ class SafaehContentBand extends StatelessWidget {
     }
     return LayoutBuilder(
       builder: (context, constraints) {
-        final metrics = safaehBandMetrics(
-          contentAreaWidth: constraints.maxWidth,
-          maxWidth: maxWidth ?? tokens.contentMaxWidth,
-        );
+        final ({double leftOffset, double bandWidth, double endFree}) metrics;
+        if (railAware) {
+          metrics = safaehRailAwareBandMetrics(context, constraints.maxWidth);
+        } else {
+          metrics = safaehBandMetrics(
+            contentAreaWidth: constraints.maxWidth,
+            maxWidth: maxWidth ?? tokens.contentMaxWidthFor(context),
+          );
+        }
         return SafaehEndAsideLayout(
           leftOffset: metrics.leftOffset,
           bandWidth: metrics.bandWidth,

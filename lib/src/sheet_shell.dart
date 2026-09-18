@@ -22,8 +22,8 @@ Widget buildSafaehSheetShell({
       physics: const AlwaysScrollableScrollPhysics(),
       child: Padding(
         padding: EdgeInsets.only(
-          top: showTitleInBody ? 0 : padding,
-          bottom: padding,
+          top: 0,
+          bottom: showTitleInBody ? padding : 0,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -31,7 +31,7 @@ Widget buildSafaehSheetShell({
           children: [
             if (showTitleInBody && title != null)
               Padding(
-                padding: EdgeInsets.fromLTRB(padding, padding, padding, 8),
+                padding: EdgeInsets.fromLTRB(padding, 0, padding, 8),
                 child: title,
               ),
             Padding(

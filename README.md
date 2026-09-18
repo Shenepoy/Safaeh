@@ -93,6 +93,19 @@ On pub.dev: [`safaeh`](https://pub.dev/packages/safaeh) · Repo: [Zyzto/Safaeh](
   </a>
 </p>
 
+<p align="center">
+  <a href="https://zyzto.github.io/Safaeh/">
+    <img src="screenshots/empty-state.png" alt="Empty state — live demo" width="160" />
+    <img src="screenshots/inline-banner.png" alt="Inline banner — live demo" width="160" />
+    <img src="screenshots/kpi-card.png" alt="KPI card — live demo" width="160" />
+    <img src="screenshots/async-error.png" alt="Async error — live demo" width="160" />
+  </a>
+</p>
+
+<p align="center">
+  <sub>Empty state · Inline banner · KPI · Async / error — <a href="https://zyzto.github.io/Safaeh/">try them in the live demo</a></sub>
+</p>
+
 Captured with [`widgets_to_image`](https://pub.dev/packages/widgets_to_image) (`cd example && flutter test test/widget_images_test.dart`).
 
 ---
@@ -105,12 +118,14 @@ Captured with [`widgets_to_image`](https://pub.dev/packages/widgets_to_image) (`
 | **Sheets** | `showSafaeh` morphs phone sheet ↔ tablet dialog; `showSafaehPicker` / `SafaehOption` (cards, `enabled`); `showSafaehTilePicker` / `SafaehTileOption` (list rows, search); `showSafaehMultiTilePicker` (multi-select); `showSafaehActionSheet`; `showSafaehInfo`; `showSafaehConfirm`, `showSafaehTimedConfirm`, `showSafaehTextInput`, `SafaehStatusBody`, `SafaehContentPanel`, `buildSafaehSheetShell`, `SafaehOptionList`, `SafaehOptionTile` |
 | **Dropdown** | `SafaehAnchoredDropdownChip` / `SafaehDropdownOption` for anchored menus that match the trigger width, with host label and selection-color hooks |
 | **Dialog** | `showSafaehDialog` centered panel (`railWidthOf` is ignored for alignment) |
-| **Theme** | `SafaehTheme` / `SafaehThemeData` for breakpoint, motion, radius, rail widths, camera compact height, `contentMaxWidth`, `floatingAppearance`; `copyWith` |
+| **Theme** | `SafaehTheme` / `SafaehThemeData` for breakpoint, motion, radius, rail widths, camera compact height, `contentMaxWidth`, desktop band tokens, `sheetBodyInset`, `floatingAppearance`; `copyWith` |
+| **Chrome** | `SafaehEmptyState`, `SafaehInlineBanner`, `SafaehMetaChip`, `SafaehGlyphAvatar`, `SafaehKpiCard`, `SafaehBorderedListChrome`, `SafaehSectionHeader`, `SafaehLtrText`, `SafaehUserText`, `SafaehAsyncBody`, `SafaehErrorBody`, `SafaehAccentSurfaces`, `applySafaehMaterialChrome` |
+| **Debug** | `showSafaehDebugMenu`, `SafaehDebugMenuFab`, host-registered `SafaehDebugSection`s, `SafaehL10nEditOverlay` behind `SafaehL10nBackend` |
 | **Motion** | `safaehResolvedMotion` zeros durations when animations are disabled |
 | **Nav** | `SafaehSidenav` temporary drawer (`asDrawer: true`), clipping rail, or overlay rail (`overlay: true`); `SafaehFloatingNavBar` (same `SafaehSidenavDestination`); keyboard-aware bottom-nav metrics and FAB placement |
 | **Page index** | `SafaehPageIndex`, overlay, `scrollToPageSection`, `safaehActivePageSectionId` (ids + keys only — no `.tr()` on scroll) |
 | **App bar** | `SafaehMorphingAppBar`, `SafaehMorphingAppBarAction`, `SafaehMorphingAppBarBottom` for page-aware title, action, and bottom chrome morphing |
-| **Content** | `safaehBandMetrics`, `SafaehContentBand`, `SafaehEndAsideLayout`, `SafaehContentAlignedAppBar`, `SafaehContentAlignedFabLocation` |
+| **Content** | `safaehBandMetrics`, `safaehRailAwareBandMetrics`, `SafaehContentBand` (`railAware`), `SafaehContentAlignedPage`, `SafaehEndAsideLayout`, `SafaehContentAlignedAppBar.forContentArea`, `SafaehContentAlignedFabLocation.of` |
 | **Camera** | `showSafaehCameraSheet` / `SafaehCameraSheetHost` paper-roll compact ↔ full |
 | **QR chrome** | `SafaehQrScannerOverlay` (optional host `preview`), `SafaehQrTopBar`, `SafaehQrMessageBody`, `SafaehQrFramePainter` |
 | **RTL** | `safaehChevronEnd`, `safaehChevronStart`, `safaehArrowBack` (LTR glyphs; Material `matchTextDirection` mirrors them) |
@@ -123,7 +138,7 @@ Captured with [`widgets_to_image`](https://pub.dev/packages/widgets_to_image) (`
 
 ```yaml
 dependencies:
-  safaeh: ^0.4.0
+  safaeh: ^0.5.0
 ```
 
 Or:
@@ -139,14 +154,15 @@ dependencies:
   safaeh:
     git:
       url: https://github.com/Zyzto/Safaeh.git
-      ref: v0.4.0
+      ref: v0.5.0
 ```
 
 ```dart
 import 'package:safaeh/safaeh.dart';
 ```
 
-Current version: **0.4.0**.
+Current version: **0.5.0**.
+See [doc/chrome.md](doc/chrome.md) and [doc/debug-menu.md](doc/debug-menu.md).
 
 ---
 
@@ -594,9 +610,13 @@ Keep `mobile_scanner` in the app.
 
 **QR:** `SafaehQrScannerOverlay`, `SafaehQrTopBar`, `SafaehQrMessageBody`, `SafaehQrFramePainter`
 
-**Shell:** `SafaehSidenav`, `SafaehSidenavDestination`, `SafaehSidenavProfile`, `SafaehSidenavAvatar`, `SafaehFloatingNavBar`, `SafaehPageIndex`, `SafaehPageIndexOverlay`, `scrollToPageSection`, `safaehActivePageSectionId`, `SafaehMorphingAppBar`, `SafaehMorphingAppBarAction`, `SafaehMorphingAppBarBottom`, `safaehBandMetrics`, `SafaehContentBand`, `SafaehEndAsideLayout`, `SafaehContentAlignedAppBar`, `SafaehContentAlignedFabLocation`
+**Shell:** `SafaehSidenav`, `SafaehSidenavDestination`, `SafaehSidenavProfile`, `SafaehSidenavAvatar`, `SafaehFloatingNavBar`, `SafaehPageIndex`, `SafaehPageIndexOverlay`, `scrollToPageSection`, `safaehActivePageSectionId`, `SafaehMorphingAppBar`, `SafaehMorphingAppBarAction`, `SafaehMorphingAppBarBottom`, `safaehBandMetrics`, `safaehRailAwareBandMetrics`, `SafaehContentBand`, `SafaehContentAlignedPage`, `SafaehEndAsideLayout`, `SafaehContentAlignedAppBar`, `SafaehContentAlignedFabLocation`
 
-**Tokens:** `SafaehTheme`, `SafaehThemeData`, `SafaehThemeData.copyWith`, `safaehResolvedMotion`, `kSafaehCameraCompactHeightFraction`
+**Chrome:** `SafaehEmptyState`, `SafaehInlineBanner`, `SafaehBannerTone`, `SafaehMetaChip`, `SafaehGlyphAvatar`, `SafaehKpiCard`, `SafaehBorderedListChrome`, `SafaehSectionHeader`, `SafaehLtrText`, `SafaehUserText`, `SafaehAsyncBody`, `SafaehLoadingBody`, `SafaehErrorBody`, `SafaehAccentStyle`, `SafaehAccentSurfaces`, `applySafaehMaterialChrome`, `scaleSafaehTextTheme`, `SafaehSemanticStatus`
+
+**Debug:** `showSafaehDebugMenu`, `SafaehDebugMenuFab`, `SafaehDebugMenuBody`, `SafaehDebugSection`, `SafaehL10nEditOverlay`, `SafaehL10nBackend`, `SafaehL10nOverrideStore`
+
+**Tokens:** `SafaehTheme`, `SafaehThemeData`, `SafaehThemeData.copyWith`, `safaehResolvedMotion`, `kSafaehCameraCompactHeightFraction`, `sheetBodyInset`, `sheetBodyInsetWide`
 
 **RTL:** `safaehChevronEnd`, `safaehChevronStart`, `safaehArrowBack`
 

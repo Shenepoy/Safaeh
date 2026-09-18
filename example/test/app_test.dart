@@ -573,6 +573,35 @@ void main() {
     );
   });
 
+  testWidgets('chrome catalog pages open without throwing', (tester) async {
+    await pumpExampleApp(tester);
+
+    const ids = [
+      'empty_state',
+      'inline_banner',
+      'meta_chip',
+      'glyph_avatar',
+      'kpi_card',
+      'bordered_list',
+      'section_header',
+      'async_error',
+      'user_text',
+      'accent_surfaces',
+      'material_chrome',
+      'debug_menu',
+      'l10n_editor',
+      'sheet_padding',
+    ];
+    for (final id in ids) {
+      await _openTitle(tester, id);
+      expect(tester.takeException(), isNull, reason: id);
+      expect(find.byIcon(Icons.arrow_back), findsOneWidget, reason: id);
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+      expect(find.byType(CatalogGallery), findsOneWidget, reason: id);
+    }
+  });
+
   testWidgets('section titles open the standalone demo', (tester) async {
     await pumpExampleApp(tester);
 

@@ -99,6 +99,19 @@
   </a>
 </p>
 
+<p align="center">
+  <a href="https://zyzto.github.io/Safaeh/">
+    <img src="screenshots/empty-state.png" alt="حالة فارغة — المثال الحي" width="160" />
+    <img src="screenshots/inline-banner.png" alt="شريط مضمّن — المثال الحي" width="160" />
+    <img src="screenshots/kpi-card.png" alt="بطاقة مؤشر — المثال الحي" width="160" />
+    <img src="screenshots/async-error.png" alt="تحميل وخطأ — المثال الحي" width="160" />
+  </a>
+</p>
+
+<p align="center">
+  <sub>حالة فارغة · شريط مضمّن · مؤشر · تحميل وخطأ — <a href="https://zyzto.github.io/Safaeh/">جرّبها في المثال الحي</a></sub>
+</p>
+
 <div dir="rtl" lang="ar">
 
 مُلتقطة بـ <span dir="ltr"><a href="https://pub.dev/packages/widgets_to_image"><code>widgets_to_image</code></a></span> عبر <span dir="ltr"><code>cd example && flutter test test/widget_images_test.dart</code></span>.
@@ -115,12 +128,14 @@
 |--------|-----------|
 | **Sheets** | <span dir="ltr"><code>showSafaeh</code></span> يحوّل sheet الهاتف ↔ dialog الجهاز اللوحي؛ <span dir="ltr"><code>showSafaehPicker</code></span> / <span dir="ltr"><code>SafaehOption</code></span> (بطاقات، <span dir="ltr"><code>enabled</code></span>)؛ <span dir="ltr"><code>showSafaehTilePicker</code></span> / <span dir="ltr"><code>SafaehTileOption</code></span> (صفوف قائمة، بحث)؛ <span dir="ltr"><code>showSafaehMultiTilePicker</code></span> (اختيار متعدد)؛ <span dir="ltr"><code>showSafaehConfirm</code></span>، <span dir="ltr"><code>showSafaehTextInput</code></span>، <span dir="ltr"><code>SafaehStatusBody</code></span>، <span dir="ltr"><code>buildSafaehSheetShell</code></span>، <span dir="ltr"><code>SafaehOptionList</code></span>، <span dir="ltr"><code>SafaehOptionTile</code></span> |
 | **Dialog** | <span dir="ltr"><code>showSafaehDialog</code></span> لوحة متمركزة في كامل الشاشة |
-| **Theme** | <span dir="ltr"><code>SafaehTheme</code></span> / <span dir="ltr"><code>SafaehThemeData</code></span> لنقطة العرض والحركة ونصف القطر وعرض الـ rail وارتفاع الكاميرا المضغوط و<span dir="ltr"><code>contentMaxWidth</code></span>؛ <span dir="ltr"><code>copyWith</code></span> |
+| **Theme** | <span dir="ltr"><code>SafaehTheme</code></span> / <span dir="ltr"><code>SafaehThemeData</code></span> لنقطة العرض والحركة ونصف القطر وعرض الـ rail وارتفاع الكاميرا المضغوط و<span dir="ltr"><code>contentMaxWidth</code></span> و<span dir="ltr"><code>sheetBodyInset</code></span>؛ <span dir="ltr"><code>copyWith</code></span> |
+| **Chrome** | <span dir="ltr"><code>SafaehEmptyState</code></span>، <span dir="ltr"><code>SafaehInlineBanner</code></span>، <span dir="ltr"><code>SafaehMetaChip</code></span>، <span dir="ltr"><code>SafaehGlyphAvatar</code></span>، <span dir="ltr"><code>SafaehKpiCard</code></span>، <span dir="ltr"><code>SafaehBorderedListChrome</code></span>، <span dir="ltr"><code>SafaehSectionHeader</code></span>، <span dir="ltr"><code>SafaehLtrText</code></span>، <span dir="ltr"><code>SafaehUserText</code></span>، <span dir="ltr"><code>SafaehAsyncBody</code></span>، <span dir="ltr"><code>SafaehErrorBody</code></span>، <span dir="ltr"><code>SafaehAccentSurfaces</code></span>، <span dir="ltr"><code>applySafaehMaterialChrome</code></span> |
+| **Debug** | <span dir="ltr"><code>showSafaehDebugMenu</code></span>، <span dir="ltr"><code>SafaehDebugMenuFab</code></span>، أقسام <span dir="ltr"><code>SafaehDebugSection</code></span> يسجّلها المضيف، <span dir="ltr"><code>SafaehL10nEditOverlay</code></span> خلف <span dir="ltr"><code>SafaehL10nBackend</code></span> |
 | **Motion** | <span dir="ltr"><code>safaehResolvedMotion</code></span> يصفر المدد عندما تُعطَّل الحركات |
 | **Nav** | <span dir="ltr"><code>SafaehSidenav</code></span> درج مؤقت (<span dir="ltr"><code>asDrawer: true</code></span>) أو rail قصّ؛ <span dir="ltr"><code>SafaehFloatingNavBar</code></span> (نفس <span dir="ltr"><code>SafaehSidenavDestination</code></span>) |
 | **Page index** | <span dir="ltr"><code>SafaehPageIndex</code></span> وoverlay و<span dir="ltr"><code>scrollToPageSection</code></span> و<span dir="ltr"><code>safaehActivePageSectionId</code></span> (معرفات + مفاتيح فقط — بلا <span dir="ltr"><code>.tr()</code></span> أثناء التمرير) |
 | **App bar** | <span dir="ltr"><code>SafaehMorphingAppBar</code></span> و<span dir="ltr"><code>SafaehMorphingAppBarAction</code></span> و<span dir="ltr"><code>SafaehMorphingAppBarBottom</code></span> لتحويل العنوان والأفعال وchrome السفلي حسب الصفحة |
-| **Content** | <span dir="ltr"><code>safaehBandMetrics</code></span>، <span dir="ltr"><code>SafaehContentBand</code></span>، <span dir="ltr"><code>SafaehEndAsideLayout</code></span>، <span dir="ltr"><code>SafaehContentAlignedAppBar</code></span>، <span dir="ltr"><code>SafaehContentAlignedFabLocation</code></span> |
+| **Content** | <span dir="ltr"><code>safaehBandMetrics</code></span>، <span dir="ltr"><code>safaehRailAwareBandMetrics</code></span>، <span dir="ltr"><code>SafaehContentBand</code></span>، <span dir="ltr"><code>SafaehContentAlignedPage</code></span>، <span dir="ltr"><code>SafaehEndAsideLayout</code></span>، <span dir="ltr"><code>SafaehContentAlignedAppBar.forContentArea</code></span> |
 | **Camera** | <span dir="ltr"><code>showSafaehCameraSheet</code></span> / <span dir="ltr"><code>SafaehCameraSheetHost</code></span> لفة ورق مضغوط ↔ كامل |
 | **QR chrome** | <span dir="ltr"><code>SafaehQrScannerOverlay</code></span> (معاينة مضيف اختيارية)، <span dir="ltr"><code>SafaehQrTopBar</code></span>، <span dir="ltr"><code>SafaehQrMessageBody</code></span>، <span dir="ltr"><code>SafaehQrFramePainter</code></span> |
 | **RTL** | <span dir="ltr"><code>safaehChevronEnd</code></span>، <span dir="ltr"><code>safaehChevronStart</code></span>، <span dir="ltr"><code>safaehArrowBack</code></span> (رموز LTR؛ Material يعكسها عبر <span dir="ltr"><code>matchTextDirection</code></span>) |
@@ -139,7 +154,7 @@
 
 ```yaml
 dependencies:
-  safaeh: ^0.4.0
+  safaeh: ^0.5.0
 ```
 
 <div dir="rtl" lang="ar">
@@ -163,7 +178,7 @@ dependencies:
   safaeh:
     git:
       url: https://github.com/Zyzto/Safaeh.git
-      ref: v0.4.0
+      ref: v0.5.0
 ```
 
 ```dart
@@ -172,7 +187,8 @@ import 'package:safaeh/safaeh.dart';
 
 <div dir="rtl" lang="ar">
 
-الإصدار الحالي: **0.4.0**.
+الإصدار الحالي: **0.5.0**.
+انظر <span dir="ltr"><a href="doc/chrome.md">doc/chrome.md</a></span> و<span dir="ltr"><a href="doc/debug-menu.md">doc/debug-menu.md</a></span>.
 
 </div>
 

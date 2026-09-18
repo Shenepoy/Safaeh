@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:safaeh/safaeh.dart';
 
@@ -158,6 +160,391 @@ class StatusBodyDemo extends StatelessWidget {
           icon: Icons.inbox_outlined,
           message: Text(t('nothing_here')),
           action: TextButton(onPressed: () {}, child: Text(t('try_again'))),
+        ),
+      ],
+    );
+  }
+}
+
+class EmptyStateDemo extends StatelessWidget {
+  const EmptyStateDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafaehEmptyState(
+      icon: Icons.inbox_outlined,
+      title: t('nothing_here'),
+      subtitle: t('empty_state_sub'),
+      actionLabel: t('try_again'),
+      onAction: () {},
+    );
+  }
+}
+
+class InlineBannerDemo extends StatelessWidget {
+  const InlineBannerDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SafaehInlineBanner(
+          message: t('feedback_info'),
+          tone: SafaehBannerTone.info,
+        ),
+        const SizedBox(height: 8),
+        SafaehInlineBanner(
+          message: t('feedback_error'),
+          tone: SafaehBannerTone.error,
+        ),
+      ],
+    );
+  }
+}
+
+class MetaChipDemo extends StatelessWidget {
+  const MetaChipDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      children: [
+        SafaehMetaChip(icon: Icons.payments_outlined, label: t('cash')),
+        SafaehMetaChip(icon: Icons.credit_card_outlined, label: t('card')),
+      ],
+    );
+  }
+}
+
+class GlyphAvatarDemo extends StatelessWidget {
+  const GlyphAvatarDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        SafaehGlyphAvatar(letter: t('profile_name')),
+        const SizedBox(width: 12),
+        const SafaehGlyphAvatar(icon: Icons.groups_outlined),
+      ],
+    );
+  }
+}
+
+class KpiCardDemo extends StatelessWidget {
+  const KpiCardDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: SafaehKpiCard(label: t('cash'), value: '42')),
+        const SizedBox(width: 8),
+        Expanded(
+          child: SafaehKpiCard(label: t('card'), value: '12', flat: true),
+        ),
+      ],
+    );
+  }
+}
+
+class BorderedListDemo extends StatelessWidget {
+  const BorderedListDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafaehBorderedListChrome(
+      onTap: () {},
+      child: ListTile(
+        leading: const Icon(Icons.account_balance_wallet_outlined),
+        title: Text(t('cash')),
+        subtitle: Text(t('minimal_sub')),
+      ),
+    );
+  }
+}
+
+class SectionHeaderDemo extends StatelessWidget {
+  const SectionHeaderDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafaehSectionHeader(label: t('section_header'));
+  }
+}
+
+class AsyncErrorDemo extends StatelessWidget {
+  const AsyncErrorDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafaehErrorBody(
+      title: t('chrome_failed'),
+      message: t('async_error_sub'),
+      retryLabel: t('try_again'),
+      onRetry: () {},
+    );
+  }
+}
+
+class UserTextDemo extends StatelessWidget {
+  const UserTextDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  Widget build(BuildContext context) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.topLeft,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(t('user_text_sub')),
+          const SizedBox(height: 8),
+          const SafaehUserText('Hello from LTR'),
+          const SafaehUserText('مرحبا من RTL'),
+          SafaehLtrText('12.50 ${t('cash')}'),
+        ],
+      ),
+    );
+  }
+}
+
+class AccentSurfacesDemo extends StatelessWidget {
+  const AccentSurfacesDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Column(
+      children: [
+        Container(
+          height: 72,
+          decoration: SafaehAccentSurfaces.panel(
+            cs,
+            subtle: context.safaehSubtleAccents,
+          ),
+          alignment: Alignment.center,
+          child: Text(t('accent_surfaces')),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 48,
+          decoration: SafaehAccentSurfaces.flatPanel(cs, context: context),
+          alignment: Alignment.center,
+          child: Text(t('material_chrome')),
+        ),
+      ],
+    );
+  }
+}
+
+class MaterialChromeDemo extends StatelessWidget {
+  const MaterialChromeDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final themed = applySafaehMaterialChrome(
+      theme,
+      colorScheme: theme.colorScheme,
+      textTheme: theme.textTheme,
+      dividerColor: theme.dividerColor,
+      outlineColor: theme.colorScheme.outline,
+      errorColor: theme.colorScheme.error,
+      primarySeed: theme.colorScheme.primary,
+    );
+    return Theme(
+      data: themed,
+      child: Card(
+        child: ListTile(
+          title: Text(t('material_chrome')),
+          subtitle: Text(t('material_chrome_sub')),
+          trailing: Chip(label: Text(t('chrome_ready'))),
+        ),
+      ),
+    );
+  }
+}
+
+class DebugMenuDemo extends StatelessWidget {
+  const DebugMenuDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.bottomRight,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(t('debug_menu_sub')),
+        ),
+        SafaehDebugMenuFab(
+          onOpen: () {
+            unawaited(
+              showSafaehDebugMenu<void>(
+                context,
+                title: t('debug_menu'),
+                identity: SafaehDebugIdentityCard(
+                  title: t('app_title'),
+                  package: 'safaeh',
+                  version: '0.5.0',
+                ),
+                statusMessage: t('chrome_ready'),
+                sections: [
+                  SafaehDebugSection(
+                    title: t('empty_state'),
+                    icon: Icons.inbox_outlined,
+                    children: [
+                      SafaehDebugActionTile(
+                        icon: Icons.refresh,
+                        label: t('try_again'),
+                        onTap: () {},
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class L10nEditorDemo extends StatefulWidget {
+  const L10nEditorDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  State<L10nEditorDemo> createState() => _L10nEditorDemoState();
+}
+
+class _L10nEditorDemoState extends State<L10nEditorDemo> {
+  late final SafaehL10nOverrideStore _store;
+  late final _DemoL10nBackend _backend;
+  final _navKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _store = SafaehL10nOverrideStore(
+      locales: const ['en', 'ar'],
+      persistence: SafaehMemoryL10nPersistence(),
+    );
+    _store.setBundled('en', {'hello': 'Hello', 'empty': 'Nothing here'});
+    _store.setBundled('ar', {'hello': 'مرحبا', 'empty': 'لا شيء هنا'});
+    _backend = _DemoL10nBackend(_store);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 280,
+      child: Navigator(
+        key: _navKey,
+        onGenerateRoute: (settings) {
+          return MaterialPageRoute<void>(
+            builder: (_) => SafaehL10nEditOverlay(
+              backend: _backend,
+              store: _store,
+              navigatorKey: _navKey,
+              child: Scaffold(
+                body: Center(child: Text(widget.t('l10n_editor_sub'))),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _DemoL10nBackend implements SafaehL10nBackend {
+  _DemoL10nBackend(this.store);
+
+  final SafaehL10nOverrideStore store;
+
+  @override
+  List<String> get locales => store.locales;
+
+  @override
+  String get currentLocale => 'en';
+
+  @override
+  Map<String, String> bundled(String locale) =>
+      store.flattenStrings(store.bundledSnapshot(locale));
+
+  @override
+  Map<String, String> overrides(String locale) => store.overridesFor(locale);
+
+  @override
+  Future<void> setOverride(String locale, String key, String value) async {
+    store.set(locale, key, value);
+    await store.save();
+  }
+
+  @override
+  Future<void> clearOverrides() => store.clearAll();
+
+  @override
+  Future<void> applyLive() async {}
+
+  @override
+  Listenable get revision => store.revision;
+}
+
+class SheetPaddingDemo extends StatelessWidget {
+  const SheetPaddingDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafaehTilePickerBody<String>(
+      title: t('settle'),
+      header: Text(t('header_hint')),
+      selected: 'cash',
+      tabletBreakpoint: 10000,
+      options: [
+        SafaehTileOption(
+          value: 'cash',
+          label: t('cash'),
+          subtitle: t('minimal_sub'),
+          leading: const Icon(Icons.payments_outlined),
+        ),
+        SafaehTileOption(
+          value: 'card',
+          label: t('card'),
+          leading: const Icon(Icons.credit_card_outlined),
         ),
       ],
     );
@@ -1767,6 +2154,34 @@ Widget _catalogPageBody(String id, String Function(String key) t) {
       return StatusBodyDemo(t: t);
     case 'feedback':
       return FeedbackDemo(t: t);
+    case 'empty_state':
+      return EmptyStateDemo(t: t);
+    case 'inline_banner':
+      return InlineBannerDemo(t: t);
+    case 'meta_chip':
+      return MetaChipDemo(t: t);
+    case 'glyph_avatar':
+      return GlyphAvatarDemo(t: t);
+    case 'kpi_card':
+      return KpiCardDemo(t: t);
+    case 'bordered_list':
+      return BorderedListDemo(t: t);
+    case 'section_header':
+      return SectionHeaderDemo(t: t);
+    case 'async_error':
+      return AsyncErrorDemo(t: t);
+    case 'user_text':
+      return UserTextDemo(t: t);
+    case 'accent_surfaces':
+      return AccentSurfacesDemo(t: t);
+    case 'material_chrome':
+      return MaterialChromeDemo(t: t);
+    case 'debug_menu':
+      return DebugMenuDemo(t: t);
+    case 'l10n_editor':
+      return L10nEditorDemo(t: t);
+    case 'sheet_padding':
+      return SheetPaddingDemo(t: t);
     case 'onboarding_designs':
       return const OnboardingDesignDemo();
     case 'sidenav':
