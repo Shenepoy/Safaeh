@@ -7,8 +7,8 @@ import 'theme.dart';
 
 /// Confirmation body used by [showSafaehConfirm].
 ///
-/// Phone: cancel sits in the action row. Tablet+: the sheet close control is
-/// the dismiss path — do not duplicate cancel here.
+/// Footer is the confirm action only. Barrier tap, drag, and tablet close
+/// dismiss without a duplicate Cancel.
 class SafaehConfirmSheet extends StatelessWidget {
   const SafaehConfirmSheet({
     super.key,
@@ -46,8 +46,6 @@ class SafaehConfirmSheet extends StatelessWidget {
     final contentStyle = theme.textTheme.bodyMedium?.copyWith(
       color: cs.onSurfaceVariant,
     );
-    final resolvedCancel =
-        cancelLabel ?? MaterialLocalizations.of(context).cancelButtonLabel;
     final radius = BorderRadius.circular(tokens.radius);
 
     return buildSafaehSheetShell(
@@ -61,12 +59,6 @@ class SafaehConfirmSheet extends StatelessWidget {
             Text(content, style: contentStyle),
       ),
       actions: [
-        if (!isWide)
-          TextButton(
-            key: const ValueKey('safaeh_cancel'),
-            onPressed: () => safaehPop(context, false),
-            child: Text(resolvedCancel),
-          ),
         FilledButton(
           key: const ValueKey('safaeh_confirm'),
           style: FilledButton.styleFrom(

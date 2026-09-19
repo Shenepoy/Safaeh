@@ -154,7 +154,7 @@
 
 ```yaml
 dependencies:
-  safaeh: ^0.5.0
+  safaeh: ^0.6.0
 ```
 
 <div dir="rtl" lang="ar">
@@ -178,7 +178,7 @@ dependencies:
   safaeh:
     git:
       url: https://github.com/Zyzto/Safaeh.git
-      ref: v0.5.0
+      ref: v0.6.0
 ```
 
 ```dart
@@ -187,7 +187,7 @@ import 'package:safaeh/safaeh.dart';
 
 <div dir="rtl" lang="ar">
 
-الإصدار الحالي: **0.5.0**.
+الإصدار الحالي: **0.6.0**.
 انظر <span dir="ltr"><a href="doc/chrome.md">doc/chrome.md</a></span> و<span dir="ltr"><a href="doc/debug-menu.md">doc/debug-menu.md</a></span>.
 
 </div>
@@ -289,7 +289,7 @@ final mode = await showSafaehTilePicker<String>(
 
 ### 5. تأكيد وإدخال نص
 
-التطبيق المضيف يمرّر كل التسميات. الهاتف يعرض إلغاء في صف الإجراءات؛ الجهاز اللوحي يستخدم زر إغلاق الـ sheet. <span dir="ltr"><code>showSafaehConfirm</code></span> يعيد <span dir="ltr"><code>true</code></span> عند التأكيد، و<span dir="ltr"><code>false</code></span> عند إلغاء الهاتف، و<span dir="ltr"><code>null</code></span> عند الإغلاق (زر الإغلاق على الجهاز اللوحي أو الحاجز). اعتبر مؤكداً فقط عندما يكون <span dir="ltr"><code>ok == true</code></span>.
+التطبيق المضيف يمرّر تسميات الإجراءات. زر التذييل يؤكد فقط؛ الإغلاق يتم بالسحب أو الحاجز أو زر الإغلاق على الجهاز اللوحي. <span dir="ltr"><code>showSafaehConfirm</code></span> يعيد <span dir="ltr"><code>true</code></span> عند التأكيد، و<span dir="ltr"><code>null</code></span> عند الإغلاق. اعتبر مؤكداً فقط عندما يكون <span dir="ltr"><code>ok == true</code></span>.
 
 ```dart
 final ok = await showSafaehConfirm(
@@ -297,7 +297,6 @@ final ok = await showSafaehConfirm(
   title: 'Delete item',
   content: 'This cannot be undone.',
   confirmLabel: 'Delete',
-  cancelLabel: 'Cancel',
   isDestructive: true,
   titleBuilder: (context, style) => Text('Delete item', style: style),
 );
@@ -306,7 +305,6 @@ final name = await showSafaehTextInput(
   context: context,
   title: 'Tag name',
   doneLabel: 'Done',
-  cancelLabel: 'Cancel',
   titleBuilder: (context, style) => Text('Tag name', style: style),
 );
 ```

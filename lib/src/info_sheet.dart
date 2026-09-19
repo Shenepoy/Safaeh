@@ -7,15 +7,15 @@ import 'theme.dart';
 
 /// Informational modal with a content panel and a primary action.
 ///
-/// Phone: optional secondary (cancel) in the footer. Tablet+: close chrome
-/// is the dismiss path.
+/// Footer is the primary action only when the host supplies one. Barrier
+/// tap, drag, and tablet close dismiss — no Cancel / Done-to-close.
 Future<bool?> showSafaehInfo({
   required BuildContext context,
   required String title,
   required String content,
   required String primaryLabel,
   String? secondaryLabel,
-  bool showSecondaryAction = true,
+  bool showSecondaryAction = false,
   SafaehTitleBuilder? titleBuilder,
   SafaehTitleBuilder? contentBuilder,
   double Function(BuildContext context)? railWidthOf,
@@ -71,9 +71,9 @@ class SafaehInfoSheet extends StatelessWidget {
     super.key,
     required this.title,
     required this.content,
-    required this.primaryLabel,
+    this.primaryLabel,
     this.secondaryLabel,
-    this.showSecondaryAction = true,
+    this.showSecondaryAction = false,
     this.titleBuilder,
     this.contentBuilder,
     this.tabletBreakpoint,
@@ -81,7 +81,7 @@ class SafaehInfoSheet extends StatelessWidget {
 
   final String title;
   final String content;
-  final String primaryLabel;
+  final String? primaryLabel;
   final String? secondaryLabel;
   final bool showSecondaryAction;
   final SafaehTitleBuilder? titleBuilder;
@@ -90,9 +90,6 @@ class SafaehInfoSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = SafaehTheme.of(context);
-    final breakpoint = tabletBreakpoint ?? tokens.tabletBreakpoint;
-    final isWide = MediaQuery.sizeOf(context).width >= breakpoint;
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final titleStyle = theme.textTheme.titleMedium?.copyWith(
@@ -101,8 +98,7 @@ class SafaehInfoSheet extends StatelessWidget {
     final contentStyle = theme.textTheme.bodyMedium?.copyWith(
       color: cs.onSurfaceVariant,
     );
-    final secondary =
-        secondaryLabel ?? MaterialLocalizations.of(context).cancelButtonLabel;
+    final hasPrimary = primaryLabel != null && primaryLabel!.isNotEmpty;
 
     return buildSafaehSheetShell(
       showTitleInBody: false,
@@ -115,17 +111,12 @@ class SafaehInfoSheet extends StatelessWidget {
             Text(content, style: contentStyle),
       ),
       actions: [
-        if (!isWide && showSecondaryAction)
-          TextButton(
-            key: const ValueKey('safaeh_cancel'),
-            onPressed: () => safaehPop(context, false),
-            child: Text(secondary),
+        if (hasPrimary)
+          FilledButton(
+            key: const ValueKey('safaeh_info_primary'),
+            onPressed: () => safaehPop(context, true),
+            child: Text(primaryLabel!),
           ),
-        FilledButton(
-          key: const ValueKey('safaeh_info_primary'),
-          onPressed: () => safaehPop(context, true),
-          child: Text(primaryLabel),
-        ),
       ],
     );
   }

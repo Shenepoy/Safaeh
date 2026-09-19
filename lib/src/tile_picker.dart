@@ -251,12 +251,6 @@ class _SafaehTilePickerBodyState<T> extends State<SafaehTilePickerBody<T>> {
                     alignment: MainAxisAlignment.end,
                     spacing: 8,
                     children: [
-                      if (widget.cancelLabel != null && showInBodyTitle)
-                        TextButton(
-                          key: const ValueKey('safaeh_cancel'),
-                          onPressed: () => _popRoot(null),
-                          child: Text(widget.cancelLabel!),
-                        ),
                       FilledButton(
                         key: const ValueKey('safaeh_multi_done'),
                         onPressed: () => _popRoot(List<T>.from(_selected)),

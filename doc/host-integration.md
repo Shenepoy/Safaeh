@@ -154,19 +154,21 @@ block after the handle aligns with the vertical center of the phone
 way. Camera / QR paper-roll sheets stay bottom-docked.
 
 Phone sheets keep their painted surface flush with the viewport's bottom
-safe-area inset while keeping body content above the home indicator. Standard
-scrollable sheet bodies also hand a downward pull to the sheet when their
-scroll position reaches the start edge: a pull shorter than
-`SheetHandleDrag.dismissDistance` settles back, and a deliberate pull
+safe-area inset while keeping body content above the home indicator. The
+whole phone sheet surface (handle, title, edges) can be dragged down to
+dismiss. Scrollable bodies still hand a downward pull to the sheet when
+their scroll position reaches the start edge: a pull shorter than the
+size-aware sheet dismiss distance settles back, and a deliberate pull
 dismisses when `barrierDismissible` is enabled. This works for tile pickers,
 confirmation sheets, text-input sheets, and host bodies that use a primary
-scrollable.
+scrollable. Descendants can toggle the gesture while the route is open
+with `SafaehSheet.of(context).enableDrag`.
 
 ## Confirm result
 
-`showSafaehConfirm` returns `true` if confirmed, `false` if the phone
-cancel button is pressed, and `null` if the route is dismissed (tablet
-close, barrier tap, or system back). Treat only `ok == true` as confirmed.
+`showSafaehConfirm` returns `true` if confirmed and `null` if the route
+is dismissed (tablet close, barrier tap, drag, or system back). Treat
+only `ok == true` as confirmed. There is no Cancel footer button.
 
 Pass `dismissReturnsFalse: true` so a barrier tap, tablet close, or
 system back also yields `false` (hosts that only check `ok == true` can
@@ -344,7 +346,7 @@ Safaeh has no bundled copy. A few chrome strings come from
 | Camera handle | expand / collapse / dismiss labels, else Material dismiss |
 | QR top-bar close | `closeButtonTooltip` |
 | QR message close | `closeButtonTooltip` (override with `closeTooltip`) |
-| Confirm / text-input cancel | host `cancelLabel` — there is no package default |
+| Confirm / text-input dismiss | barrier, drag, tablet close — no Cancel footer |
 
 Wire `MaterialApp.localizationsDelegates` (and `supportedLocales`) for
 every locale the host ships. Missing delegates leave those controls in

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -161,6 +162,11 @@ double safaehPhoneCenterSheetHeight({
 /// Shows [child] as a centered dialog on tablet+ and a bottom sheet on phone.
 ///
 /// The same route morphs when the viewport crosses the tablet breakpoint.
+///
+/// On phone, drag-to-dismiss starts from the whole sheet surface — handle,
+/// title, edges, and a downward pull at the top of a primary scrollable.
+/// [enableDrag] is the initial value; descendants can change it while the
+/// route is open through [SafaehSheet.enableDrag].
 Future<T?> showSafaeh<T>({
   required BuildContext context,
   required Widget child,
@@ -659,30 +665,28 @@ class _AdaptiveSheetHost extends StatelessWidget {
             ),
           )
         : showDragHandle
-        ? _PhoneDragHandle(
-            child: Semantics(
-              container: true,
-              button: barrierDismissible,
-              label: barrierDismissible
-                  ? (dismissLabel ??
-                        MaterialLocalizations.of(
-                          context,
-                        ).modalBarrierDismissLabel)
-                  : null,
-              onTap: barrierDismissible
-                  ? () => safaehPop(context, dismissValue)
-                  : null,
-              child: Padding(
-                key: const ValueKey('safaeh_drag_handle'),
-                padding: const EdgeInsets.only(top: 12, bottom: 8),
-                child: Center(
-                  child: Container(
-                    width: 32,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: cs.outline,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+        ? Semantics(
+            container: true,
+            button: barrierDismissible,
+            label: barrierDismissible
+                ? (dismissLabel ??
+                      MaterialLocalizations.of(
+                        context,
+                      ).modalBarrierDismissLabel)
+                : null,
+            onTap: barrierDismissible
+                ? () => safaehPop(context, dismissValue)
+                : null,
+            child: Padding(
+              key: const ValueKey('safaeh_drag_handle'),
+              padding: const EdgeInsets.only(top: 12, bottom: 8),
+              child: Center(
+                child: Container(
+                  width: 32,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: cs.outline,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
@@ -814,13 +818,13 @@ class _AdaptiveSheetHost extends StatelessWidget {
             child: panel,
           )
         : panel;
-    if (!isWide && enableDrag) {
+    if (!isWide) {
       sheet = _PhoneSheetDragDismiss(
         motion: motion,
         enterCurve: enterCurve,
         dismissValue: dismissValue,
         barrierDismissible: barrierDismissible,
-        child: showDragHandle ? sheet : _PhoneDragHandle(child: sheet),
+        child: sheet,
       );
     }
     if (expandPhone) {
@@ -886,15 +890,110 @@ class _AdaptiveSheetHost extends StatelessWidget {
         ),
       ),
     );
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        if (barrierDismissible) safaehPop(context, dismissValue);
-      },
-      child: host,
+    return _SafaehSheetBinding(
+      initialEnableDrag: enableDrag,
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          if (barrierDismissible) safaehPop(context, dismissValue);
+        },
+        child: host,
+      ),
     );
   }
+}
+
+/// Live handle for the enclosing [showSafaeh] route.
+///
+/// On phone, [enableDrag] gates drag-to-dismiss from the whole sheet
+/// surface. It starts as [showSafaeh]'s `enableDrag` argument and can
+/// change while the route is open. Tablet dialogs ignore the gesture.
+class SafaehSheet {
+  SafaehSheet._(this._host);
+
+  final _SafaehSheetBindingState _host;
+
+  bool get enableDrag => _host._enableDrag;
+
+  set enableDrag(bool value) => _host._setEnableDrag(value);
+
+  static SafaehSheet of(BuildContext context) {
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<_SafaehSheetScope>();
+    if (scope == null) {
+      throw StateError('SafaehSheet.of() called with no showSafaeh ancestor.');
+    }
+    return scope.sheet;
+  }
+
+  static SafaehSheet? maybeOf(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<_SafaehSheetScope>()
+        ?.sheet;
+  }
+}
+
+class _SafaehSheetBinding extends StatefulWidget {
+  const _SafaehSheetBinding({
+    required this.initialEnableDrag,
+    required this.child,
+  });
+
+  final bool initialEnableDrag;
+  final Widget child;
+
+  @override
+  State<_SafaehSheetBinding> createState() => _SafaehSheetBindingState();
+}
+
+class _SafaehSheetBindingState extends State<_SafaehSheetBinding> {
+  late final SafaehSheet sheet;
+  late bool _enableDrag;
+
+  @override
+  void initState() {
+    super.initState();
+    _enableDrag = widget.initialEnableDrag;
+    sheet = SafaehSheet._(this);
+  }
+
+  @override
+  void didUpdateWidget(covariant _SafaehSheetBinding oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialEnableDrag != widget.initialEnableDrag) {
+      _enableDrag = widget.initialEnableDrag;
+    }
+  }
+
+  void _setEnableDrag(bool value) {
+    if (_enableDrag == value) return;
+    setState(() => _enableDrag = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SafaehSheetScope(
+      sheet: sheet,
+      enableDrag: _enableDrag,
+      child: widget.child,
+    );
+  }
+}
+
+class _SafaehSheetScope extends InheritedWidget {
+  const _SafaehSheetScope({
+    required this.sheet,
+    required this.enableDrag,
+    required super.child,
+  });
+
+  final SafaehSheet sheet;
+  final bool enableDrag;
+
+  @override
+  bool updateShouldNotify(_SafaehSheetScope oldWidget) =>
+      enableDrag != oldWidget.enableDrag;
 }
 
 Widget _defaultSlideUp({
@@ -943,6 +1042,7 @@ class _PhoneSheetDragDismissState extends State<_PhoneSheetDragDismiss>
   late final AnimationController _snap;
   Animation<double>? _snapAnim;
   bool _contentDragActive = false;
+  bool? _lastEnableDrag;
 
   @override
   void initState() {
@@ -1034,6 +1134,21 @@ class _PhoneSheetDragDismissState extends State<_PhoneSheetDragDismiss>
     return false;
   }
 
+  bool _shouldCompete(Offset global) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return true;
+    final local = box.globalToLocal(global);
+    if (!box.size.contains(local)) return true;
+    final result = BoxHitTestResult();
+    box.hitTest(result, position: local);
+    for (final entry in result.path) {
+      // Scrollables keep the arena so lists can still move. Their top-edge
+      // pull reaches the sheet through [_onScrollNotification].
+      if (entry.target is RenderAbstractViewport) return false;
+    }
+    return true;
+  }
+
   Future<void> _tryDismiss() async {
     if (!widget.barrierDismissible) {
       _snapBack();
@@ -1055,64 +1170,67 @@ class _PhoneSheetDragDismissState extends State<_PhoneSheetDragDismiss>
       ..forward();
   }
 
+  void _stopDragIfDisabled(bool enableDrag) {
+    if (_lastEnableDrag == true && !enableDrag) {
+      _contentDragActive = false;
+      if (_dy.value > 0) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _snapBack();
+        });
+      }
+    }
+    _lastEnableDrag = enableDrag;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return _PhoneSheetDragScope(
-      onUpdate: _onDragUpdate,
-      onEnd: _onDragEnd,
-      onCancel: _onDragCancel,
-      child: NotificationListener<ScrollNotification>(
-        onNotification: _onScrollNotification,
-        child: ValueListenableBuilder<double>(
-          valueListenable: _dy,
-          builder: (context, dy, child) {
-            return Transform.translate(offset: Offset(0, dy), child: child);
-          },
-          child: widget.child,
-        ),
+    final enableDrag = SafaehSheet.of(context).enableDrag;
+    _stopDragIfDisabled(enableDrag);
+
+    Widget child = NotificationListener<ScrollNotification>(
+      onNotification: enableDrag ? _onScrollNotification : (_) => false,
+      child: ValueListenableBuilder<double>(
+        valueListenable: _dy,
+        builder: (context, dy, child) {
+          return Transform.translate(offset: Offset(0, dy), child: child);
+        },
+        child: widget.child,
       ),
     );
+
+    if (enableDrag) {
+      child = RawGestureDetector(
+        behavior: HitTestBehavior.opaque,
+        gestures: <Type, GestureRecognizerFactory>{
+          _PhoneSheetDragRecognizer:
+              GestureRecognizerFactoryWithHandlers<_PhoneSheetDragRecognizer>(
+                () => _PhoneSheetDragRecognizer(),
+                (instance) {
+                  instance
+                    ..shouldCompete = _shouldCompete
+                    ..onUpdate = _onDragUpdate
+                    ..onEnd = _onDragEnd
+                    ..onCancel = _onDragCancel;
+                },
+              ),
+        },
+        child: child,
+      );
+    }
+
+    return child;
   }
 }
 
-class _PhoneSheetDragScope extends InheritedWidget {
-  const _PhoneSheetDragScope({
-    required this.onUpdate,
-    required this.onEnd,
-    required this.onCancel,
-    required super.child,
-  });
+class _PhoneSheetDragRecognizer extends VerticalDragGestureRecognizer {
+  _PhoneSheetDragRecognizer() : super(debugOwner: 'safaeh_phone_sheet_drag');
 
-  final GestureDragUpdateCallback onUpdate;
-  final GestureDragEndCallback onEnd;
-  final VoidCallback onCancel;
-
-  static _PhoneSheetDragScope? maybeOf(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<_PhoneSheetDragScope>();
-  }
+  bool Function(Offset globalPosition)? shouldCompete;
 
   @override
-  bool updateShouldNotify(_PhoneSheetDragScope oldWidget) =>
-      onUpdate != oldWidget.onUpdate ||
-      onEnd != oldWidget.onEnd ||
-      onCancel != oldWidget.onCancel;
-}
-
-class _PhoneDragHandle extends StatelessWidget {
-  const _PhoneDragHandle({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final drag = _PhoneSheetDragScope.maybeOf(context);
-    if (drag == null) return child;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onVerticalDragUpdate: drag.onUpdate,
-      onVerticalDragEnd: drag.onEnd,
-      onVerticalDragCancel: drag.onCancel,
-      child: child,
-    );
+  void addAllowedPointer(PointerDownEvent event) {
+    final compete = shouldCompete;
+    if (compete != null && !compete(event.position)) return;
+    super.addAllowedPointer(event);
   }
 }

@@ -8,6 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Tags are `vX.Y.Z` and must match `version:` in [`pubspec.yaml`](pubspec.yaml).
 See [VERSIONING.md](VERSIONING.md).
 
+## [Unreleased]
+
+## [0.6.0] - 2026-09-19
+
+### Added
+
+- `SafaehSheet.of(context).enableDrag` toggles phone drag-to-dismiss while
+  the route is open.
+
+### Changed
+
+- Phone drag-to-dismiss now starts from the whole sheet surface (title,
+  edges, and handle), not only the handle or a top-edge list pull.
+- Confirm, timed confirm, text input, info, and multi-select footers no
+  longer show Cancel. Barrier tap, drag, and tablet close dismiss. A
+  footer button stays only when it commits an action. `SafaehInfoSheet`
+  paints a primary button only when `primaryLabel` is non-empty.
+  `cancelLabel` remains on the API for hosts that still pass it.
+
 ## [0.5.0] - 2026-09-18
 
 ### Added

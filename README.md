@@ -115,7 +115,7 @@ Captured with [`widgets_to_image`](https://pub.dev/packages/widgets_to_image) (`
 | Area | What you get |
 |------|----------------|
 | **Onboarding** | Six public presets through `SafaehOnboardingDesign`; `SafaehOnboarding`, design catalog metadata, host-owned steps, trackers, action bars, list items, and generic `SafaehAuthFlow` |
-| **Sheets** | `showSafaeh` morphs phone sheet ↔ tablet dialog; `showSafaehPicker` / `SafaehOption` (cards, `enabled`); `showSafaehTilePicker` / `SafaehTileOption` (list rows, search); `showSafaehMultiTilePicker` (multi-select); `showSafaehActionSheet`; `showSafaehInfo`; `showSafaehConfirm`, `showSafaehTimedConfirm`, `showSafaehTextInput`, `SafaehStatusBody`, `SafaehContentPanel`, `buildSafaehSheetShell`, `SafaehOptionList`, `SafaehOptionTile` |
+| **Sheets** | `showSafaeh` morphs phone sheet ↔ tablet dialog; `SafaehSheet.enableDrag` toggles phone drag-to-dismiss; `showSafaehPicker` / `SafaehOption` (cards, `enabled`); `showSafaehTilePicker` / `SafaehTileOption` (list rows, search); `showSafaehMultiTilePicker` (multi-select); `showSafaehActionSheet`; `showSafaehInfo`; `showSafaehConfirm`, `showSafaehTimedConfirm`, `showSafaehTextInput`, `SafaehStatusBody`, `SafaehContentPanel`, `buildSafaehSheetShell`, `SafaehOptionList`, `SafaehOptionTile` |
 | **Dropdown** | `SafaehAnchoredDropdownChip` / `SafaehDropdownOption` for anchored menus that match the trigger width, with host label and selection-color hooks |
 | **Dialog** | `showSafaehDialog` centered panel (`railWidthOf` is ignored for alignment) |
 | **Theme** | `SafaehTheme` / `SafaehThemeData` for breakpoint, motion, radius, rail widths, camera compact height, `contentMaxWidth`, desktop band tokens, `sheetBodyInset`, `floatingAppearance`; `copyWith` |
@@ -138,7 +138,7 @@ Captured with [`widgets_to_image`](https://pub.dev/packages/widgets_to_image) (`
 
 ```yaml
 dependencies:
-  safaeh: ^0.5.0
+  safaeh: ^0.6.0
 ```
 
 Or:
@@ -154,14 +154,14 @@ dependencies:
   safaeh:
     git:
       url: https://github.com/Zyzto/Safaeh.git
-      ref: v0.5.0
+      ref: v0.6.0
 ```
 
 ```dart
 import 'package:safaeh/safaeh.dart';
 ```
 
-Current version: **0.5.0**.
+Current version: **0.6.0**.
 See [doc/chrome.md](doc/chrome.md) and [doc/debug-menu.md](doc/debug-menu.md).
 
 ---
@@ -232,6 +232,11 @@ crosses `tabletBreakpoint`. Pass `phonePlacement: SafaehPhoneSheetPlacement.cent
 to grow the phone sheet so the first content center aligns with the phone
 center (still flush with the bottom).
 
+On phone, the whole sheet surface (handle, title, edges) can be dragged down
+to dismiss. `enableDrag` sets the initial value; a descendant can change it
+later with `SafaehSheet.of(context).enableDrag`. Lists still scroll; a
+downward pull at their top edge is handed to the sheet.
+
 ### 4. Option picker
 
 ```dart
@@ -284,10 +289,9 @@ other `showSafaeh*` helpers (`railWidthOf`, `motion`, …).
 
 ### 6. Confirm and text input
 
-Host passes every label. Phone shows cancel in the action row; tablet uses the
-sheet close control. `showSafaehConfirm` returns `true` if confirmed, `false`
-if the phone cancel button is pressed, and `null` if dismissed (tablet close,
-barrier, or system back). Treat only `ok == true` as confirmed.
+Host passes action labels. The footer is the commit action only; barrier
+tap, drag, and tablet close dismiss. `showSafaehConfirm` returns `true` if
+confirmed and `null` if dismissed. Treat only `ok == true` as confirmed.
 
 ```dart
 final ok = await showSafaehConfirm(
@@ -295,7 +299,6 @@ final ok = await showSafaehConfirm(
   title: 'Delete item',
   content: 'This cannot be undone.',
   confirmLabel: 'Delete',
-  cancelLabel: 'Cancel',
   isDestructive: true,
   titleBuilder: (context, style) => Text('Delete item', style: style),
 );
@@ -304,7 +307,6 @@ final name = await showSafaehTextInput(
   context: context,
   title: 'Tag name',
   doneLabel: 'Done',
-  cancelLabel: 'Cancel',
   titleBuilder: (context, style) => Text('Tag name', style: style),
 );
 ```
@@ -602,7 +604,7 @@ Keep `mobile_scanner` in the app.
 
 ## UI inventory
 
-**Sheets:** `showSafaeh`, `SafaehRouteOptions`, `showSafaehPicker`, `SafaehOption`, `SafaehOptionPickerBody`, `showSafaehTilePicker`, `showSafaehMultiTilePicker`, `SafaehTileOption`, `SafaehTilePickerBody`, `SafaehTileBuilder`, `showSafaehConfirm`, `SafaehConfirmSheet`, `showSafaehTextInput`, `SafaehTextInputSheet`, `SafaehStatusBody`, `buildSafaehSheetShell`, `SafaehOptionList`, `SafaehOptionTile`, `kSheetContentPadding`, `kSafaehSheetPadding`, `SafaehTitleBuilder`, `SafaehLabelBuilder`, `safaehTitleFromLabel`, `safaehPop`, `SafaehTransition`, `safaehFadeScale`, `safaehFade`, `SafaehPhoneSheetPlacement`, `safaehPhoneCenterSheetTop`
+**Sheets:** `showSafaeh`, `SafaehSheet`, `SafaehRouteOptions`, `showSafaehPicker`, `SafaehOption`, `SafaehOptionPickerBody`, `showSafaehTilePicker`, `showSafaehMultiTilePicker`, `SafaehTileOption`, `SafaehTilePickerBody`, `SafaehTileBuilder`, `showSafaehConfirm`, `SafaehConfirmSheet`, `showSafaehTextInput`, `SafaehTextInputSheet`, `SafaehStatusBody`, `buildSafaehSheetShell`, `SafaehOptionList`, `SafaehOptionTile`, `kSheetContentPadding`, `kSafaehSheetPadding`, `SafaehTitleBuilder`, `SafaehLabelBuilder`, `safaehTitleFromLabel`, `safaehPop`, `SafaehTransition`, `safaehFadeScale`, `safaehFade`, `SafaehPhoneSheetPlacement`, `safaehPhoneCenterSheetTop`
 
 **Dialog:** `showSafaehDialog`
 

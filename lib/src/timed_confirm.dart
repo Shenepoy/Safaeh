@@ -81,8 +81,6 @@ class _SafaehTimedConfirmSheetState extends State<SafaehTimedConfirmSheet> {
   @override
   Widget build(BuildContext context) {
     final tokens = SafaehTheme.of(context);
-    final breakpoint = widget.tabletBreakpoint ?? tokens.tabletBreakpoint;
-    final isWide = MediaQuery.sizeOf(context).width >= breakpoint;
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final enabled = _remaining <= 0;
@@ -92,9 +90,6 @@ class _SafaehTimedConfirmSheetState extends State<SafaehTimedConfirmSheet> {
     final contentStyle = theme.textTheme.bodyMedium?.copyWith(
       color: cs.onSurfaceVariant,
     );
-    final resolvedCancel =
-        widget.cancelLabel ??
-        MaterialLocalizations.of(context).cancelButtonLabel;
     final radius = BorderRadius.circular(tokens.radius);
     final status = widget.statusLabel?.call(_remaining);
 
@@ -124,12 +119,6 @@ class _SafaehTimedConfirmSheetState extends State<SafaehTimedConfirmSheet> {
         ),
       ),
       actions: [
-        if (!isWide)
-          TextButton(
-            key: const ValueKey('safaeh_cancel'),
-            onPressed: widget.onCancel ?? () => safaehPop(context, false),
-            child: Text(resolvedCancel),
-          ),
         FilledButton(
           key: const ValueKey('safaeh_confirm'),
           style: FilledButton.styleFrom(

@@ -87,10 +87,6 @@ class _SafaehTextInputSheetState extends State<SafaehTextInputSheet> {
     final titleStyle = theme.textTheme.titleMedium?.copyWith(
       fontWeight: FontWeight.w700,
     );
-    final resolvedCancel =
-        widget.cancelLabel ??
-        MaterialLocalizations.of(context).cancelButtonLabel;
-
     return buildSafaehSheetShell(
       showTitleInBody: widget.showTitleInBody && !isWide,
       title:
@@ -128,12 +124,6 @@ class _SafaehTextInputSheetState extends State<SafaehTextInputSheet> {
         ),
       ),
       actions: [
-        if (!isWide)
-          TextButton(
-            key: const ValueKey('safaeh_cancel'),
-            onPressed: () => safaehPop<String?>(context),
-            child: Text(resolvedCancel),
-          ),
         FilledButton(
           key: const ValueKey('safaeh_text_done'),
           onPressed: _submit,

@@ -183,8 +183,12 @@ extension SafaehFeedbackContext on BuildContext {
     Duration duration = const Duration(seconds: 8),
   }) {
     if (!mounted) return;
+    // Keep [context] for ToastificationConfig (width, alignment, insets).
+    // Pass the navigator overlay explicitly so BetterFeedback's root Overlay
+    // does not steal toasts via Overlay.maybeOf(rootOverlay: true).
     toastification.showCustom(
       context: this,
+      overlayState: Navigator.maybeOf(this, rootNavigator: true)?.overlay,
       autoCloseDuration: duration,
       builder: (context, holder) =>
           builder(context, () => toastification.dismiss(holder)),

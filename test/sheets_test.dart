@@ -363,7 +363,7 @@ void main() {
     );
   });
 
-  testWidgets('text input cancel pops null', (tester) async {
+  testWidgets('text input barrier dismiss pops null', (tester) async {
     await setPhone(tester);
     Object? value = 'pending';
     await tester.pumpWidget(
@@ -375,7 +375,6 @@ void main() {
                 context: context,
                 title: 'Tag',
                 doneLabel: 'Done',
-                cancelLabel: 'Cancel',
               );
             },
             child: const Text('open'),
@@ -386,7 +385,9 @@ void main() {
 
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('safaeh_cancel')));
+    expect(find.byKey(const ValueKey('safaeh_cancel')), findsNothing);
+    expect(find.byKey(const ValueKey('safaeh_text_done')), findsOneWidget);
+    await tester.tapAt(const Offset(8, 8));
     await tester.pumpAndSettle();
     expect(value, isNull);
   });
@@ -1822,6 +1823,145 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('phone sheet enableDrag false ignores title drag', (
+    tester,
+  ) async {
+    await setPhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSafaeh<void>(
+              context: context,
+              title: 'Rename',
+              enableDrag: false,
+              child: const Text('sheet-body'),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    final title = find.descendant(
+      of: find.byKey(const ValueKey('safaeh_panel')),
+      matching: find.text('Rename'),
+    );
+    await tester.drag(title, const Offset(0, 300));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('safaeh_panel')), findsOneWidget);
+  });
+
+  testWidgets('phone sheet title drag dismisses', (tester) async {
+    await setPhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSafaeh<void>(
+              context: context,
+              title: 'Rename',
+              child: const Text('sheet-body'),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    final title = find.descendant(
+      of: find.byKey(const ValueKey('safaeh_panel')),
+      matching: find.text('Rename'),
+    );
+    await tester.drag(title, const Offset(0, 300));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('safaeh_panel')), findsNothing);
+  });
+
+  testWidgets('phone sheet edge drag dismisses', (tester) async {
+    await setPhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSafaeh<void>(
+              context: context,
+              title: 'Rename',
+              child: const Text('sheet-body'),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    final panel = find.byKey(const ValueKey('safaeh_panel'));
+    final origin = tester.getTopLeft(panel) + const Offset(16, 10);
+    await tester.dragFrom(origin, const Offset(0, 300));
+    await tester.pumpAndSettle();
+    expect(panel, findsNothing);
+  });
+
+  testWidgets('SafaehSheet.enableDrag can be toggled while open', (
+    tester,
+  ) async {
+    await setPhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSafaeh<void>(
+              context: context,
+              title: 'Rename',
+              child: Builder(
+                builder: (context) {
+                  final sheet = SafaehSheet.of(context);
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextButton(
+                        onPressed: () => sheet.enableDrag = !sheet.enableDrag,
+                        child: Text(sheet.enableDrag ? 'lock' : 'unlock'),
+                      ),
+                      const Text('sheet-body'),
+                    ],
+                  );
+                },
+              ),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('lock'), findsOneWidget);
+
+    await tester.tap(find.text('lock'));
+    await tester.pumpAndSettle();
+    expect(find.text('unlock'), findsOneWidget);
+
+    final title = find.descendant(
+      of: find.byKey(const ValueKey('safaeh_panel')),
+      matching: find.text('Rename'),
+    );
+    await tester.drag(title, const Offset(0, 300));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('safaeh_panel')), findsOneWidget);
+
+    await tester.tap(find.text('unlock'));
+    await tester.pumpAndSettle();
+    expect(find.text('lock'), findsOneWidget);
+
+    await tester.drag(title, const Offset(0, 300));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('safaeh_panel')), findsNothing);
   });
 
   testWidgets('enableDrag without a handle still dismisses on fling', (
