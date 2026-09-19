@@ -210,7 +210,7 @@ void main() {
     );
   });
 
-  testWidgets('confirm sheet phone cancel pops false and confirm pops true', (
+  testWidgets('confirm sheet barrier dismisses and confirm pops true', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(400, 800);
@@ -236,7 +236,7 @@ void main() {
                     isDestructive: true,
                   );
                 },
-                child: const Text('open-cancel'),
+                child: const Text('open-dismiss'),
               ),
               TextButton(
                 onPressed: () async {
@@ -256,12 +256,12 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('open-cancel'));
+    await tester.tap(find.text('open-dismiss'));
     await tester.pumpAndSettle();
-    expect(find.text('Cancel'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('safaeh_cancel')));
+    expect(find.byKey(const ValueKey('safaeh_cancel')), findsNothing);
+    await tester.tapAt(const Offset(8, 8));
     await tester.pumpAndSettle();
-    expect(first, isFalse);
+    expect(first, isNull);
 
     await tester.tap(find.text('open-confirm'));
     await tester.pumpAndSettle();
