@@ -180,6 +180,7 @@ Future<T?> showSafaeh<T>({
   bool enableDrag = true,
   ShapeBorder? sheetShape,
   bool barrierDismissible = true,
+  Color? barrierColor,
   EdgeInsetsGeometry? contentPadding,
   double? tabletBreakpoint,
   double? dialogMaxWidth,
@@ -227,7 +228,8 @@ Future<T?> showSafaeh<T>({
     useRootNavigator: resolvedRoot,
     barrierDismissible: resolvedBarrier,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-    barrierColor: theme.colorScheme.scrim.withValues(alpha: 0.32),
+    barrierColor:
+        barrierColor ?? theme.colorScheme.scrim.withValues(alpha: 0.32),
     transitionDuration: resolvedMotion,
     pageBuilder: (ctx, animation, secondaryAnimation) {
       return _AdaptiveSheetHost(

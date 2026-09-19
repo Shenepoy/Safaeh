@@ -128,14 +128,15 @@ _FloatingVisual _resolveFloatingVisual(
   final transparency = _normalizedTransparency(
     appearance.transparency ?? _defaultTransparency(appearance.style),
   );
-  // Keep the v0.2.5 dark-mode treatment: dark glass inherits the host
+  // Keep the v0.2.5 dark-mode treatment: dark frosted surfaces inherit the host
   // component's fallback surface, which gives Hisab's floating navigation its
-  // established depth. Light mode uses the active theme surface so it remains
-  // white-ish. A host can still provide a deliberately branded tint through
-  // tintColor.
+  // established depth. Light mode uses the active theme surface so frosted
+  // surfaces remain white-ish. A host can still provide a deliberately
+  // branded tint through tintColor.
   final tint =
       appearance.tintColor ??
-      (appearance.style == SafaehFloatingSurfaceStyle.glass &&
+      ((appearance.style == SafaehFloatingSurfaceStyle.glass ||
+                  appearance.style == SafaehFloatingSurfaceStyle.tunedGlass) &&
               cs.brightness == Brightness.light
           ? cs.surface
           : fallbackColor);
@@ -162,6 +163,7 @@ double _defaultTransparency(SafaehFloatingSurfaceStyle style) {
     SafaehFloatingSurfaceStyle.solid => 0,
     SafaehFloatingSurfaceStyle.translucent => 28,
     SafaehFloatingSurfaceStyle.glass => 48,
+    SafaehFloatingSurfaceStyle.tunedGlass => 36,
     SafaehFloatingSurfaceStyle.vista => 35,
   };
 }
@@ -171,6 +173,7 @@ double _defaultBlurSigma(SafaehFloatingSurfaceStyle style) {
     SafaehFloatingSurfaceStyle.solid => 0,
     SafaehFloatingSurfaceStyle.translucent => 0,
     SafaehFloatingSurfaceStyle.glass => 18,
+    SafaehFloatingSurfaceStyle.tunedGlass => 12,
     SafaehFloatingSurfaceStyle.vista => 32,
   };
 }
@@ -194,6 +197,9 @@ BoxBorder? _defaultBorder(
     SafaehFloatingSurfaceStyle.glass => Border.all(
       color: cs.onSurface.withValues(alpha: 0.20),
     ),
+    SafaehFloatingSurfaceStyle.tunedGlass => Border.all(
+      color: cs.outlineVariant,
+    ),
     SafaehFloatingSurfaceStyle.vista => Border.all(
       color: cs.onSurface.withValues(alpha: 0.28),
     ),
@@ -212,6 +218,13 @@ List<BoxShadow> _defaultShadows(
         color: cs.shadow.withValues(alpha: 0.18),
         blurRadius: 16,
         offset: const Offset(0, 4),
+      ),
+    ],
+    SafaehFloatingSurfaceStyle.tunedGlass => [
+      BoxShadow(
+        color: cs.shadow.withValues(alpha: 0.14),
+        blurRadius: 12,
+        offset: const Offset(0, 3),
       ),
     ],
     SafaehFloatingSurfaceStyle.vista => [

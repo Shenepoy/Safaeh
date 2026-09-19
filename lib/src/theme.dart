@@ -25,8 +25,8 @@ class SafaehThemeData {
     this.cameraCompactHeightFraction = kSafaehCameraCompactHeightFraction,
     this.contentMaxWidth = 600,
     this.contentMaxWidthDesktop = 720,
-    this.sheetBodyInset = const EdgeInsets.fromLTRB(20, 16, 20, 20),
-    this.sheetBodyInsetWide = const EdgeInsets.fromLTRB(24, 16, 24, 20),
+    this.sheetBodyInset = const EdgeInsets.fromLTRB(12, 16, 12, 20),
+    this.sheetBodyInsetWide = const EdgeInsets.fromLTRB(16, 16, 16, 20),
     this.floatingAppearance,
   });
 

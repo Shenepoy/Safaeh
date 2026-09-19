@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const double kSafaehSheetPadding = 20;
+const double kSafaehSheetPadding = 12;
 const double _kActionsSpacing = 8;
 const double _kBodyActionsGap = 20;
 

@@ -12,6 +12,9 @@ enum SafaehFloatingSurfaceStyle {
   /// A soft, iOS-inspired frosted surface.
   glass,
 
+  /// A balanced frosted surface for readable modal content.
+  tunedGlass,
+
   /// A stronger, Vista/Aero-inspired frosted surface.
   vista,
 }
@@ -27,6 +30,7 @@ enum SafaehFloatingSurfaceStyle {
 /// The presets use `0% / 0` for [SafaehFloatingSurfaceStyle.solid],
 /// `28% / 0` for [SafaehFloatingSurfaceStyle.translucent],
 /// `48% / 18` for [SafaehFloatingSurfaceStyle.glass], and
+/// `36% / 12` for [SafaehFloatingSurfaceStyle.tunedGlass], and
 /// `35% / 32` for [SafaehFloatingSurfaceStyle.vista] (transparency / sigma).
 class SafaehFloatingAppearance {
   const SafaehFloatingAppearance({
