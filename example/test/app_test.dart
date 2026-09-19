@@ -628,14 +628,8 @@ void main() {
     await _openTitle(tester, 'confirm');
     expect(find.text('This cannot be undone.'), findsWidgets);
     expect(find.byKey(const ValueKey('safaeh_confirm')), findsWidgets);
-    await tester.tap(
-      find
-          .descendant(
-            of: find.byType(SafaehConfirmSheet),
-            matching: find.byKey(const ValueKey('safaeh_cancel')),
-          )
-          .last,
-    );
+    expect(find.byKey(const ValueKey('safaeh_cancel')), findsNothing);
+    await tester.tapAt(const Offset(8, 8));
     await tester.pumpAndSettle();
     expect(find.byType(CatalogGallery), findsOneWidget);
     expect(find.text('This cannot be undone.'), findsOneWidget);
