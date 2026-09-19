@@ -12,9 +12,6 @@ enum SafaehFloatingSurfaceStyle {
   /// A soft, iOS-inspired frosted surface.
   glass,
 
-  /// A balanced frosted surface for readable modal content.
-  tunedGlass,
-
   /// A stronger, Vista/Aero-inspired frosted surface.
   vista,
 }
@@ -30,7 +27,6 @@ enum SafaehFloatingSurfaceStyle {
 /// The presets use `0% / 0` for [SafaehFloatingSurfaceStyle.solid],
 /// `28% / 0` for [SafaehFloatingSurfaceStyle.translucent],
 /// `48% / 18` for [SafaehFloatingSurfaceStyle.glass], and
-/// `36% / 12` for [SafaehFloatingSurfaceStyle.tunedGlass], and
 /// `35% / 32` for [SafaehFloatingSurfaceStyle.vista] (transparency / sigma).
 class SafaehFloatingAppearance {
   const SafaehFloatingAppearance({
@@ -48,6 +44,19 @@ class SafaehFloatingAppearance {
          blurSigma == null || (blurSigma >= 0 && blurSigma < double.infinity),
          'blurSigma must be a finite non-negative value',
        );
+
+  /// A balanced frosted surface intended for readable modal content.
+  ///
+  /// This uses the existing [SafaehFloatingSurfaceStyle.glass] enum value
+  /// with tuned transparency and blur values, so adding the preset does not
+  /// break downstream exhaustive switches over the style enum.
+  const SafaehFloatingAppearance.tunedGlass({
+    this.tintColor,
+    this.border,
+    this.shadows,
+  }) : style = SafaehFloatingSurfaceStyle.glass,
+       transparency = 36,
+       blurSigma = 12;
 
   final SafaehFloatingSurfaceStyle style;
   final double? transparency;
