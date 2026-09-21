@@ -196,6 +196,8 @@ Future<T?> showSafaeh<T>({
   String? dismissLabel,
   String? closeTooltip,
   bool paintPhoneTitle = true,
+  bool showHeaderDivider = true,
+  bool pinTopOnSizeChange = false,
   SafaehFloatingAppearance? floatingAppearance,
   SafaehRouteOptions? route,
 }) {
@@ -260,6 +262,8 @@ Future<T?> showSafaeh<T>({
         dismissLabel: resolvedDismissLabel,
         closeTooltip: resolvedCloseTooltip,
         paintPhoneTitle: paintPhoneTitle,
+        showHeaderDivider: showHeaderDivider,
+        pinTopOnSizeChange: pinTopOnSizeChange,
         floatingAppearance: resolvedFloatingAppearance,
         child: child,
       );
@@ -543,6 +547,8 @@ class _AdaptiveSheetHost extends StatelessWidget {
     this.dismissLabel,
     this.closeTooltip,
     this.paintPhoneTitle = true,
+    this.showHeaderDivider = true,
+    this.pinTopOnSizeChange = false,
     this.floatingAppearance,
   });
 
@@ -577,6 +583,8 @@ class _AdaptiveSheetHost extends StatelessWidget {
   final String? dismissLabel;
   final String? closeTooltip;
   final bool paintPhoneTitle;
+  final bool showHeaderDivider;
+  final bool pinTopOnSizeChange;
   final SafaehFloatingAppearance? floatingAppearance;
 
   @override
@@ -633,7 +641,9 @@ class _AdaptiveSheetHost extends StatelessWidget {
     final Widget header = isWide
         ? DecoratedBox(
             decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: cs.outline)),
+              border: showHeaderDivider
+                  ? Border(bottom: BorderSide(color: cs.outline))
+                  : null,
             ),
             child: Padding(
               padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 12, 12),
@@ -839,12 +849,14 @@ class _AdaptiveSheetHost extends StatelessWidget {
       padding: isWide
           ? const EdgeInsets.symmetric(horizontal: 24, vertical: 24)
           : EdgeInsets.zero,
-      child: AnimatedAlign(
-        duration: motion,
-        curve: enterCurve,
-        alignment: isWide ? Alignment.center : Alignment.bottomCenter,
-        child: sheet,
-      ),
+      child: pinTopOnSizeChange && isWide
+          ? _TopPinnedAlign(child: sheet)
+          : AnimatedAlign(
+              duration: motion,
+              curve: enterCurve,
+              alignment: isWide ? Alignment.center : Alignment.bottomCenter,
+              child: sheet,
+            ),
     );
 
     // Call the transition once. Wrapping another AnimatedBuilder here nested
@@ -1221,6 +1233,64 @@ class _PhoneSheetDragDismissState extends State<_PhoneSheetDragDismiss>
     }
 
     return child;
+  }
+}
+
+/// Centers [child] once, then keeps that top while [child] changes height.
+///
+/// A regular [Align] recenters every frame of a footer collapse, which walks
+/// the locked fields. This records the first centered top and only recenters
+/// when the *host* slot changes (keyboard, window), not when the card shrinks.
+class _TopPinnedAlign extends SingleChildRenderObjectWidget {
+  const _TopPinnedAlign({required Widget child}) : super(child: child);
+
+  @override
+  RenderObject createRenderObject(BuildContext context) => _RenderTopPinnedAlign();
+}
+
+class _RenderTopPinnedAlign extends RenderShiftedBox {
+  _RenderTopPinnedAlign() : super(null);
+
+  double? _frozenTop;
+  double _lastHostHeight = 0;
+
+  @override
+  void performLayout() {
+    final child = this.child;
+    if (!constraints.hasBoundedHeight || !constraints.hasBoundedWidth) {
+      if (child != null) {
+        child.layout(constraints, parentUsesSize: true);
+        size = child.size;
+        (child.parentData as BoxParentData).offset = Offset.zero;
+      } else {
+        size = constraints.smallest;
+      }
+      return;
+    }
+
+    size = constraints.biggest;
+    if (child == null) return;
+
+    child.layout(constraints.loosen(), parentUsesSize: true);
+    final hostHeight = size.height;
+    if (_frozenTop == null || (hostHeight - _lastHostHeight).abs() > 0.5) {
+      _frozenTop = ((hostHeight - child.size.height) / 2).clamp(
+        0.0,
+        math.max(0.0, hostHeight - child.size.height),
+      );
+    }
+    _lastHostHeight = hostHeight;
+
+    final dx = (size.width - child.size.width) / 2;
+    (child.parentData as BoxParentData).offset = Offset(dx, _frozenTop!);
+  }
+
+  @override
+  Size computeDryLayout(BoxConstraints constraints) {
+    if (!constraints.hasBoundedHeight || !constraints.hasBoundedWidth) {
+      return child?.getDryLayout(constraints) ?? constraints.smallest;
+    }
+    return constraints.biggest;
   }
 }
 
