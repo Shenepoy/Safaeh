@@ -685,7 +685,7 @@ class _AuthCollapsingSlotState extends State<_AuthCollapsingSlot>
         opacity: _progress,
         child: SizeTransition(
           sizeFactor: _progress,
-          axisAlignment: -1,
+          alignment: const AlignmentDirectional(-1, -1),
           child: widget.child,
         ),
       ),
