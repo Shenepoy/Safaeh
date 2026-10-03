@@ -38,6 +38,7 @@ class SafaehAnchoredDropdownChip<T> extends StatefulWidget {
     this.selectedBorder,
     this.selectedForeground,
     this.labelBuilder,
+    this.iconOnly = false,
   }) : assert(menuWidth == null || menuWidth > 0);
 
   final IconData icon;
@@ -66,6 +67,10 @@ class SafaehAnchoredDropdownChip<T> extends StatefulWidget {
 
   /// Optional host bidi / text wrapper for labels.
   final SafaehLabelBuilder? labelBuilder;
+
+  /// When true, the trigger is only [icon]. [label] stays the tooltip.
+  /// Menu rows still show their labels.
+  final bool iconOnly;
 
   @override
   State<SafaehAnchoredDropdownChip<T>> createState() =>
@@ -153,9 +158,38 @@ class _SafaehAnchoredDropdownChipState<T>
             ? cs.primaryContainer
             : cs.surfaceContainerHighest.withValues(alpha: 0.65);
         final fg = widget.active ? cs.onPrimaryContainer : cs.onSurface;
-        final iconColor = widget.active
+        final iconColor = widget.iconOnly
+            ? (widget.active ? cs.primary : cs.onSurface)
+            : widget.active
             ? cs.onPrimaryContainer
             : cs.onSurfaceVariant;
+        void toggle() {
+          _measureAnchor();
+          if (controller.isOpen) {
+            controller.close();
+          } else {
+            controller.open();
+          }
+        }
+        if (widget.iconOnly) {
+          return Tooltip(
+            message: widget.label,
+            child: Material(
+              key: _anchorKey,
+              color: Colors.transparent,
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: toggle,
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Icon(widget.icon, size: 24, color: iconColor),
+                ),
+              ),
+            ),
+          );
+        }
         final labelStyle = theme.textTheme.labelLarge?.copyWith(
           color: fg,
           fontWeight: widget.active ? FontWeight.w700 : FontWeight.w500,
@@ -168,14 +202,7 @@ class _SafaehAnchoredDropdownChipState<T>
           borderRadius: BorderRadius.circular(22),
           child: InkWell(
             borderRadius: BorderRadius.circular(22),
-            onTap: () {
-              _measureAnchor();
-              if (controller.isOpen) {
-                controller.close();
-              } else {
-                controller.open();
-              }
-            },
+            onTap: toggle,
             child: Container(
               width: widget.expand ? double.infinity : null,
               padding: EdgeInsetsDirectional.only(

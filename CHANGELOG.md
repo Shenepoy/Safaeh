@@ -10,6 +10,13 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-10-03
+
+### Added
+
+- `SafaehAnchoredDropdownChip.iconOnly` draws an icon trigger and keeps the
+  label as the tooltip. Menu rows still show their labels.
+
 ## [0.6.0] - 2026-09-19
 
 ### Added
