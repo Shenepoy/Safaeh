@@ -79,7 +79,7 @@ class CatalogPhoneFrame extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   viewPadding: EdgeInsets.zero,
                 ),
-                child: ColoredBox(color: scheme.surface, child: child),
+                child: Material(color: scheme.surface, child: child),
               ),
             ),
           ],

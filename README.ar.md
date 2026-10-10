@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://zyzto.github.io/Safaeh/"><img alt="المثال الحي" src="https://img.shields.io/badge/live%20demo-zyzto.github.io%2FSafaeh-8B6914?style=for-the-badge" /></a>
+  <a href="https://shenepoy.github.io/Safaeh/"><img alt="المثال الحي" src="https://img.shields.io/badge/live%20demo-shenepoy.github.io%2FSafaeh-8B6914?style=for-the-badge" /></a>
 </p>
 
 <p align="center">
@@ -26,13 +26,13 @@
 </p>
 
 <p align="center">
-  <strong><a href="https://zyzto.github.io/Safaeh/">المثال الحي</a></strong>
+  <strong><a href="https://shenepoy.github.io/Safaeh/">المثال الحي</a></strong>
   — افتح كتالوج المثال في المتصفح<br/>
-  <a href="https://zyzto.github.io/Safaeh/"><span dir="ltr">zyzto.github.io/Safaeh</span></a>
+  <a href="https://shenepoy.github.io/Safaeh/"><span dir="ltr">shenepoy.github.io/Safaeh</span></a>
 </p>
 
 <p align="center">
-  <a href="https://zyzto.github.io/Safaeh/">المثال الحي</a> ·
+  <a href="https://shenepoy.github.io/Safaeh/">المثال الحي</a> ·
   <a href="#التثبيت">Install</a> ·
   <a href="#ابدأ-في-دقائق">Quick start</a> ·
   <a href="#ودجات">ودجات</a> ·
@@ -82,7 +82,7 @@
 </div>
 
 <p align="center">
-  <a href="https://zyzto.github.io/Safaeh/">
+  <a href="https://shenepoy.github.io/Safaeh/">
     <img src="screenshots/picker.png" alt="منتقي البطاقات — المثال الحي" width="200" />
     <img src="screenshots/confirm.png" alt="ورقة تأكيد — المثال الحي" width="200" />
     <img src="screenshots/option-tiles.png" alt="صفوف خيارات — المثال الحي" width="200" />
@@ -90,17 +90,17 @@
 </p>
 
 <p align="center">
-  <sub>منتقي البطاقات · تأكيد · صفوف خيارات — <a href="https://zyzto.github.io/Safaeh/">جرّبها في المثال الحي</a></sub>
+  <sub>منتقي البطاقات · تأكيد · صفوف خيارات — <a href="https://shenepoy.github.io/Safaeh/">جرّبها في المثال الحي</a></sub>
 </p>
 
 <p align="center">
-  <a href="https://zyzto.github.io/Safaeh/">
+  <a href="https://shenepoy.github.io/Safaeh/">
     <img src="screenshots/sidenav.png" alt="سكة جانبية — المثال الحي" width="320" />
   </a>
 </p>
 
 <p align="center">
-  <a href="https://zyzto.github.io/Safaeh/">
+  <a href="https://shenepoy.github.io/Safaeh/">
     <img src="screenshots/empty-state.png" alt="حالة فارغة — المثال الحي" width="160" />
     <img src="screenshots/inline-banner.png" alt="شريط مضمّن — المثال الحي" width="160" />
     <img src="screenshots/kpi-card.png" alt="بطاقة مؤشر — المثال الحي" width="160" />
@@ -109,7 +109,7 @@
 </p>
 
 <p align="center">
-  <sub>حالة فارغة · شريط مضمّن · مؤشر · تحميل وخطأ — <a href="https://zyzto.github.io/Safaeh/">جرّبها في المثال الحي</a></sub>
+  <sub>حالة فارغة · شريط مضمّن · مؤشر · تحميل وخطأ — <a href="https://shenepoy.github.io/Safaeh/">جرّبها في المثال الحي</a></sub>
 </p>
 
 <div dir="rtl" lang="ar">
@@ -508,7 +508,7 @@ await showSafaehCameraSheet<void>(
 
 ## المثال
 
-<strong><a href="https://zyzto.github.io/Safaeh/">المثال الحي — <span dir="ltr">zyzto.github.io/Safaeh</span></a></strong>
+<strong><a href="https://shenepoy.github.io/Safaeh/">المثال الحي — <span dir="ltr">shenepoy.github.io/Safaeh</span></a></strong>
 
 الكتالوج المستضاف هو بناء ويب <span dir="ltr"><code>example/</code></span>. التكامل المستمر ينشره بعد نجاح الاختبارات على <span dir="ltr"><code>main</code></span>.
 

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:safaeh/safaeh.dart';
 
+import 'app.dart';
+
 /// Public catalog page for Safaeh's onboarding and auth presentation APIs.
 class OnboardingDesignDemo extends StatefulWidget {
-  const OnboardingDesignDemo({super.key});
+  const OnboardingDesignDemo({super.key, required this.t});
+
+  final String Function(String key) t;
 
   @override
   State<OnboardingDesignDemo> createState() => _OnboardingDesignDemoState();
@@ -13,10 +17,15 @@ class _OnboardingDesignDemoState extends State<OnboardingDesignDemo> {
   SafaehOnboardingDesign _design = SafaehOnboardingDesign.zen;
   SafaehAuthMode _authMode = SafaehAuthMode.signIn;
   bool _showAuth = false;
-  bool _darkControls = false;
+  bool? _darkOverride;
+  bool? _rtlOverride;
 
   @override
   Widget build(BuildContext context) {
+    final t = widget.t;
+    final rtl = _rtlOverride ?? Directionality.of(context) == TextDirection.rtl;
+    final dark =
+        _darkOverride ?? Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -32,7 +41,7 @@ class _OnboardingDesignDemoState extends State<OnboardingDesignDemo> {
                 onSelected: (_) => setState(() => _design = info.design),
               ),
             FilterChip(
-              label: Text(_showAuth ? 'Onboarding' : 'Auth flow'),
+              label: Text(t('ob_auth_flow')),
               selected: _showAuth,
               onSelected: (value) => setState(() => _showAuth = value),
             ),
@@ -60,89 +69,96 @@ class _OnboardingDesignDemoState extends State<OnboardingDesignDemo> {
         ],
         const SizedBox(height: 8),
         Expanded(
-          child: _showAuth
-              ? SafaehAuthFlow(
-                  design: _design,
-                  snapshot: SafaehAuthSnapshot(mode: _authMode),
-                  actions: const SafaehAuthActions(),
-                )
-              : SafaehOnboarding(
-                  design: _design,
-                  controlPlacement:
-                      SafaehOnboardingControlPlacement.bottomCenter,
-                  steps: _steps,
-                  labels: const SafaehOnboardingLabels(stepProgress: _progress),
-                  actions: SafaehOnboardingHostActions(
-                    languageControl: IconButton(
-                      tooltip: 'Language',
-                      onPressed: () {},
-                      icon: const Icon(Icons.language),
-                    ),
-                    themeControl: IconButton(
-                      tooltip: 'Theme',
-                      onPressed: () =>
-                          setState(() => _darkControls = !_darkControls),
-                      icon: Icon(
-                        _darkControls
-                            ? Icons.dark_mode_outlined
-                            : Icons.light_mode_outlined,
+          child: Theme(
+            data: catalogTheme(dark ? Brightness.dark : Brightness.light),
+            child: Directionality(
+              textDirection: rtl ? TextDirection.rtl : TextDirection.ltr,
+              child: _showAuth
+                  ? SafaehAuthFlow(
+                      design: _design,
+                      snapshot: SafaehAuthSnapshot(mode: _authMode),
+                      actions: const SafaehAuthActions(),
+                    )
+                  : SafaehOnboarding(
+                      design: _design,
+                      controlPlacement:
+                          SafaehOnboardingControlPlacement.bottomCenter,
+                      steps: _steps(t),
+                      labels: SafaehOnboardingLabels(
+                        stepProgress: (current, total) => t('ob_progress')
+                            .replaceAll('{current}', '$current')
+                            .replaceAll('{total}', '$total'),
+                      ),
+                      actions: SafaehOnboardingHostActions(
+                        languageControl: IconButton(
+                          tooltip: t('ob_language'),
+                          onPressed: () => setState(() => _rtlOverride = !rtl),
+                          icon: const Icon(Icons.language),
+                        ),
+                        themeControl: IconButton(
+                          tooltip: t('ob_theme'),
+                          onPressed: () =>
+                              setState(() => _darkOverride = !dark),
+                          icon: Icon(
+                            dark
+                                ? Icons.dark_mode_outlined
+                                : Icons.light_mode_outlined,
+                          ),
+                        ),
+                        onComplete: () async =>
+                            SafaehOnboardingResult.completed,
                       ),
                     ),
-                    onComplete: () async => SafaehOnboardingResult.completed,
-                  ),
-                ),
+            ),
+          ),
         ),
       ],
     );
   }
 
-  static String _progress(int current, int total) => 'Page $current / $total';
-
-  static final _steps = <SafaehOnboardingStep>[
+  static List<SafaehOnboardingStep> _steps(String Function(String key) t) => [
     SafaehOnboardingStep(
       id: 'welcome',
-      titleBuilder: (_) => const Text('A calmer way to get started'),
-      subtitleBuilder: (_) =>
-          const Text('Choose a visual direction and explore the host seam.'),
-      bodyBuilder: (_) => const SafaehOnboardingList(
+      titleBuilder: (_) => Text(t('ob_welcome_title')),
+      subtitleBuilder: (_) => Text(t('ob_welcome_sub')),
+      bodyBuilder: (_) => SafaehOnboardingList(
         children: [
           SafaehOnboardingListItem(
-            title: Text('Shared spaces'),
-            subtitle: Text('A reusable list treatment for your app content.'),
-            leading: Icon(Icons.dashboard_customize_outlined),
+            title: Text(t('ob_shared_title')),
+            subtitle: Text(t('ob_shared_sub')),
+            leading: const Icon(Icons.dashboard_customize_outlined),
           ),
           SafaehOnboardingListItem(
-            title: Text('Your controls'),
-            subtitle: Text('Language and theme actions stay with the host.'),
-            leading: Icon(Icons.tune_outlined),
+            title: Text(t('ob_controls_title')),
+            subtitle: Text(t('ob_controls_sub')),
+            leading: const Icon(Icons.tune_outlined),
           ),
         ],
       ),
     ),
     SafaehOnboardingStep(
       id: 'preferences',
-      titleBuilder: (_) => const Text('Make it yours'),
-      subtitleBuilder: (_) =>
-          const Text('Every label and action is replaceable.'),
-      bodyBuilder: (_) => const SafaehOnboardingList(
+      titleBuilder: (_) => Text(t('ob_prefs_title')),
+      subtitleBuilder: (_) => Text(t('ob_prefs_sub')),
+      bodyBuilder: (_) => SafaehOnboardingList(
         children: [
           SafaehOnboardingListItem(
-            title: Text('Six complete designs'),
-            subtitle: Text('Meadow, Orbit, Paper, Atelier, Zen, and Prism.'),
-            leading: Icon(Icons.palette_outlined),
+            title: Text(t('ob_designs_title')),
+            subtitle: Text(t('ob_designs_sub')),
+            leading: const Icon(Icons.palette_outlined),
             selected: true,
           ),
           SafaehOnboardingListItem(
-            title: Text('No hidden state'),
-            subtitle: Text('The package never persists your selection.'),
-            leading: Icon(Icons.lock_outline),
+            title: Text(t('ob_state_title')),
+            subtitle: Text(t('ob_state_sub')),
+            leading: const Icon(Icons.lock_outline),
           ),
         ],
       ),
     ),
     SafaehOnboardingStep(
       id: 'ready',
-      titleBuilder: (_) => const Text('Ready to compose'),
+      titleBuilder: (_) => Text(t('ob_ready_title')),
       bodyBuilder: (_) =>
           const Center(child: Icon(Icons.auto_awesome, size: 72)),
     ),

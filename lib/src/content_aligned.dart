@@ -13,8 +13,7 @@ class SafaehContentAlignedPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (context, constraints) =>
-          builder(context, constraints.maxWidth),
+      builder: (context, constraints) => builder(context, constraints.maxWidth),
     );
   }
 }

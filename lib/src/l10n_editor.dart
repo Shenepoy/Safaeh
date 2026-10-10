@@ -43,10 +43,7 @@ class SafaehMemoryL10nPersistence implements SafaehL10nPersistence {
 
 /// Pure-Dart flatten / merge / reverse-lookup store.
 class SafaehL10nOverrideStore {
-  SafaehL10nOverrideStore({
-    required this.locales,
-    this.persistence,
-  });
+  SafaehL10nOverrideStore({required this.locales, this.persistence});
 
   final List<String> locales;
   final SafaehL10nPersistence? persistence;
@@ -408,7 +405,10 @@ List<String> safaehCollectPlainTextsAt(
   void visit(RenderObject node) {
     if (node is RenderParagraph) {
       final box = node;
-      if (box.hasSize && box.paintBounds.shift(box.localToGlobal(Offset.zero)).contains(globalPosition)) {
+      if (box.hasSize &&
+          box.paintBounds
+              .shift(box.localToGlobal(Offset.zero))
+              .contains(globalPosition)) {
         final text = box.text.toPlainText();
         if (text.trim().isNotEmpty) texts.add(text);
       }
@@ -436,10 +436,7 @@ Future<T?> _showLtrSheet<T>({
       overflow: TextOverflow.ellipsis,
     ),
     maxHeight: MediaQuery.sizeOf(context).height * 0.75,
-    child: Directionality(
-      textDirection: TextDirection.ltr,
-      child: child,
-    ),
+    child: Directionality(textDirection: TextDirection.ltr, child: child),
   );
 }
 

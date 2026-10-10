@@ -31,8 +31,9 @@ double safaehAnchoredLift(double progress) {
 
 /// Shadow that appears once the funnel has opened.
 double safaehAnchoredElevation(double progress) {
-  final t = ((progress - safaehGenieWarpEnd) / (_shadowEnd - safaehGenieWarpEnd))
-      .clamp(0.0, 1.0);
+  final t =
+      ((progress - safaehGenieWarpEnd) / (_shadowEnd - safaehGenieWarpEnd))
+          .clamp(0.0, 1.0);
   return 12 * Curves.easeOut.transform(t);
 }
 
@@ -73,23 +74,25 @@ Future<T?> showSafaehAnchored<T>({
   bool barrierDismissible = true,
 }) {
   assert(child != null || childBuilder != null);
-    if (motion == SafaehAnchoredMotion.genie) SafaehGenieShader.preload();
-    final captured = sourceRect;
-    final barrierLabel = MaterialLocalizations.of(context).modalBarrierDismissLabel;
-    return Navigator.of(context, rootNavigator: true).push<T>(
-      _AnchoredRoute<T>(
-        motion: motion,
-        link: link,
-        sourceRect: captured,
-        opensAbove: opensAbove,
-        sourceShape: sourceShape,
-        maxCardWidth: maxCardWidth,
-        dismissible: barrierDismissible,
-        barrierLabel: barrierLabel,
-        child: child,
-        childBuilder: childBuilder,
-      ),
-    );
+  if (motion == SafaehAnchoredMotion.genie) SafaehGenieShader.preload();
+  final captured = sourceRect;
+  final barrierLabel = MaterialLocalizations.of(
+    context,
+  ).modalBarrierDismissLabel;
+  return Navigator.of(context, rootNavigator: true).push<T>(
+    _AnchoredRoute<T>(
+      motion: motion,
+      link: link,
+      sourceRect: captured,
+      opensAbove: opensAbove,
+      sourceShape: sourceShape,
+      maxCardWidth: maxCardWidth,
+      dismissible: barrierDismissible,
+      barrierLabel: barrierLabel,
+      child: child,
+      childBuilder: childBuilder,
+    ),
+  );
 }
 
 class _AnchoredRoute<T> extends PopupRoute<T> {
@@ -455,7 +458,9 @@ SafaehAnchoredCardPlacement safaehAnchoredCardPlacement({
   required bool endIsRight,
   double maxWidth = 420,
 }) {
-  final full = screenWidth - 24;
+  // A max width of the screen or wider is edge to edge. A narrower card
+  // keeps a 12dp gutter on each side.
+  final full = maxWidth >= screenWidth ? screenWidth : screenWidth - 24;
   var width = full < maxWidth ? full : maxWidth;
   if (width < 0) width = 0;
   if (anchorEnd == null || screenWidth <= 0) {
@@ -501,7 +506,10 @@ class _ScrimHolePainter extends CustomPainter {
     var scrim = Path()..addRect(Offset.zero & size);
     final rect = sourceRect;
     if (rect != null) {
-      final cutout = sourceShape.getOuterPath(rect, textDirection: textDirection);
+      final cutout = sourceShape.getOuterPath(
+        rect,
+        textDirection: textDirection,
+      );
       scrim = Path.combine(PathOperation.difference, scrim, cutout);
     }
     canvas.drawPath(

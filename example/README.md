@@ -8,7 +8,7 @@ standalone demo (sheet, page, or camera host). Locale + light/dark toggles.
 No `mobile_scanner`, Riverpod, or `easy_localization`. Profile name/email
 go through catalog keys; emails stay LTR in Arabic via `catalogIsolateLabel`.
 
-Live: [zyzto.github.io/Safaeh](https://zyzto.github.io/Safaeh/)
+Live: [shenepoy.github.io/Safaeh](https://shenepoy.github.io/Safaeh/)
 
 `web/` is in-tree for GitHub Pages. A green [CI](../.github/workflows/ci.yml)
 run on `main` builds `example/` (`flutter build web --release --base-href /Safaeh/`)

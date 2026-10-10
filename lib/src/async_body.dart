@@ -37,7 +37,7 @@ class SafaehAsyncBody extends StatelessWidget {
   final WidgetBuilder data;
   final WidgetBuilder? loading;
   final Widget Function(BuildContext context, Object error, StackTrace? stack)?
-      errorBuilder;
+  errorBuilder;
   final WidgetBuilder? empty;
 
   @override
@@ -47,10 +47,7 @@ class SafaehAsyncBody extends StatelessWidget {
     }
     if (error != null) {
       return errorBuilder?.call(context, error!, stackTrace) ??
-          SafaehErrorBody(
-            title: error.toString(),
-            message: error.toString(),
-          );
+          SafaehErrorBody(title: error.toString(), message: error.toString());
     }
     if (isEmpty && empty != null) {
       return empty!(context);

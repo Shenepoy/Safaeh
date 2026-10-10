@@ -30,16 +30,16 @@ class SafaehSectionHeader extends StatelessWidget {
           theme.colorScheme,
           subtle: context.safaehSubtleAccents,
         );
-    final labelStyle = (compact
-            ? theme.textTheme.labelMedium
-            : theme.textTheme.titleSmall)
-        ?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: labelColor ??
-              (compact
-                  ? theme.colorScheme.onSurfaceVariant
-                  : theme.colorScheme.onSurface),
-        );
+    final labelStyle =
+        (compact ? theme.textTheme.labelMedium : theme.textTheme.titleSmall)
+            ?.copyWith(
+              fontWeight: FontWeight.w700,
+              color:
+                  labelColor ??
+                  (compact
+                      ? theme.colorScheme.onSurfaceVariant
+                      : theme.colorScheme.onSurface),
+            );
     return Row(
       crossAxisAlignment: subtitle == null
           ? CrossAxisAlignment.center

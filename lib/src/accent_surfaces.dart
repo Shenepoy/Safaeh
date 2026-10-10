@@ -39,8 +39,7 @@ abstract final class SafaehAccentSurfaces {
     BuildContext? context,
   }) {
     final resolved =
-        radius ??
-        (context != null ? SafaehTheme.of(context).radius : 16);
+        radius ?? (context != null ? SafaehTheme.of(context).radius : 16);
     return BoxDecoration(
       color: colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(resolved),
@@ -60,8 +59,7 @@ abstract final class SafaehAccentSurfaces {
     BuildContext? context,
   }) {
     final resolved =
-        radius ??
-        (context != null ? SafaehTheme.of(context).radius : 16);
+        radius ?? (context != null ? SafaehTheme.of(context).radius : 16);
     if (subtle) {
       return flatPanel(colorScheme, radius: resolved, context: context);
     }
@@ -102,7 +100,10 @@ abstract final class SafaehAccentSurfaces {
 }
 
 /// Applies [SafaehAccentStyle] without dropping other theme extensions.
-ThemeData withSafaehAccentStyle(ThemeData theme, {required bool subtleAccents}) {
+ThemeData withSafaehAccentStyle(
+  ThemeData theme, {
+  required bool subtleAccents,
+}) {
   final exts = List<ThemeExtension<dynamic>>.from(
     theme.extensions.values.where((e) => e is! SafaehAccentStyle),
   )..add(SafaehAccentStyle(subtleAccents: subtleAccents));

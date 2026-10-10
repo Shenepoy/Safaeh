@@ -66,7 +66,7 @@ Optional `VERSION` file, if present, must match pubspec.
 
 | Workflow | Trigger | What it does |
 |----------|---------|----------------|
-| [CI](.github/workflows/ci.yml) | push/PR to `main`, or **Run workflow** | version check, `dart analyze --fatal-infos`, `flutter test --coverage`, example analyze + test, `widgets_to_image` captures. On `main` (not PRs) a green run then builds `example/` web and deploys [zyzto.github.io/Safaeh](https://zyzto.github.io/Safaeh/) |
+| [CI](.github/workflows/ci.yml) | push/PR to `main`, or **Run workflow** | version check, `dart analyze --fatal-infos`, `flutter test --coverage`, example analyze + test, `widgets_to_image` captures. On `main` (not PRs) a green run then builds `example/` web and deploys [shenepoy.github.io/Safaeh](https://shenepoy.github.io/Safaeh/) |
 | [Release](.github/workflows/release.yml) | tag `v*.*.*` | tag↔pubspec check, CHANGELOG check, tests, GitHub Release, pub.dev publish |
 
 `scripts/check_version.sh` verifies pubspec semver, a matching CHANGELOG

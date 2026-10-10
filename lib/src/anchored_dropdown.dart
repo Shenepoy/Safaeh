@@ -171,6 +171,7 @@ class _SafaehAnchoredDropdownChipState<T>
             controller.open();
           }
         }
+
         if (widget.iconOnly) {
           return Tooltip(
             message: widget.label,

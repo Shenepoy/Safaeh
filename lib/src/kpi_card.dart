@@ -47,7 +47,9 @@ class SafaehKpiCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style:
-                (flat ? theme.textTheme.labelSmall : theme.textTheme.labelMedium)
+                (flat
+                        ? theme.textTheme.labelSmall
+                        : theme.textTheme.labelMedium)
                     ?.copyWith(
                       color: cs.onSurfaceVariant,
                       fontWeight: FontWeight.w600,

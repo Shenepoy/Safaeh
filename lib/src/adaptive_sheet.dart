@@ -1245,7 +1245,8 @@ class _TopPinnedAlign extends SingleChildRenderObjectWidget {
   const _TopPinnedAlign({required Widget child}) : super(child: child);
 
   @override
-  RenderObject createRenderObject(BuildContext context) => _RenderTopPinnedAlign();
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderTopPinnedAlign();
 }
 
 class _RenderTopPinnedAlign extends RenderShiftedBox {

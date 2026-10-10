@@ -96,7 +96,7 @@ void main() {
     await _capture(
       tester,
       name: 'option-tiles',
-      size: const Size(390, 300),
+      size: const Size(390, 400),
       child: OptionTilesDemo(t: _t),
     );
   });

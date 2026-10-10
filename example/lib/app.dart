@@ -136,24 +136,24 @@ class _SafaehExampleAppState extends State<SafaehExampleApp> {
               child: CatalogFeedbackInset(
                 notifier: _feedbackInset,
                 child: ThemeRippleHost(
-                overlay: CatalogAppearanceToggles(
-                  localeCode: _locale,
-                  themeMode: _themeMode,
-                  floatingStyle: _floatingStyle,
-                  onSelectLocale: (code) => setState(() => _locale = code),
-                  onToggleTheme: () => setState(() {
-                    _themeMode = _themeMode == ThemeMode.dark
-                        ? ThemeMode.light
-                        : ThemeMode.dark;
-                  }),
-                  onCycleFloatingStyle: () => setState(() {
-                    final styles = SafaehFloatingSurfaceStyle.values;
-                    _floatingStyle =
-                        styles[(styles.indexOf(_floatingStyle) + 1) %
-                            styles.length];
-                  }),
-                ),
-                child: child ?? const SizedBox.shrink(),
+                  overlay: CatalogAppearanceToggles(
+                    localeCode: _locale,
+                    themeMode: _themeMode,
+                    floatingStyle: _floatingStyle,
+                    onSelectLocale: (code) => setState(() => _locale = code),
+                    onToggleTheme: () => setState(() {
+                      _themeMode = _themeMode == ThemeMode.dark
+                          ? ThemeMode.light
+                          : ThemeMode.dark;
+                    }),
+                    onCycleFloatingStyle: () => setState(() {
+                      final styles = SafaehFloatingSurfaceStyle.values;
+                      _floatingStyle =
+                          styles[(styles.indexOf(_floatingStyle) + 1) %
+                              styles.length];
+                    }),
+                  ),
+                  child: child ?? const SizedBox.shrink(),
                 ),
               ),
             ),

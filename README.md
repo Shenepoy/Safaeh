@@ -17,7 +17,7 @@ authentication-service dependency. Onboarding and auth widgets receive state
 and callbacks from the host application.
 
 <p align="center">
-  <a href="https://zyzto.github.io/Safaeh/"><img alt="Live demo" src="https://img.shields.io/badge/live%20demo-zyzto.github.io%2FSafaeh-8B6914?style=for-the-badge" /></a>
+  <a href="https://shenepoy.github.io/Safaeh/"><img alt="Live demo" src="https://img.shields.io/badge/live%20demo-shenepoy.github.io%2FSafaeh-8B6914?style=for-the-badge" /></a>
 </p>
 
 <p align="center">
@@ -28,13 +28,13 @@ and callbacks from the host application.
 </p>
 
 <p align="center">
-  <strong><a href="https://zyzto.github.io/Safaeh/">Live demo</a></strong>
+  <strong><a href="https://shenepoy.github.io/Safaeh/">Live demo</a></strong>
   — open the example catalog in the browser<br/>
-  <a href="https://zyzto.github.io/Safaeh/">zyzto.github.io/Safaeh</a>
+  <a href="https://shenepoy.github.io/Safaeh/">shenepoy.github.io/Safaeh</a>
 </p>
 
 <p align="center">
-  <a href="https://zyzto.github.io/Safaeh/">Live demo</a> ·
+  <a href="https://shenepoy.github.io/Safaeh/">Live demo</a> ·
   <a href="#install">Install</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#widgets">Widgets</a> ·
@@ -76,7 +76,7 @@ On pub.dev: [`safaeh`](https://pub.dev/packages/safaeh) · Repo: [Zyzto/Safaeh](
 ## Widgets
 
 <p align="center">
-  <a href="https://zyzto.github.io/Safaeh/">
+  <a href="https://shenepoy.github.io/Safaeh/">
     <img src="screenshots/picker.png" alt="Card picker — live demo" width="200" />
     <img src="screenshots/confirm.png" alt="Confirm sheet — live demo" width="200" />
     <img src="screenshots/option-tiles.png" alt="Option tiles — live demo" width="200" />
@@ -84,17 +84,17 @@ On pub.dev: [`safaeh`](https://pub.dev/packages/safaeh) · Repo: [Zyzto/Safaeh](
 </p>
 
 <p align="center">
-  <sub>Card picker · Confirm · Option tiles — <a href="https://zyzto.github.io/Safaeh/">try them in the live demo</a></sub>
+  <sub>Card picker · Confirm · Option tiles — <a href="https://shenepoy.github.io/Safaeh/">try them in the live demo</a></sub>
 </p>
 
 <p align="center">
-  <a href="https://zyzto.github.io/Safaeh/">
+  <a href="https://shenepoy.github.io/Safaeh/">
     <img src="screenshots/sidenav.png" alt="Sidenav rail — live demo" width="320" />
   </a>
 </p>
 
 <p align="center">
-  <a href="https://zyzto.github.io/Safaeh/">
+  <a href="https://shenepoy.github.io/Safaeh/">
     <img src="screenshots/empty-state.png" alt="Empty state — live demo" width="160" />
     <img src="screenshots/inline-banner.png" alt="Inline banner — live demo" width="160" />
     <img src="screenshots/kpi-card.png" alt="KPI card — live demo" width="160" />
@@ -103,7 +103,7 @@ On pub.dev: [`safaeh`](https://pub.dev/packages/safaeh) · Repo: [Zyzto/Safaeh](
 </p>
 
 <p align="center">
-  <sub>Empty state · Inline banner · KPI · Async / error — <a href="https://zyzto.github.io/Safaeh/">try them in the live demo</a></sub>
+  <sub>Empty state · Inline banner · KPI · Async / error — <a href="https://shenepoy.github.io/Safaeh/">try them in the live demo</a></sub>
 </p>
 
 Captured with [`widgets_to_image`](https://pub.dev/packages/widgets_to_image) (`cd example && flutter test test/widget_images_test.dart`).
@@ -651,7 +651,7 @@ Keep `mobile_scanner` in the app.
 
 ## Example
 
-**[Live demo — zyzto.github.io/Safaeh](https://zyzto.github.io/Safaeh/)**
+**[Live demo — shenepoy.github.io/Safaeh](https://shenepoy.github.io/Safaeh/)**
 
 The hosted catalog is the `example/` web build. CI deploys it after tests pass
 on `main`.

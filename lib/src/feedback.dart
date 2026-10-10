@@ -114,11 +114,8 @@ class _SafaehFeedbackHostState extends State<SafaehFeedbackHost> {
         marginBuilder: (context, alignment) {
           final y = alignment.resolve(Directionality.of(context)).y;
           if (y >= 0.5) {
-            final extraBottom =
-                (widget.bottomInsetBuilder?.call(context) ?? 0).clamp(
-                  0.0,
-                  double.infinity,
-                );
+            final extraBottom = (widget.bottomInsetBuilder?.call(context) ?? 0)
+                .clamp(0.0, double.infinity);
             final start = (widget.startInsetBuilder?.call(context) ?? 0).clamp(
               0.0,
               double.infinity,
@@ -146,6 +143,9 @@ class _SafaehFeedbackHostState extends State<SafaehFeedbackHost> {
 }
 
 /// Shared feedback surface used by the built-in and custom message APIs.
+///
+/// Stays one slim row; grows only when [child] wraps. A [TextButton] passed
+/// as [trailing] is compacted and tinted with the type accent.
 class SafaehFeedbackSurface extends StatelessWidget {
   const SafaehFeedbackSurface({
     super.key,
@@ -153,8 +153,9 @@ class SafaehFeedbackSurface extends StatelessWidget {
     required this.child,
     this.icon,
     this.trailing,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    this.borderRadius = const BorderRadius.all(Radius.circular(12)),
+    this.padding = const EdgeInsetsDirectional.fromSTEB(10, 8, 12, 8),
+    this.borderRadius = const BorderRadius.all(Radius.circular(16)),
+    this.elevation = 4,
   });
 
   final SafaehFeedbackType type;
@@ -163,47 +164,82 @@ class SafaehFeedbackSurface extends StatelessWidget {
   final Widget? trailing;
   final EdgeInsetsGeometry padding;
   final BorderRadiusGeometry borderRadius;
+  final double elevation;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final (background, foreground, defaultIcon) = switch (type) {
-      SafaehFeedbackType.info => (
-        colors.surfaceContainerHigh,
-        colors.onSurface,
-        Icons.info_outline,
-      ),
+    final (accent, defaultIcon) = switch (type) {
+      SafaehFeedbackType.info => (colors.primary, Icons.info_outline),
       SafaehFeedbackType.success => (
-        colors.primaryContainer,
-        colors.onPrimaryContainer,
+        colors.primary,
         Icons.check_circle_outline,
       ),
-      SafaehFeedbackType.error => (
-        colors.errorContainer,
-        colors.onErrorContainer,
-        Icons.error_outline,
-      ),
+      SafaehFeedbackType.error => (colors.error, Icons.error_outline),
     };
+    final badge = type == SafaehFeedbackType.error
+        ? colors.errorContainer
+        : colors.primaryContainer;
+    final onBadge = type == SafaehFeedbackType.error
+        ? colors.onErrorContainer
+        : colors.onPrimaryContainer;
 
     return Material(
-      color: background,
-      borderRadius: borderRadius,
+      color: colors.surfaceContainerHigh,
+      surfaceTintColor: Colors.transparent,
+      elevation: elevation,
+      shadowColor: colors.shadow.withValues(alpha: 0.25),
       clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: borderRadius,
+        side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.6)),
+      ),
       child: Padding(
         padding: padding,
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon ?? defaultIcon, size: 24, color: foreground),
-            const SizedBox(width: 12),
-            Expanded(
-              child: DefaultTextStyle(
-                style: theme.textTheme.bodyMedium!.copyWith(color: foreground),
-                child: child,
+            DecoratedBox(
+              decoration: BoxDecoration(color: badge, shape: BoxShape.circle),
+              child: SizedBox.square(
+                dimension: 28,
+                child: Icon(icon ?? defaultIcon, size: 18, color: onBadge),
               ),
             ),
-            if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+            const SizedBox(width: 10),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: DefaultTextStyle(
+                  style: theme.textTheme.bodyMedium!.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w500,
+                    height: 1.3,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  child: child,
+                ),
+              ),
+            ),
+            if (trailing != null) ...[
+              const SizedBox(width: 6),
+              TextButtonTheme(
+                data: TextButtonThemeData(
+                  style: TextButton.styleFrom(
+                    foregroundColor: accent,
+                    minimumSize: const Size(0, 28),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                    textStyle: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                child: trailing!,
+              ),
+            ],
           ],
         ),
       ),
@@ -222,11 +258,8 @@ extension SafaehFeedbackContext on BuildContext {
   }) {
     showSafaehCustomFeedback(
       duration: duration,
-      builder: (context, _) => SafaehFeedbackSurface(
-        type: type,
-        icon: icon,
-        child: Text(message, maxLines: 3, overflow: TextOverflow.ellipsis),
-      ),
+      builder: (context, _) =>
+          SafaehFeedbackSurface(type: type, icon: icon, child: Text(message)),
     );
   }
 
@@ -251,7 +284,7 @@ extension SafaehFeedbackContext on BuildContext {
           },
           child: Text(actionLabel),
         ),
-        child: Text(message, maxLines: 3, overflow: TextOverflow.ellipsis),
+        child: Text(message),
       ),
     );
   }
@@ -269,8 +302,10 @@ extension SafaehFeedbackContext on BuildContext {
       context: this,
       overlayState: Navigator.maybeOf(this, rootNavigator: true)?.overlay,
       autoCloseDuration: duration,
-      builder: (context, holder) =>
-          builder(context, () => toastification.dismiss(holder)),
+      builder: (context, holder) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: builder(context, () => toastification.dismiss(holder)),
+      ),
     );
   }
 

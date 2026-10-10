@@ -20,6 +20,86 @@ const double kCatalogColumnGap = 20;
 const double kCatalogRowGap = 28;
 const EdgeInsets kCatalogGalleryPadding = EdgeInsets.fromLTRB(20, 12, 20, 40);
 
+/// Gallery sections in display order. Items missing here land in the last
+/// section so new catalog entries never disappear.
+const catalogGroups = <(String, List<String>)>[
+  (
+    'group_sheets',
+    [
+      'sheet',
+      'picker',
+      'tile_picker',
+      'multi_picker',
+      'confirm',
+      'text_input',
+      'sheet_shell',
+      'sheet_morph',
+      'sheet_padding',
+      'dialog',
+    ],
+  ),
+  ('group_controls', ['option_tiles', 'anchored_popout', 'swatch']),
+  (
+    'group_feedback',
+    ['feedback', 'status_body', 'empty_state', 'inline_banner', 'async_error'],
+  ),
+  (
+    'group_display',
+    [
+      'kpi_card',
+      'meta_chip',
+      'glyph_avatar',
+      'bordered_list',
+      'section_header',
+      'user_text',
+      'accent_surfaces',
+      'material_chrome',
+    ],
+  ),
+  (
+    'group_navigation',
+    [
+      'sidenav',
+      'sidenav_drawer',
+      'sidenav_overlay',
+      'floating_nav',
+      'floating_surface',
+      'page_index',
+      'page_index_overlay',
+    ],
+  ),
+  (
+    'group_layout',
+    ['content_band', 'end_aside', 'aligned_chrome', 'morphing_app_bar'],
+  ),
+  ('group_camera', ['camera', 'qr_overlay', 'qr_message']),
+  ('group_onboarding', ['onboarding_designs']),
+  ('group_tools', ['debug_menu', 'l10n_editor']),
+];
+
+/// Demos that need room span two columns when the band has them.
+const catalogWideItems = {
+  'sidenav',
+  'sidenav_drawer',
+  'sidenav_overlay',
+  'floating_surface',
+  'page_index',
+  'onboarding_designs',
+};
+
+List<(String, List<CatalogItem>)> catalogSections() {
+  final byId = {for (final item in catalogItems) item.id: item};
+  final sections = [
+    for (final (key, ids) in catalogGroups)
+      (key, [for (final id in ids) ?byId.remove(id)]),
+  ];
+  if (byId.isNotEmpty) sections.last.$2.addAll(byId.values);
+  return [
+    for (final s in sections)
+      if (s.$2.isNotEmpty) s,
+  ];
+}
+
 int catalogColumnCount(double bandWidth) {
   if (!bandWidth.isFinite || bandWidth <= 0) return 1;
   return math.max(1, bandWidth ~/ kCatalogMinColumnWidth);
@@ -52,36 +132,49 @@ class CatalogGalleryState extends State<CatalogGallery> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = catalogColumnCount(constraints.maxWidth);
-        final rows = (catalogItems.length / columns).ceil();
+        final inner = constraints.maxWidth - kCatalogGalleryPadding.horizontal;
+        final unit = (inner - (columns - 1) * kCatalogColumnGap) / columns;
+        double spanWidth(int span) =>
+            span * unit + (span - 1) * kCatalogColumnGap;
+        final entries = <Widget>[];
+        final sections = catalogSections();
+        for (var s = 0; s < sections.length; s++) {
+          final (titleKey, items) = sections[s];
+          entries.add(
+            _GroupHeader(
+              key: ValueKey('catalog_group_$titleKey'),
+              title: t(titleKey),
+              count: items.length,
+              first: s == 0,
+            ),
+          );
+          for (final row in _packRows(items, columns)) {
+            entries.add(
+              Padding(
+                padding: const EdgeInsets.only(bottom: kCatalogRowGap),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var i = 0; i < row.length; i++) ...[
+                      if (i > 0) const SizedBox(width: kCatalogColumnGap),
+                      SizedBox(
+                        width: spanWidth(row[i].$2),
+                        child: _section(context, row[i].$1, t),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          }
+        }
         return CustomScrollView(
           key: const ValueKey('catalog_gallery'),
           controller: controller,
           slivers: [
             SliverPadding(
               padding: kCatalogGalleryPadding,
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate((context, rowIndex) {
-                  final start = rowIndex * columns;
-                  return Padding(
-                    padding: EdgeInsets.only(
-                      bottom: rowIndex == rows - 1 ? 0 : kCatalogRowGap,
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        for (var c = 0; c < columns; c++) ...[
-                          if (c > 0) const SizedBox(width: kCatalogColumnGap),
-                          Expanded(
-                            child: start + c < catalogItems.length
-                                ? _section(context, catalogItems[start + c], t)
-                                : const SizedBox.shrink(),
-                          ),
-                        ],
-                      ],
-                    ),
-                  );
-                }, childCount: rows),
-              ),
+              sliver: SliverList(delegate: SliverChildListDelegate(entries)),
             ),
           ],
         );
@@ -114,6 +207,93 @@ class CatalogGalleryState extends State<CatalogGallery> {
   }
 }
 
+/// Fills rows start-first. A hole left by a wide item is backfilled with the
+/// next narrow item in the section; otherwise the row's last item stretches.
+List<List<(CatalogItem, int)>> _packRows(List<CatalogItem> items, int columns) {
+  int spanOf(CatalogItem item) =>
+      catalogWideItems.contains(item.id) ? math.min(2, columns) : 1;
+  final pending = [...items];
+  final rows = <List<(CatalogItem, int)>>[];
+  while (pending.isNotEmpty) {
+    final row = <(CatalogItem, int)>[];
+    var used = 0;
+    while (used < columns) {
+      final free = columns - used;
+      final index = pending.indexWhere((item) => spanOf(item) <= free);
+      if (index < 0) break;
+      final item = pending.removeAt(index);
+      row.add((item, spanOf(item)));
+      used += spanOf(item);
+    }
+    if (used < columns) {
+      final (last, span) = row.removeLast();
+      row.add((last, span + columns - used));
+    }
+    rows.add(row);
+  }
+  return rows;
+}
+
+class _GroupHeader extends StatelessWidget {
+  const _GroupHeader({
+    super.key,
+    required this.title,
+    required this.count,
+    required this.first,
+  });
+
+  final String title;
+  final int count;
+  final bool first;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(4, first ? 4 : 16, 4, 16),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 22,
+            decoration: BoxDecoration(
+              color: cs.primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(width: 10),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: cs.secondaryContainer,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              child: Text(
+                '$count',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: cs.onSecondaryContainer,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Divider(color: cs.outlineVariant)),
+        ],
+      ),
+    );
+  }
+}
+
 class GallerySection extends StatelessWidget {
   const GallerySection({
     super.key,
@@ -140,86 +320,112 @@ class GallerySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: cs.outlineVariant),
+        boxShadow: [
+          BoxShadow(
+            color: cs.shadow.withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 8, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: Semantics(
-                key: titleKey,
-                button: true,
-                label: title,
-                excludeSemantics: true,
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: onOpen,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(4, 6, 4, 6),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              title,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
+            Row(
+              children: [
+                Expanded(
+                  child: Semantics(
+                    key: titleKey,
+                    button: true,
+                    label: title,
+                    excludeSemantics: true,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: onOpen,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 6, 4, 6),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
                               ),
-                            ),
+                              Icon(
+                                safaehChevronEnd(context),
+                                color: cs.onSurfaceVariant,
+                              ),
+                            ],
                           ),
-                          Icon(
-                            safaehChevronEnd(context),
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 44,
+                    minHeight: 44,
+                  ),
+                  child: IconButton(
+                    key: phoneKey,
+                    tooltip: phoneLabel,
+                    onPressed: onPhonePreview,
+                    icon: Icon(
+                      Icons.smartphone_outlined,
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-              child: IconButton(
-                key: phoneKey,
-                tooltip: phoneLabel,
-                onPressed: onPhonePreview,
-                icon: Icon(
-                  Icons.smartphone_outlined,
-                  color: cs.onSurfaceVariant,
+            if (subtitle != null) ...[
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  subtitle!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 4),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: cs.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: cs.outlineVariant),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: child,
+                  ),
                 ),
               ),
             ),
           ],
         ),
-        if (subtitle != null) ...[
-          const SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(
-              subtitle!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-                height: 1.35,
-              ),
-            ),
-          ),
-        ],
-        const SizedBox(height: 14),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cs.outline),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(padding: const EdgeInsets.all(12), child: child),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -320,7 +526,7 @@ Widget galleryPreview(String id, String Function(String key) t) {
         child: _galleryConstrainedMedia(child: QrMessageDemo(t: t)),
       );
     case 'onboarding_designs':
-      return const SizedBox(height: 520, child: OnboardingDesignDemo());
+      return SizedBox(height: 520, child: OnboardingDesignDemo(t: t));
     default:
       return const SizedBox.shrink();
   }

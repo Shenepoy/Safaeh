@@ -113,10 +113,11 @@ class SafaehInlineBanner extends StatelessWidget {
                   children: [
                     Text(
                       message,
-                      style: (fullBleed
-                              ? theme.textTheme.bodyMedium
-                              : theme.textTheme.bodySmall)
-                          ?.copyWith(color: foreground),
+                      style:
+                          (fullBleed
+                                  ? theme.textTheme.bodyMedium
+                                  : theme.textTheme.bodySmall)
+                              ?.copyWith(color: foreground),
                     ),
                     if (detail != null) ...[
                       const SizedBox(height: 4),

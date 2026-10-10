@@ -400,7 +400,18 @@ class DebugMenuDemo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Text(t('debug_menu_sub')),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(t('debug_menu_sub'), textAlign: TextAlign.center),
+          const SizedBox(height: 12),
+          SafaehDebugMenuFab(
+            key: const ValueKey('debug_menu_demo_open'),
+            tooltip: t('debug_menu'),
+            onOpen: () => openExampleDebugMenu(context, t),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -416,7 +427,7 @@ Future<void> openExampleDebugMenu(
     identity: SafaehDebugIdentityCard(
       title: t('app_title'),
       package: 'safaeh',
-      version: '0.8.2',
+      version: '0.10.0',
     ),
     statusMessage: t('chrome_ready'),
     sections: [
@@ -590,18 +601,8 @@ class _FeedbackDemoState extends State<FeedbackDemo> {
       builder: (context, dismiss) => SafaehFeedbackSurface(
         type: SafaehFeedbackType.info,
         icon: Icons.auto_awesome_outlined,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(t('feedback_custom_message')),
-            const SizedBox(height: 8),
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: TextButton(onPressed: dismiss, child: Text(t('close'))),
-            ),
-          ],
-        ),
+        trailing: TextButton(onPressed: dismiss, child: Text(t('close'))),
+        child: Text(t('feedback_custom_message')),
       ),
     );
   }
@@ -764,7 +765,8 @@ class TextInputChoicesDemo extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         FilledButton(
-          onPressed: () => _open(context, title: t('tag_name'), hint: t('work')),
+          onPressed: () =>
+              _open(context, title: t('tag_name'), hint: t('work')),
           child: Text(t('tag_name')),
         ),
         const SizedBox(height: 12),
@@ -1082,14 +1084,19 @@ class _SidenavRailDemoState extends State<SidenavRailDemo> {
   bool? _collapsedOverride;
   var _index = 0;
 
-  bool _collapsedFor(BuildContext context) {
-    return _collapsedOverride ?? !SafaehTheme.of(context).isWide(context);
-  }
-
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) => _buildRail(
+        context,
+        _collapsedOverride ??
+            constraints.maxWidth < SafaehTheme.of(context).tabletBreakpoint,
+      ),
+    );
+  }
+
+  Widget _buildRail(BuildContext context, bool collapsed) {
     final t = widget.t;
-    final collapsed = _collapsedFor(context);
     return Row(
       children: [
         SafaehSidenav(
@@ -1144,6 +1151,7 @@ class SidenavDrawerDemo extends StatefulWidget {
 
 class _SidenavDrawerDemoState extends State<SidenavDrawerDemo> {
   var _index = 0;
+  var _open = true;
 
   @override
   Widget build(BuildContext context) {
@@ -1153,7 +1161,10 @@ class _SidenavDrawerDemoState extends State<SidenavDrawerDemo> {
       asDrawer: true,
       title: t('app_title'),
       selectedIndex: _index,
-      onDestinationSelected: (i) => setState(() => _index = i),
+      onDestinationSelected: (i) => setState(() {
+        _index = i;
+        _open = false;
+      }),
       destinations: [
         SafaehSidenavDestination(
           label: t('groups'),
@@ -1182,23 +1193,59 @@ class _SidenavDrawerDemoState extends State<SidenavDrawerDemo> {
           children: [
             ColoredBox(
               color: cs.surface,
-              child: const Align(
-                alignment: AlignmentDirectional.topStart,
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Icon(Icons.menu),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: IconButton(
+                      key: const ValueKey('drawer_demo_menu'),
+                      tooltip: t('expand'),
+                      onPressed: () => setState(() => _open = true),
+                      icon: const Icon(Icons.menu),
+                    ),
+                  ),
+                  Expanded(
+                    child: _DemoPage(
+                      title: _index == 0 ? t('groups') : t('settings'),
+                      body: t('sidenav_drawer_sub'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IgnorePointer(
+              ignoring: !_open,
+              child: GestureDetector(
+                key: const ValueKey('drawer_demo_scrim'),
+                onTap: () => setState(() => _open = false),
+                child: AnimatedOpacity(
+                  opacity: _open ? 1 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: const ColoredBox(color: Color(0x52000000)),
                 ),
               ),
             ),
-            const ColoredBox(color: Color(0x52000000)),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: SizedBox(
-                width: panelW,
-                child: Material(
-                  elevation: 8,
-                  color: cs.surfaceContainerLow,
-                  child: drawer,
+            AnimatedSlide(
+              offset: Offset(
+                _open
+                    ? 0
+                    : (Directionality.of(context) == TextDirection.rtl
+                          ? 1.1
+                          : -1.1),
+                0,
+              ),
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: SizedBox(
+                  width: panelW,
+                  child: Material(
+                    elevation: 8,
+                    color: cs.surfaceContainerLow,
+                    child: drawer,
+                  ),
                 ),
               ),
             ),
@@ -2211,7 +2258,8 @@ class AnchoredPopoutDemo extends StatelessWidget {
     final first = MaterialLocalizations.of(context).firstDayOfWeekIndex;
     return List<String>.generate(7, (i) {
       final weekday = DateTime.utc(2023, 1, 1 + ((first + i) % 7));
-      return MaterialLocalizations.of(context).narrowWeekdays[weekday.weekday % 7];
+      return MaterialLocalizations.of(context).narrowWeekdays[weekday.weekday %
+          7];
     });
   }
 
@@ -2276,10 +2324,16 @@ class AnchoredPopoutDemo extends StatelessWidget {
                   month: DateTime(now.year, now.month),
                   firstDate: DateTime(now.year - 1),
                   lastDate: DateTime(now.year + 1, 12, 31),
-                  monthLabel: MaterialLocalizations.of(context).formatMonthYear(now),
+                  monthLabel: MaterialLocalizations.of(
+                    context,
+                  ).formatMonthYear(now),
                   weekdayLabels: _weekdays(context),
-                  previousTooltip: MaterialLocalizations.of(context).previousMonthTooltip,
-                  nextTooltip: MaterialLocalizations.of(context).nextMonthTooltip,
+                  previousTooltip: MaterialLocalizations.of(
+                    context,
+                  ).previousMonthTooltip,
+                  nextTooltip: MaterialLocalizations.of(
+                    context,
+                  ).nextMonthTooltip,
                   onPreviousMonth: () {},
                   onNextMonth: () {},
                   onDayTap: (_) => Navigator.of(context).maybePop(),
@@ -2349,9 +2403,15 @@ class CatalogDemoPage extends StatelessWidget {
         actions: const [SizedBox(width: 148)],
       ),
       body: padBody
-          ? Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              child: child,
+          ? Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                  child: child,
+                ),
+              ),
             )
           : child,
     );
@@ -2403,7 +2463,7 @@ Widget _catalogPageBody(String id, String Function(String key) t) {
     case 'sheet_padding':
       return SheetPaddingDemo(t: t);
     case 'onboarding_designs':
-      return const OnboardingDesignDemo();
+      return OnboardingDesignDemo(t: t);
     case 'sidenav':
       return SidenavRailDemo(t: t);
     case 'sidenav_drawer':
@@ -2543,11 +2603,7 @@ Future<void> openCatalogItem(
         isDestructive: true,
       );
     case 'text_input':
-      await _pushDemo(
-        context,
-        t('text_input'),
-        TextInputChoicesDemo(t: t),
-      );
+      await _pushDemo(context, t('text_input'), TextInputChoicesDemo(t: t));
     case 'sheet_shell':
       await showSafaeh<void>(
         context: context,

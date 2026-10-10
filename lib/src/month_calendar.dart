@@ -172,7 +172,8 @@ class _DayCell extends StatelessWidget {
     final scheme = theme.colorScheme;
     final day = _dateOnly(date);
     final enabled =
-        !day.isBefore(_dateOnly(firstDate)) && !day.isAfter(_dateOnly(lastDate));
+        !day.isBefore(_dateOnly(firstDate)) &&
+        !day.isAfter(_dateOnly(lastDate));
     final isStart = start != null && _sameDay(day, start!);
     final isEnd = end != null && _sameDay(day, end!);
     final inRange =
@@ -221,9 +222,7 @@ class _DayCell extends StatelessWidget {
                       : edge
                       ? scheme.onPrimary
                       : scheme.onSurface,
-                  fontWeight: edge || today
-                      ? FontWeight.w700
-                      : FontWeight.w500,
+                  fontWeight: edge || today ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
             ),

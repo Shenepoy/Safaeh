@@ -32,8 +32,39 @@
 
   <title>Safaeh — صفائح</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    html, body { margin: 0; height: 100%; background: #FFF8F0; }
+    @media (prefers-color-scheme: dark) {
+      html, body { background: #16130F; }
+      #splash { color: #F6EFE2; }
+    }
+    #splash {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 18px;
+      font: 600 18px system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: #1F1708; transition: opacity .3s ease;
+    }
+    #splash .ring {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 3px solid rgba(139, 105, 20, .25); border-top-color: #8B6914;
+      animation: spin .9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
+  <div id="splash" aria-live="polite">
+    <div class="ring"></div>
+    <div>Safaeh — صفائح</div>
+  </div>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var s = document.getElementById('splash');
+      if (!s) return;
+      s.style.opacity = '0';
+      setTimeout(function () { s.remove(); }, 300);
+    });
+  </script>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader

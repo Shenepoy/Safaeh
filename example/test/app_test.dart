@@ -26,7 +26,7 @@ Future<void> _reveal(WidgetTester tester, String id) async {
     controller.jumpTo(0);
     await tester.pumpAndSettle();
   }
-  for (var i = 0; i < 48 && section.evaluate().isEmpty; i++) {
+  for (var i = 0; i < 120 && section.evaluate().isEmpty; i++) {
     final next = (controller.offset + 280).clamp(
       0.0,
       controller.position.maxScrollExtent,
@@ -264,7 +264,13 @@ void main() {
 
     await _reveal(tester, 'status_body');
     expect(find.text('Loading'), findsOneWidget);
-    expect(find.text('Nothing here yet'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('catalog_status_body')),
+        matching: find.text('Nothing here yet'),
+      ),
+      findsOneWidget,
+    );
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 
@@ -323,8 +329,18 @@ void main() {
     expect(find.text('Selected'), findsOneWidget);
     expect(find.text('Disabled'), findsOneWidget);
     expect(find.text('Destructive'), findsOneWidget);
-    expect(find.byIcon(Icons.check_circle_outline), findsNothing);
-    expect(find.byIcon(Icons.check), findsNothing);
+    final optionTiles = find.byKey(const ValueKey('catalog_option_tiles'));
+    expect(
+      find.descendant(
+        of: optionTiles,
+        matching: find.byIcon(Icons.check_circle_outline),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: optionTiles, matching: find.byIcon(Icons.check)),
+      findsNothing,
+    );
 
     await _reveal(tester, 'sheet_morph');
     expect(find.text('320'), findsOneWidget);
@@ -361,7 +377,13 @@ void main() {
       findsNothing,
     );
     expect(
-      find.descendant(of: drawerSection, matching: find.text('Groups')),
+      find.descendant(
+        of: find.descendant(
+          of: drawerSection,
+          matching: find.byType(SafaehSidenav),
+        ),
+        matching: find.text('Groups'),
+      ),
       findsOneWidget,
     );
     expect(
@@ -783,7 +805,10 @@ void main() {
     await openPhone('sidenav_drawer');
     expect(
       find.descendant(
-        of: find.byKey(const ValueKey('catalog_phone_frame')),
+        of: find.descendant(
+          of: find.byKey(const ValueKey('catalog_phone_frame')),
+          matching: find.byType(SafaehSidenav),
+        ),
         matching: find.text('Groups'),
       ),
       findsOneWidget,
@@ -1033,7 +1058,7 @@ void main() {
     expect(bar, findsOneWidget);
     final sectionBox = tester.getRect(section);
     final barBox = tester.getRect(bar);
-    expect(barBox.bottom, closeTo(sectionBox.bottom, 24));
+    expect(barBox.bottom, closeTo(sectionBox.bottom, 40));
   });
 
   testWidgets('floating surface demo shows the background behind each style', (

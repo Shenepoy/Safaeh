@@ -54,10 +54,6 @@ class SafaehGlyphAvatar extends StatelessWidget {
         child: child,
       );
     }
-    return CircleAvatar(
-      radius: radius,
-      backgroundColor: bg,
-      child: child,
-    );
+    return CircleAvatar(radius: radius, backgroundColor: bg, child: child);
   }
 }

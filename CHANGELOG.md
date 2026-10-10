@@ -10,6 +10,23 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-10
+
+### Changed
+
+- `SafaehFeedbackSurface` is a slim raised card. The type color sits on a
+  round icon badge and the action, and the card grows to a second line only
+  when the message wraps. A trailing `TextButton` is compacted and tinted.
+  Stacked toasts keep an 8dp gap so their shadows don't land on each other.
+  `elevation` defaults to 4.
+- The example catalog groups widgets into sections and gives wide demos two
+  columns. Onboarding copy follows the catalog language.
+
+### Fixed
+
+- `safaehAnchoredCardPlacement` stays edge to edge when `maxWidth` is the
+  screen width or wider. A narrower card still keeps the 12dp gutter.
+
 ## [0.9.0] - 2026-10-10
 
 ### Added

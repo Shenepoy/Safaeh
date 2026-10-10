@@ -21,10 +21,7 @@ Widget buildSafaehSheetShell({
     child: SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       child: Padding(
-        padding: EdgeInsets.only(
-          top: 0,
-          bottom: showTitleInBody ? padding : 0,
-        ),
+        padding: EdgeInsets.only(top: 0, bottom: showTitleInBody ? padding : 0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

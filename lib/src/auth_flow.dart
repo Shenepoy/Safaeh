@@ -315,12 +315,12 @@ class _SafaehAuthFlowState extends State<SafaehAuthFlow> {
       child: AutofillGroup(
         onDisposeAction: AutofillContextAction.cancel,
         child: _AuthSurface(
-        design: widget.design,
-        brand: widget.brand,
-        title: widget.showTitle ? Text(_title) : null,
-        subtitle: _subtitle,
-        error: snapshot.errorMessage,
-        child: content,
+          design: widget.design,
+          brand: widget.brand,
+          title: widget.showTitle ? Text(_title) : null,
+          subtitle: _subtitle,
+          error: snapshot.errorMessage,
+          child: content,
         ),
       ),
     );
@@ -378,9 +378,7 @@ class _SafaehAuthFlowState extends State<SafaehAuthFlow> {
                       ? null
                       : () {
                           if (!_validateEmailOnly()) return;
-                          setState(
-                            () => _mode = SafaehAuthMode.resetPassword,
-                          );
+                          setState(() => _mode = SafaehAuthMode.resetPassword);
                         },
                   style: TextButton.styleFrom(
                     visualDensity: VisualDensity.compact,
@@ -592,7 +590,11 @@ class _SafaehAuthFlowState extends State<SafaehAuthFlow> {
       style: OutlinedButton.styleFrom(
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        backgroundColor: Color.lerp(cs.surface, cs.surfaceContainerHighest, 0.42),
+        backgroundColor: Color.lerp(
+          cs.surface,
+          cs.surfaceContainerHighest,
+          0.42,
+        ),
         side: BorderSide(color: cs.outline.withValues(alpha: 0.06)),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(_controlRadius),
@@ -603,15 +605,12 @@ class _SafaehAuthFlowState extends State<SafaehAuthFlow> {
           SizedBox(
             width: 20,
             height: 20,
-            child: Icon(
-              switch (provider) {
-                SafaehAuthProvider.google => Icons.g_mobiledata,
-                SafaehAuthProvider.github => Icons.code,
-                SafaehAuthProvider.apple => Icons.apple,
-                SafaehAuthProvider.other => Icons.login,
-              },
-              size: 20,
-            ),
+            child: Icon(switch (provider) {
+              SafaehAuthProvider.google => Icons.g_mobiledata,
+              SafaehAuthProvider.github => Icons.code,
+              SafaehAuthProvider.apple => Icons.apple,
+              SafaehAuthProvider.other => Icons.login,
+            }, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(

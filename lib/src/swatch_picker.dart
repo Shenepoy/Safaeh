@@ -95,7 +95,8 @@ class _Swatch extends StatelessWidget {
               ? Icon(
                   Icons.check,
                   size: size * 0.45,
-                  color: ThemeData.estimateBrightnessForColor(fill) ==
+                  color:
+                      ThemeData.estimateBrightnessForColor(fill) ==
                           Brightness.dark
                       ? Colors.white
                       : Colors.black,
