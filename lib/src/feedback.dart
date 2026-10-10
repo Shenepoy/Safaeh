@@ -23,7 +23,7 @@ typedef SafaehFeedbackBuilder =
 /// feedback survives route changes. [bottomInsetBuilder] is intentionally a
 /// callback rather than a dependency on a shell implementation: each app can
 /// connect its own bottom-navigation visibility state at this seam.
-class SafaehFeedbackHost extends StatelessWidget {
+class SafaehFeedbackHost extends StatefulWidget {
   const SafaehFeedbackHost({
     super.key,
     required this.child,
@@ -31,7 +31,10 @@ class SafaehFeedbackHost extends StatelessWidget {
     this.itemWidth = 400,
     this.itemWidthBuilder,
     this.bottomInsetBuilder,
+    this.startInsetBuilder,
+    this.endInsetBuilder,
     this.maxToastLimit = 10,
+    this.relayout,
   });
 
   final Widget child;
@@ -39,29 +42,105 @@ class SafaehFeedbackHost extends StatelessWidget {
   final double itemWidth;
   final double Function(BuildContext context)? itemWidthBuilder;
   final SafaehFeedbackInsetBuilder? bottomInsetBuilder;
+
+  /// Leading inset outside the toast width. Zero keeps the centered width.
+  final SafaehFeedbackInsetBuilder? startInsetBuilder;
+
+  /// Trailing inset outside the toast width. Zero keeps the centered width.
+  final SafaehFeedbackInsetBuilder? endInsetBuilder;
   final int maxToastLimit;
+
+  /// Rebuilds placement when shell chrome changes. Toastification keeps the
+  /// first config for an alignment, so an idle manager is dropped too.
+  final Listenable? relayout;
+
+  @override
+  State<SafaehFeedbackHost> createState() => _SafaehFeedbackHostState();
+}
+
+class _SafaehFeedbackHostState extends State<SafaehFeedbackHost> {
+  @override
+  void initState() {
+    super.initState();
+    widget.relayout?.addListener(_onRelayout);
+  }
+
+  @override
+  void didUpdateWidget(covariant SafaehFeedbackHost oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.relayout == widget.relayout) return;
+    oldWidget.relayout?.removeListener(_onRelayout);
+    widget.relayout?.addListener(_onRelayout);
+  }
+
+  void _onRelayout() {
+    // ignore: invalid_use_of_visible_for_testing_member
+    toastification.managers.removeWhere(
+      (_, manager) =>
+          // ignore: invalid_use_of_visible_for_testing_member
+          manager.notifications.isEmpty &&
+          // ignore: invalid_use_of_visible_for_testing_member
+          manager.overlayEntry == null,
+    );
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.relayout?.removeListener(_onRelayout);
+    // dismissAll() schedules another timer. These testing-visible members are
+    // the only way to cancel auto-close timers in the same turn.
+    // ignore: invalid_use_of_visible_for_testing_member
+    for (final manager in toastification.managers.values) {
+      // ignore: invalid_use_of_visible_for_testing_member
+      for (final item in manager.notifications.toList()) {
+        item.dispose();
+      }
+      // ignore: invalid_use_of_visible_for_testing_member
+      manager.notifications.clear();
+      // ignore: invalid_use_of_visible_for_testing_member
+      manager.overlayEntry = null;
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return ToastificationWrapper(
       config: ToastificationConfig(
-        alignment: alignment,
-        itemWidth: itemWidthBuilder?.call(context) ?? itemWidth,
-        maxToastLimit: maxToastLimit,
+        alignment: widget.alignment,
+        itemWidth: widget.itemWidthBuilder?.call(context) ?? widget.itemWidth,
+        maxToastLimit: widget.maxToastLimit,
         marginBuilder: (context, alignment) {
           final y = alignment.resolve(Directionality.of(context)).y;
           if (y >= 0.5) {
-            final extraBottom = (bottomInsetBuilder?.call(context) ?? 0).clamp(
+            final extraBottom =
+                (widget.bottomInsetBuilder?.call(context) ?? 0).clamp(
+                  0.0,
+                  double.infinity,
+                );
+            final start = (widget.startInsetBuilder?.call(context) ?? 0).clamp(
               0.0,
               double.infinity,
             );
-            return EdgeInsets.only(bottom: 12 + extraBottom);
+            final end = (widget.endInsetBuilder?.call(context) ?? 0).clamp(
+              0.0,
+              double.infinity,
+            );
+            if (start == 0 && end == 0) {
+              return EdgeInsets.only(bottom: 12 + extraBottom);
+            }
+            return EdgeInsetsDirectional.only(
+              bottom: 12 + extraBottom,
+              start: start,
+              end: end,
+            );
           }
           if (y <= -0.5) return const EdgeInsets.only(top: 12);
           return EdgeInsets.zero;
         },
       ),
-      child: child,
+      child: widget.child,
     );
   }
 }

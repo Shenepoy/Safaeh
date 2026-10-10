@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'adaptive_sheet.dart';
@@ -115,6 +117,157 @@ class SafaehDebugMenuFab extends StatelessWidget {
   }
 }
 
+const double _kDebugFabExtent = 40;
+const double _kDebugFabEdgeMargin = 8;
+const double _kDebugFabBottomReserve = 96;
+
+/// Floating debug button over [child].
+///
+/// Owns the button's corner, long-press drag, and hide-while-open behavior.
+/// The host stays mounted when the button is hidden so a drag offset survives
+/// the sheet. [onOpen] should return the sheet future; the button comes back
+/// when that future completes, including when it returns immediately or throws.
+class SafaehDebugMenuHost extends StatefulWidget {
+  const SafaehDebugMenuHost({
+    super.key,
+    required this.child,
+    required this.onOpen,
+    this.visible = true,
+    this.tooltip = 'Debug menu',
+  });
+
+  final Widget child;
+  final Future<void> Function() onOpen;
+  final bool visible;
+  final String tooltip;
+
+  @override
+  State<SafaehDebugMenuHost> createState() => _SafaehDebugMenuHostState();
+}
+
+class _SafaehDebugMenuHostState extends State<SafaehDebugMenuHost> {
+  Offset? _position;
+  var _buttonHidden = false;
+  var _opening = false;
+  var _ownsOverlay = false;
+  late final OverlayEntry _entry = OverlayEntry(builder: _buildStack);
+
+  @override
+  void didUpdateWidget(SafaehDebugMenuHost oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _entry.markNeedsBuild();
+  }
+
+  @override
+  void dispose() {
+    if (_ownsOverlay) _entry.remove();
+    _entry.dispose();
+    super.dispose();
+  }
+
+  void _repaintButton() {
+    if (_entry.mounted) _entry.markNeedsBuild();
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _handleOpen() async {
+    if (_opening) return;
+    _opening = true;
+    _buttonHidden = true;
+    _repaintButton();
+    try {
+      await widget.onOpen();
+    } finally {
+      _opening = false;
+      if (mounted) {
+        _buttonHidden = false;
+        _repaintButton();
+      }
+    }
+  }
+
+  void _move(Offset delta, Size box, bool isRtl) {
+    final current = _position ?? _defaultPosition(box, isRtl);
+    final next = _clamp(
+      Offset(current.dx + delta.dx, current.dy + delta.dy),
+      box,
+    );
+    if (next == current) return;
+    _position = next;
+    _repaintButton();
+  }
+
+  Offset _defaultPosition(Size box, bool isRtl) {
+    return _clamp(
+      Offset(
+        isRtl
+            ? box.width - _kDebugFabEdgeMargin - _kDebugFabExtent
+            : _kDebugFabEdgeMargin,
+        box.height - _kDebugFabBottomReserve - _kDebugFabExtent,
+      ),
+      box,
+    );
+  }
+
+  Offset _clamp(Offset position, Size box) {
+    final maxLeft = (box.width - _kDebugFabExtent - _kDebugFabEdgeMargin).clamp(
+      _kDebugFabEdgeMargin,
+      double.infinity,
+    );
+    final maxTop = (box.height - _kDebugFabExtent - _kDebugFabEdgeMargin).clamp(
+      _kDebugFabEdgeMargin,
+      double.infinity,
+    );
+    return Offset(
+      position.dx.clamp(_kDebugFabEdgeMargin, maxLeft).toDouble(),
+      position.dy.clamp(_kDebugFabEdgeMargin, maxTop).toDouble(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // The app builder sits above the navigator, where a drag has no overlay.
+    // Under a navigator, reuse that overlay so the button paints normally.
+    if (Overlay.maybeOf(context) != null) return _buildStack(context);
+    _ownsOverlay = true;
+    return SizedBox.expand(child: Overlay(initialEntries: [_entry]));
+  }
+
+  Widget _buildStack(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final box = Size(constraints.maxWidth, constraints.maxHeight);
+        final usable =
+            box.width.isFinite &&
+            box.height.isFinite &&
+            box.width > 0 &&
+            box.height > 0;
+        final isRtl = Directionality.of(context) == TextDirection.rtl;
+        final showButton = usable && widget.visible && !_buttonHidden;
+        final position = showButton
+            ? _clamp(_position ?? _defaultPosition(box, isRtl), box)
+            : null;
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            widget.child,
+            if (position != null)
+              Positioned(
+                left: position.dx,
+                top: position.dy,
+                child: SafaehDebugMenuFab(
+                  tooltip: widget.tooltip,
+                  onOpen: () => unawaited(_handleOpen()),
+                  onDragDelta: (delta) => _move(delta, box, isRtl),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 /// Opens a scrollable debug menu sheet.
 Future<T?> showSafaehDebugMenu<T>(
   BuildContext context, {
@@ -172,7 +325,8 @@ class SafaehDebugMenuBody extends StatelessWidget {
           ),
           const SizedBox(height: 12),
         ],
-        if (statusMessage != null) SafaehDebugStatusBanner(message: statusMessage!),
+        if (statusMessage != null)
+          SafaehDebugStatusBanner(message: statusMessage!),
       ],
     );
   }
@@ -387,8 +541,9 @@ class SafaehDebugQuickActionTile extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
               if (hint != null) ...[
                 const SizedBox(height: 2),
@@ -396,8 +551,9 @@ class SafaehDebugQuickActionTile extends StatelessWidget {
                   hint!,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall
-                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ],
@@ -504,8 +660,9 @@ class SafaehDebugStatusBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: Theme.of(context).textTheme.bodySmall
-                  ?.copyWith(color: colorScheme.onSecondaryContainer),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSecondaryContainer,
+              ),
             ),
           ),
         ],

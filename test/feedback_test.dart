@@ -69,4 +69,55 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Close feedback', skipOffstage: false), findsNothing);
   });
+
+  testWidgets('removing the host cancels feedback timers', (tester) async {
+    await tester.pumpWidget(
+      SafaehFeedbackHost(
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () => context.showSafaehFeedback('Stay'),
+              child: const Text('Show'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Show'));
+    await tester.pump();
+    expect(toastification.managers.values, isNotEmpty);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    expect(
+      toastification.managers.values.every(
+        (manager) => manager.notifications.isEmpty,
+      ),
+      isTrue,
+    );
+  });
+
+  testWidgets('relayout drops an idle manager', (tester) async {
+    final relayout = ValueNotifier<int>(0);
+    addTearDown(relayout.dispose);
+    await tester.pumpWidget(
+      SafaehFeedbackHost(
+        relayout: relayout,
+        bottomInsetBuilder: (_) => relayout.value * 40,
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () => context.showSafaehFeedback('Moved'),
+              child: const Text('Show'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Show'));
+    await tester.pump();
+    relayout.value = 1;
+    await tester.pump();
+    expect(find.text('Moved', skipOffstage: false), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 }

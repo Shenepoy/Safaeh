@@ -10,6 +10,23 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-10
+
+### Added
+
+- `SafaehDebugMenuHost` places the debug button, clamps long-press drags to
+  its box, and hides the button until `onOpen` finishes.
+- `SafaehLabeledOptionTile` paints a string title with the accent fill.
+- `SafaehFeedbackHost.relayout` rebuilds toast placement, and removing the
+  host cancels toastification timers.
+- `showSafaehTextInput` takes a `validator`. A returned string keeps the
+  sheet open and shows the error.
+- `showSafaehAnchored` grows a host card with `fadeScale`, `genie`, or
+  `drop`. The genie shader ships in the package. `safaehAnchoredLift` and
+  `safaehAnchoredElevation` time the settle.
+- `SafaehMonthCalendar` draws one month from host-built labels.
+- `SafaehSwatchPicker` is a wrap of color circles with an optional none swatch.
+
 ## [0.8.2] - 2026-10-03
 
 ### Added

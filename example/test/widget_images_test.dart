@@ -51,10 +51,7 @@ Future<void> _capture(
               alignment: Alignment.topCenter,
               child: SizedBox(
                 width: size.width,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: child,
-                ),
+                child: Padding(padding: const EdgeInsets.all(16), child: child),
               ),
             ),
           ),
@@ -150,12 +147,30 @@ void main() {
   });
 
   testWidgets('debug menu image', (tester) async {
+    final errors = <FlutterErrorDetails>[];
+    final previous = FlutterError.onError;
+    FlutterError.onError = errors.add;
+    addTearDown(() => FlutterError.onError = previous);
     await _capture(
       tester,
       name: 'debug-menu',
       size: const Size(390, 200),
-      child: SizedBox(height: 160, child: DebugMenuDemo(t: _t)),
+      child: SizedBox(
+        width: double.infinity,
+        height: 160,
+        child: SafaehDebugMenuHost(
+          tooltip: _t('debug_menu'),
+          onOpen: () async {},
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(_t('debug_menu_sub')),
+          ),
+        ),
+      ),
     );
+    expect(errors.map((error) => error.exceptionAsString()), isEmpty);
+    expect(find.byType(ErrorWidget), findsNothing);
+    expect(find.text(_t('debug_menu_sub')), findsOneWidget);
   });
 
   testWidgets('meta chip image', (tester) async {

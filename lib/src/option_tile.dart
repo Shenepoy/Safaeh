@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'accent_surfaces.dart';
 import 'theme.dart';
+import 'user_text.dart';
 
 /// Bordered ink row for sheet action / picker lists.
 ///
@@ -123,6 +125,73 @@ class SafaehOptionTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// String-title row that paints the host accent when selected.
+///
+/// [SafaehOptionTile] still accepts widget titles for custom rows.
+class SafaehLabeledOptionTile extends StatelessWidget {
+  const SafaehLabeledOptionTile({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.leading,
+    this.trailing,
+    this.onTap,
+    this.selected = false,
+    this.destructive = false,
+    this.enabled = true,
+  });
+
+  final String title;
+  final String? subtitle;
+  final Widget? leading;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final bool selected;
+  final bool destructive;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final subtle = context.safaehSubtleAccents;
+    final titleColor = destructive
+        ? cs.error
+        : (enabled ? cs.onSurface : cs.onSurface.withValues(alpha: 0.38));
+    final subtitleColor = destructive
+        ? cs.error.withValues(alpha: 0.8)
+        : cs.onSurfaceVariant;
+
+    return SafaehOptionTile(
+      title: SafaehUserText(
+        title,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: titleColor,
+          fontWeight: FontWeight.w600,
+        ),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: subtitle != null && subtitle!.isNotEmpty
+          ? SafaehUserText(
+              subtitle!,
+              style: theme.textTheme.bodySmall?.copyWith(color: subtitleColor),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            )
+          : null,
+      leading: leading,
+      trailing: trailing,
+      onTap: onTap,
+      selected: selected,
+      destructive: destructive,
+      enabled: enabled,
+      selectedFill: SafaehAccentSurfaces.emphasizedFill(cs, subtle: subtle),
+      selectedBorder: SafaehAccentSurfaces.emphasizedBorder(cs, subtle: subtle),
     );
   }
 }

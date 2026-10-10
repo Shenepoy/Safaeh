@@ -448,7 +448,8 @@ void main() {
 
     await _reveal(tester, 'aligned_chrome');
     expect(find.text('Aligned title'), findsOneWidget);
-    expect(find.byType(FloatingActionButton), findsOneWidget);
+    expect(find.byTooltip('Add'), findsOneWidget);
+    expect(find.byTooltip('Debug menu'), findsOneWidget);
   });
 
   testWidgets('camera host and QR chrome pages', (tester) async {

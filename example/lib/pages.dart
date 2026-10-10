@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:safaeh/safaeh.dart';
 
@@ -250,7 +248,9 @@ class KpiCardDemo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: SafaehKpiCard(label: t('cash'), value: '42')),
+        Expanded(
+          child: SafaehKpiCard(label: t('cash'), value: '42'),
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: SafaehKpiCard(label: t('card'), value: '12', flat: true),
@@ -398,45 +398,41 @@ class DebugMenuDemo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.bottomRight,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(t('debug_menu_sub')),
-        ),
-        SafaehDebugMenuFab(
-          onOpen: () {
-            unawaited(
-              showSafaehDebugMenu<void>(
-                context,
-                title: t('debug_menu'),
-                identity: SafaehDebugIdentityCard(
-                  title: t('app_title'),
-                  package: 'safaeh',
-                  version: '0.5.0',
-                ),
-                statusMessage: t('chrome_ready'),
-                sections: [
-                  SafaehDebugSection(
-                    title: t('empty_state'),
-                    icon: Icons.inbox_outlined,
-                    children: [
-                      SafaehDebugActionTile(
-                        icon: Icons.refresh,
-                        label: t('try_again'),
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Text(t('debug_menu_sub')),
     );
   }
+}
+
+/// Sample debug sheet opened by the example app's [SafaehDebugMenuHost].
+Future<void> openExampleDebugMenu(
+  BuildContext context,
+  String Function(String key) t,
+) async {
+  await showSafaehDebugMenu<void>(
+    context,
+    title: t('debug_menu'),
+    identity: SafaehDebugIdentityCard(
+      title: t('app_title'),
+      package: 'safaeh',
+      version: '0.8.2',
+    ),
+    statusMessage: t('chrome_ready'),
+    sections: [
+      SafaehDebugSection(
+        title: t('empty_state'),
+        icon: Icons.inbox_outlined,
+        children: [
+          SafaehDebugActionTile(
+            icon: Icons.refresh,
+            label: t('try_again'),
+            onTap: () {},
+          ),
+        ],
+      ),
+    ],
+  );
 }
 
 class L10nEditorDemo extends StatefulWidget {
@@ -551,6 +547,21 @@ class SheetPaddingDemo extends StatelessWidget {
   }
 }
 
+/// Example-only inset the feedback host listens to.
+class CatalogFeedbackInset extends InheritedNotifier<ValueNotifier<double>> {
+  const CatalogFeedbackInset({
+    super.key,
+    required ValueNotifier<double> notifier,
+    required super.child,
+  }) : super(notifier: notifier);
+
+  static ValueNotifier<double>? maybeOf(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<CatalogFeedbackInset>()
+        ?.notifier;
+  }
+}
+
 class FeedbackDemo extends StatefulWidget {
   const FeedbackDemo({super.key, required this.t});
 
@@ -655,6 +666,18 @@ class _FeedbackDemoState extends State<FeedbackDemo> {
               onPressed: context.dismissSafaehFeedbacks,
               child: Text(t('feedback_dismiss_all')),
             ),
+            OutlinedButton.icon(
+              key: const ValueKey('feedback_raise_inset_button'),
+              onPressed: () {
+                final inset = CatalogFeedbackInset.maybeOf(context);
+                if (inset == null) return;
+                inset.value = inset.value == 0 ? 72 : 0;
+                context.dismissSafaehFeedbacks();
+                context.showSafaehFeedback(t('feedback_raise_message'));
+              },
+              icon: const Icon(Icons.vertical_align_top),
+              label: Text(t('feedback_raise_inset')),
+            ),
           ],
         ),
         if (_actionStatus != null) ...[
@@ -704,6 +727,62 @@ class TextInputDemo extends StatelessWidget {
       cancelLabel: t('cancel'),
       tabletBreakpoint: 10000,
       autofocus: false,
+    );
+  }
+}
+
+class TextInputChoicesDemo extends StatelessWidget {
+  const TextInputChoicesDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  Future<void> _open(
+    BuildContext context, {
+    required String title,
+    String? hint,
+    String? Function(String value)? validator,
+    TextInputType? keyboardType,
+  }) async {
+    final value = await showSafaehTextInput(
+      context: context,
+      title: title,
+      doneLabel: t('done'),
+      cancelLabel: t('cancel'),
+      hint: hint,
+      keyboardType: keyboardType,
+      validator: validator,
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(value ?? t('dismissed'))));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton(
+          onPressed: () => _open(context, title: t('tag_name'), hint: t('work')),
+          child: Text(t('tag_name')),
+        ),
+        const SizedBox(height: 12),
+        FilledButton.tonal(
+          key: const ValueKey('number_input_open'),
+          onPressed: () => _open(
+            context,
+            title: t('number_title'),
+            hint: t('number_open'),
+            keyboardType: TextInputType.number,
+            validator: (text) {
+              if (double.tryParse(text) == null) return t('number_invalid');
+              return null;
+            },
+          ),
+          child: Text(t('number_open')),
+        ),
+      ],
     );
   }
 }
@@ -887,6 +966,13 @@ class OptionTilesDemo extends StatelessWidget {
           title: Text(t('destructive')),
           subtitle: Text(t('destructive_sub')),
           destructive: true,
+          onTap: () {},
+        ),
+        SafaehLabeledOptionTile(
+          title: t('labeled_title'),
+          subtitle: t('labeled_sub'),
+          selected: true,
+          leading: const Icon(Icons.label_outline),
           onTap: () {},
         ),
       ],
@@ -2107,6 +2193,136 @@ class QrMessageChrome extends StatelessWidget {
   }
 }
 
+class AnchoredPopoutDemo extends StatelessWidget {
+  const AnchoredPopoutDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  Widget _card(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(t('popout_card')),
+      ),
+    );
+  }
+
+  List<String> _weekdays(BuildContext context) {
+    final first = MaterialLocalizations.of(context).firstDayOfWeekIndex;
+    return List<String>.generate(7, (i) {
+      final weekday = DateTime.utc(2023, 1, 1 + ((first + i) % 7));
+      return MaterialLocalizations.of(context).narrowWeekdays[weekday.weekday % 7];
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final link = LayerLink();
+    final now = DateTime.now();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CompositedTransformTarget(
+          link: link,
+          child: Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: FilledButton(
+              onPressed: () {
+                final box = context.findRenderObject() as RenderBox?;
+                final rect = box == null
+                    ? null
+                    : box.localToGlobal(Offset.zero) & box.size;
+                showSafaehAnchored<void>(
+                  context: context,
+                  motion: SafaehAnchoredMotion.fadeScale,
+                  link: link,
+                  sourceRect: rect,
+                  child: _card(context),
+                );
+              },
+              child: Text(t('popout_fade')),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        FilledButton.tonal(
+          onPressed: () {
+            final box = context.findRenderObject() as RenderBox?;
+            final origin = box?.localToGlobal(Offset.zero) ?? Offset.zero;
+            showSafaehAnchored<void>(
+              context: context,
+              motion: SafaehAnchoredMotion.genie,
+              sourceRect: origin & const Size(48, 48),
+              sourceShape: const CircleBorder(),
+              child: _card(context),
+            );
+          },
+          child: Text(t('popout_genie')),
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton(
+          onPressed: () {
+            final box = context.findRenderObject() as RenderBox?;
+            final rect = box == null
+                ? null
+                : box.localToGlobal(Offset.zero) & box.size;
+            showSafaehAnchored<void>(
+              context: context,
+              motion: SafaehAnchoredMotion.drop,
+              sourceRect: rect,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
+                child: SafaehMonthCalendar(
+                  month: DateTime(now.year, now.month),
+                  firstDate: DateTime(now.year - 1),
+                  lastDate: DateTime(now.year + 1, 12, 31),
+                  monthLabel: MaterialLocalizations.of(context).formatMonthYear(now),
+                  weekdayLabels: _weekdays(context),
+                  previousTooltip: MaterialLocalizations.of(context).previousMonthTooltip,
+                  nextTooltip: MaterialLocalizations.of(context).nextMonthTooltip,
+                  onPreviousMonth: () {},
+                  onNextMonth: () {},
+                  onDayTap: (_) => Navigator.of(context).maybePop(),
+                ),
+              ),
+            );
+          },
+          child: Text(t('popout_drop')),
+        ),
+      ],
+    );
+  }
+}
+
+class SwatchPickerDemo extends StatefulWidget {
+  const SwatchPickerDemo({super.key, required this.t});
+
+  final String Function(String key) t;
+
+  @override
+  State<SwatchPickerDemo> createState() => _SwatchPickerDemoState();
+}
+
+class _SwatchPickerDemoState extends State<SwatchPickerDemo> {
+  Color? _selected = const Color(0xFF8B6914);
+
+  @override
+  Widget build(BuildContext context) {
+    return SafaehSwatchPicker(
+      selected: _selected,
+      showNone: true,
+      colors: const [
+        Color(0xFF8B6914),
+        Color(0xFF2E7D32),
+        Color(0xFF1565C0),
+        Color(0xFFC62828),
+        Color(0xFF6A1B9A),
+      ],
+      onSelected: (color) => setState(() => _selected = color),
+    );
+  }
+}
+
 class CatalogDemoPage extends StatelessWidget {
   const CatalogDemoPage({
     super.key,
@@ -2150,6 +2366,10 @@ Widget _catalogPageBody(String id, String Function(String key) t) {
       return SheetMorphDemo(t: t);
     case 'option_tiles':
       return OptionTilesDemo(t: t);
+    case 'anchored_popout':
+      return AnchoredPopoutDemo(t: t);
+    case 'swatch':
+      return SwatchPickerDemo(t: t);
     case 'status_body':
       return StatusBodyDemo(t: t);
     case 'feedback':
@@ -2323,17 +2543,11 @@ Future<void> openCatalogItem(
         isDestructive: true,
       );
     case 'text_input':
-      final value = await showSafaehTextInput(
-        context: context,
-        title: t('tag_name'),
-        doneLabel: t('done'),
-        cancelLabel: t('cancel'),
-        hint: t('work'),
-      );
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(
+      await _pushDemo(
         context,
-      ).showSnackBar(SnackBar(content: Text(value ?? t('dismissed'))));
+        t('text_input'),
+        TextInputChoicesDemo(t: t),
+      );
     case 'sheet_shell':
       await showSafaeh<void>(
         context: context,

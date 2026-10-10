@@ -276,6 +276,10 @@ Widget galleryPreview(String id, String Function(String key) t) {
       return SheetMorphDemo(t: t);
     case 'option_tiles':
       return OptionTilesDemo(t: t);
+    case 'anchored_popout':
+      return AnchoredPopoutDemo(t: t);
+    case 'swatch':
+      return SwatchPickerDemo(t: t);
     case 'dialog':
       return DialogDemo(t: t);
     case 'sidenav':
@@ -460,6 +464,16 @@ Widget catalogPhonePreview(
       return Padding(
         padding: const EdgeInsets.all(16),
         child: OptionTilesDemo(t: t),
+      );
+    case 'anchored_popout':
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: AnchoredPopoutDemo(t: t),
+      );
+    case 'swatch':
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: SwatchPickerDemo(t: t),
       );
     case 'sidenav':
       return SizedBox.expand(child: SidenavRailDemo(t: t));

@@ -27,6 +27,7 @@ class SafaehTextInputSheet extends StatefulWidget {
     this.titleBuilder,
     this.tabletBreakpoint,
     this.autofocus = true,
+    this.validator,
   });
 
   final String title;
@@ -48,12 +49,16 @@ class SafaehTextInputSheet extends StatefulWidget {
   final double? tabletBreakpoint;
   final bool autofocus;
 
+  /// When this returns a string, submission stays open and shows that error.
+  final String? Function(String value)? validator;
+
   @override
   State<SafaehTextInputSheet> createState() => _SafaehTextInputSheetState();
 }
 
 class _SafaehTextInputSheetState extends State<SafaehTextInputSheet> {
   late final TextEditingController _controller;
+  String? _errorText;
 
   @override
   void initState() {
@@ -75,7 +80,15 @@ class _SafaehTextInputSheetState extends State<SafaehTextInputSheet> {
     super.dispose();
   }
 
-  void _submit() => safaehPop(context, _controller.text.trim());
+  void _submit() {
+    final text = _controller.text.trim();
+    final error = widget.validator?.call(text);
+    if (error != null) {
+      setState(() => _errorText = error);
+      return;
+    }
+    safaehPop(context, text);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -112,13 +125,17 @@ class _SafaehTextInputSheetState extends State<SafaehTextInputSheet> {
                 : widget.enableSuggestions,
             decoration: InputDecoration(
               hintText: widget.hint,
+              errorText: _errorText,
               border: const OutlineInputBorder(),
               isDense: true,
             ),
             maxLines: widget.obscureText ? 1 : widget.maxLines,
             maxLength: widget.maxLength,
             autofocus: widget.autofocus,
-            onChanged: widget.onChanged,
+            onChanged: (value) {
+              if (_errorText != null) setState(() => _errorText = null);
+              widget.onChanged?.call(value);
+            },
             onSubmitted: (_) => _submit(),
           ),
         ),
@@ -168,6 +185,7 @@ Future<String?> showSafaehTextInput({
   bool useRootNavigator = true,
   bool showTitleInBody = true,
   SafaehRouteOptions? route,
+  String? Function(String value)? validator,
 }) {
   return showSafaeh<String?>(
     context: context,
@@ -205,6 +223,7 @@ Future<String?> showSafaehTextInput({
       showTitleInBody: showTitleInBody,
       titleBuilder: titleBuilder,
       tabletBreakpoint: tabletBreakpoint,
+      validator: validator,
     ),
   );
 }
