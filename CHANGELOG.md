@@ -10,6 +10,13 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-10-11
+
+### Fixed
+
+- The genie warp stays upright on Vulkan and Metal. `FlutterFragCoord` is
+  top-left there, and the funnel math assumes y grows upward.
+
 ## [0.9.0] - 2026-10-10
 
 ### Added
