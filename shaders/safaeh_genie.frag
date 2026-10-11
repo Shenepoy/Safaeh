@@ -26,7 +26,10 @@ float ease_in_out_cubic(float t) {
 
 void main() {
   vec2 frag = FlutterFragCoord().xy;
-#ifdef IMPELLER_TARGET_OPENGLES
+  // FlutterFragCoord is top-left on Vulkan and Metal, and on current OpenGL
+  // too (IMPELLER_OPENGLES_UNFLIPPED_DEPRECATED). The funnel below assumes y
+  // grows upward. Older OpenGL already reported that, so leave it alone.
+#if !defined(IMPELLER_TARGET_OPENGLES) || defined(IMPELLER_OPENGLES_UNFLIPPED_DEPRECATED)
   frag.y = u_size.y - frag.y;
 #endif
   vec2 uv = frag / u_size;
