@@ -1,5 +1,27 @@
+import 'dart:async';
+
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:toastification/toastification.dart';
+
+/// Close timers armed after a toast is inserted.
+///
+/// Toastification starts its own timer before the toast is in the tree. A
+/// result that arrives while the app is not drawing (a Bluetooth scan finishing
+/// in the background) can expire that timer first. The later insert then leaves
+/// a toast that never closes. These timers start on the next frame instead.
+final List<Timer> _feedbackCloseTimers = [];
+int _feedbackCloseGeneration = 0;
+
+/// Cancels every pending feedback close. Host disposal and "dismiss all" use
+/// this so a removed tree does not keep timers alive.
+void _cancelFeedbackCloseTimers() {
+  _feedbackCloseGeneration++;
+  for (final timer in _feedbackCloseTimers) {
+    timer.cancel();
+  }
+  _feedbackCloseTimers.clear();
+}
 
 /// The visual meaning of a Safaeh feedback message.
 enum SafaehFeedbackType { info, success, error }
@@ -88,6 +110,7 @@ class _SafaehFeedbackHostState extends State<SafaehFeedbackHost> {
   @override
   void dispose() {
     widget.relayout?.removeListener(_onRelayout);
+    _cancelFeedbackCloseTimers();
     // dismissAll() schedules another timer. These testing-visible members are
     // the only way to cancel auto-close timers in the same turn.
     // ignore: invalid_use_of_visible_for_testing_member
@@ -98,6 +121,12 @@ class _SafaehFeedbackHostState extends State<SafaehFeedbackHost> {
       }
       // ignore: invalid_use_of_visible_for_testing_member
       manager.notifications.clear();
+      // ignore: invalid_use_of_visible_for_testing_member
+      final entry = manager.overlayEntry;
+      if (entry != null && entry.mounted) {
+        entry.remove();
+        entry.dispose();
+      }
       // ignore: invalid_use_of_visible_for_testing_member
       manager.overlayEntry = null;
     }
@@ -153,7 +182,7 @@ class SafaehFeedbackSurface extends StatelessWidget {
     required this.child,
     this.icon,
     this.trailing,
-    this.padding = const EdgeInsetsDirectional.fromSTEB(10, 8, 12, 8),
+    this.padding = const EdgeInsetsDirectional.fromSTEB(10, 12, 12, 12),
     this.borderRadius = const BorderRadius.all(Radius.circular(16)),
     this.elevation = 4,
   });
@@ -295,23 +324,139 @@ extension SafaehFeedbackContext on BuildContext {
     Duration duration = const Duration(seconds: 8),
   }) {
     if (!mounted) return;
+    var closed = false;
+    Timer? closeTimer;
+    late final ToastificationItem item;
+
+    void dismiss({bool animate = true}) {
+      if (closed) return;
+      closed = true;
+      final timer = closeTimer;
+      closeTimer = null;
+      if (timer != null) {
+        timer.cancel();
+        _feedbackCloseTimers.remove(timer);
+      }
+      toastification.dismiss(item, showRemoveAnimation: animate);
+    }
+
+    final generation = _feedbackCloseGeneration;
     // Keep [context] for ToastificationConfig (width, alignment, insets).
     // Pass the navigator overlay explicitly so BetterFeedback's root Overlay
     // does not steal toasts via Overlay.maybeOf(rootOverlay: true).
-    toastification.showCustom(
+    //
+    // Do not pass autoCloseDuration. That timer starts before the toast is
+    // inserted, and with no frame (background Bluetooth result) it expires
+    // first. The insert then sticks on screen.
+    item = toastification.showCustom(
       context: this,
       overlayState: Navigator.maybeOf(this, rootNavigator: true)?.overlay,
-      autoCloseDuration: duration,
-      builder: (context, holder) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: builder(context, () => toastification.dismiss(holder)),
+      builder: (context, holder) => _FeedbackSwipe(
+        onTap: () => dismiss(),
+        onSwipe: () => dismiss(animate: false),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: builder(context, () => dismiss()),
+        ),
       ),
     );
+    if (duration <= Duration.zero) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (closed || generation != _feedbackCloseGeneration) return;
+      closeTimer = Timer(duration, dismiss);
+      _feedbackCloseTimers.add(closeTimer!);
+    });
   }
 
   /// Dismisses all feedback messages currently shown by the host.
   void dismissSafaehFeedbacks() {
     if (!mounted) return;
+    _cancelFeedbackCloseTimers();
     toastification.dismissAll(delayForAnimation: true);
+  }
+}
+
+/// Closes feedback on a tap or a swipe in any direction.
+///
+/// The toast sits in a vertical list, so a drag recognizer loses that arena.
+/// Pointer events follow the finger on every axis and close once the travel
+/// or the fling is deliberate. A short drag settles back.
+class _FeedbackSwipe extends StatefulWidget {
+  const _FeedbackSwipe({
+    required this.onTap,
+    required this.onSwipe,
+    required this.child,
+  });
+
+  final VoidCallback onTap;
+  final VoidCallback onSwipe;
+  final Widget child;
+
+  @override
+  State<_FeedbackSwipe> createState() => _FeedbackSwipeState();
+}
+
+class _FeedbackSwipeState extends State<_FeedbackSwipe> {
+  Offset _offset = Offset.zero;
+  Offset? _start;
+  VelocityTracker? _tracker;
+
+  static const _dismissDistance = 36.0;
+
+  void _down(PointerDownEvent event) {
+    _start = event.position;
+    _tracker = VelocityTracker.withKind(event.kind)
+      ..addPosition(event.timeStamp, event.position);
+  }
+
+  void _move(PointerMoveEvent event) {
+    final start = _start;
+    if (start == null) return;
+    _tracker?.addPosition(event.timeStamp, event.position);
+    setState(() => _offset = event.position - start);
+  }
+
+  void _up(PointerUpEvent event) {
+    final start = _start;
+    final tracker = _tracker;
+    _start = null;
+    _tracker = null;
+    if (start == null) return;
+    tracker?.addPosition(event.timeStamp, event.position);
+    final travel = event.position - start;
+    final speed = tracker?.getVelocity().pixelsPerSecond.distance ?? 0;
+    final flung = travel.distance >= kTouchSlop && speed >= 280;
+    if (travel.distance >= _dismissDistance || flung) {
+      widget.onSwipe();
+      return;
+    }
+    setState(() => _offset = Offset.zero);
+  }
+
+  void _cancel(PointerCancelEvent _) {
+    _start = null;
+    _tracker = null;
+    if (_offset == Offset.zero) return;
+    setState(() => _offset = Offset.zero);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = (1 - _offset.distance / 140).clamp(0.35, 1.0);
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.onTap,
+      child: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerDown: _down,
+        onPointerMove: _move,
+        onPointerUp: _up,
+        onPointerCancel: _cancel,
+        child: Transform.translate(
+          offset: _offset,
+          child: Opacity(opacity: fade, child: widget.child),
+        ),
+      ),
+    );
   }
 }

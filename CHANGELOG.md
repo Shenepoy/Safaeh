@@ -10,8 +10,21 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-15
+
+### Added
+
+- Feedback cards dismiss on tap or a deliberate swipe in any direction.
+
+### Changed
+
+- Give feedback cards more vertical padding.
+
 ### Fixed
 
+- Feedback close timers start after insertion, so results arriving while the
+  app is not drawing still close normally. Removing a feedback host also
+  disposes its toast overlay.
 - The genie warp stays upright on Vulkan and Metal. `FlutterFragCoord` is
   top-left there, and the funnel math assumes y grows upward.
 
