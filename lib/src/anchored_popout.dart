@@ -60,7 +60,8 @@ class SafaehGenieShader {
 /// Opens [child] from an anchor with [motion].
 ///
 /// Pass [link] so the card follows a live target. [sourceRect] places the
-/// drop card and cuts the genie scrim hole. The host owns the card.
+/// drop card and cuts the genie scrim hole. Supply [sourceRectBuilder] for a
+/// trigger that can move with rotation. The host owns the card.
 Future<T?> showSafaehAnchored<T>({
   required BuildContext context,
   Widget? child,
@@ -68,6 +69,7 @@ Future<T?> showSafaehAnchored<T>({
   SafaehAnchoredMotion motion = SafaehAnchoredMotion.drop,
   LayerLink? link,
   Rect? sourceRect,
+  Rect? Function()? sourceRectBuilder,
   bool opensAbove = false,
   ShapeBorder sourceShape = const CircleBorder(),
   double maxCardWidth = 420,
@@ -84,6 +86,7 @@ Future<T?> showSafaehAnchored<T>({
       motion: motion,
       link: link,
       sourceRect: captured,
+      sourceRectBuilder: sourceRectBuilder,
       opensAbove: opensAbove,
       sourceShape: sourceShape,
       maxCardWidth: maxCardWidth,
@@ -100,6 +103,7 @@ class _AnchoredRoute<T> extends PopupRoute<T> {
     required this.motion,
     required this.link,
     required this.sourceRect,
+    required this.sourceRectBuilder,
     required this.opensAbove,
     required this.sourceShape,
     required this.maxCardWidth,
@@ -112,6 +116,7 @@ class _AnchoredRoute<T> extends PopupRoute<T> {
   final SafaehAnchoredMotion motion;
   final LayerLink? link;
   final Rect? sourceRect;
+  final Rect? Function()? sourceRectBuilder;
   final bool opensAbove;
   final ShapeBorder sourceShape;
   final double maxCardWidth;
@@ -139,7 +144,9 @@ class _AnchoredRoute<T> extends PopupRoute<T> {
   Color? get barrierColor => Colors.transparent;
 
   @override
-  bool get barrierDismissible => dismissible;
+  // The page paints and handles its own dismiss scrim. Keep the route-level
+  // barrier out of the semantics tree so it cannot cover the card's controls.
+  bool get barrierDismissible => false;
 
   @override
   Widget buildPage(
@@ -150,6 +157,13 @@ class _AnchoredRoute<T> extends PopupRoute<T> {
     return AnimatedBuilder(
       animation: animation,
       builder: (context, _) {
+        if (sourceRectBuilder != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (isActive && sourceRectBuilder!() == null) {
+              navigator?.removeRoute(this);
+            }
+          });
+        }
         final progress = animation.value;
         final built =
             childBuilder?.call(context, progress) ?? child ?? const SizedBox();
@@ -163,6 +177,7 @@ class _AnchoredRoute<T> extends PopupRoute<T> {
             child: built,
           ),
           SafaehAnchoredMotion.genie => _GeniePopout(
+            sourceRectBuilder: sourceRectBuilder,
             progress: progress,
             animation: animation,
             link: link,
@@ -253,12 +268,13 @@ class _FadeScalePopout extends StatelessWidget {
   }
 }
 
-class _GeniePopout extends StatelessWidget {
+class _GeniePopout extends StatefulWidget {
   const _GeniePopout({
     required this.progress,
     required this.animation,
     required this.link,
     required this.sourceRect,
+    required this.sourceRectBuilder,
     required this.opensAbove,
     required this.sourceShape,
     required this.maxCardWidth,
@@ -270,6 +286,7 @@ class _GeniePopout extends StatelessWidget {
   final Animation<double> animation;
   final LayerLink? link;
   final Rect? sourceRect;
+  final Rect? Function()? sourceRectBuilder;
   final bool opensAbove;
   final ShapeBorder sourceShape;
   final double maxCardWidth;
@@ -277,12 +294,37 @@ class _GeniePopout extends StatelessWidget {
   final Widget child;
 
   @override
+  State<_GeniePopout> createState() => _GeniePopoutState();
+}
+
+class _GeniePopoutState extends State<_GeniePopout> {
+  Rect? _anchor;
+
+  @override
   Widget build(BuildContext context) {
+    // A trigger may live below transforms. Measure it after layout instead of
+    // reading unrelated RenderBox sizes from the card's layout delegate.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final updated = widget.sourceRectBuilder?.call() ?? widget.sourceRect;
+      if (updated != _anchor) setState(() => _anchor = updated);
+    });
+    final sourceRect = _anchor ?? widget.sourceRect;
+    final sourceRectBuilder = widget.sourceRectBuilder;
+    final progress = widget.progress;
+    final animation = widget.animation;
+    final link = widget.link;
+    final opensAbove = widget.opensAbove;
+    final sourceShape = widget.sourceShape;
+    final maxCardWidth = widget.maxCardWidth;
+    final onDismiss = widget.onDismiss;
+    final child = widget.child;
+
     final endIsRight = Directionality.of(context) == ui.TextDirection.ltr;
     final topEnd = endIsRight ? Alignment.topRight : Alignment.topLeft;
     final bottomEnd = endIsRight ? Alignment.bottomRight : Alignment.bottomLeft;
-    final targetAnchor = opensAbove ? topEnd : Alignment.bottomCenter;
-    final followerAnchor = opensAbove ? bottomEnd : Alignment.topCenter;
+    final targetAnchor = opensAbove ? topEnd : bottomEnd;
+    final followerAnchor = opensAbove ? bottomEnd : topEnd;
     final sourceSize = sourceRect?.size ?? const Size(56, 56);
     final morphed = IgnorePointer(
       ignoring: progress < 1,
@@ -297,6 +339,35 @@ class _GeniePopout extends StatelessWidget {
     final offset = opensAbove
         ? Offset(0, -safaehAnchoredLift(progress))
         : const Offset(0, 8);
+    final media = MediaQuery.of(context);
+    final padding = media.viewPadding;
+    final safeViewport = Rect.fromLTRB(
+      padding.left + 12,
+      padding.top + 12,
+      math.max(padding.left + 13, media.size.width - padding.right - 12),
+      math.max(
+        padding.top + 13,
+        media.size.height -
+            math.max(padding.bottom, media.viewInsets.bottom) -
+            12,
+      ),
+    );
+    final placedCard = SizedBox.fromSize(
+      size: media.size,
+      child: CustomSingleChildLayout(
+        delegate: _GeniePlacementDelegate(
+          sourceRect: sourceRect,
+          progress: progress,
+          safeViewport: safeViewport,
+          offset: offset,
+          endIsRight: endIsRight,
+          opensAbove: opensAbove,
+          linked: link != null,
+          maxWidth: maxCardWidth,
+        ),
+        child: morphed,
+      ),
+    );
     return Stack(
       fit: StackFit.expand,
       clipBehavior: Clip.none,
@@ -304,10 +375,12 @@ class _GeniePopout extends StatelessWidget {
         Positioned.fill(
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
+            excludeFromSemantics: true,
             onTap: onDismiss,
             child: CustomPaint(
               painter: _ScrimHolePainter(
                 sourceRect: sourceRect,
+                sourceRectBuilder: sourceRectBuilder,
                 sourceShape: sourceShape,
                 textDirection: Directionality.of(context),
                 animation: animation,
@@ -317,21 +390,96 @@ class _GeniePopout extends StatelessWidget {
           ),
         ),
         Align(
-          alignment: opensAbove ? topEnd : Alignment.topCenter,
+          alignment: topEnd,
           child: link == null
-              ? Transform.translate(offset: offset, child: morphed)
+              ? Transform.translate(offset: offset, child: placedCard)
               : CompositedTransformFollower(
-                  link: link!,
+                  link: link,
                   showWhenUnlinked: false,
                   targetAnchor: targetAnchor,
                   followerAnchor: followerAnchor,
                   offset: offset,
-                  child: morphed,
+                  child: placedCard,
                 ),
         ),
       ],
     );
   }
+}
+
+/// The follower preserves the trigger animation; this delegate measures the
+/// expanded card and shifts it inside the physical safe viewport.
+class _GeniePlacementDelegate extends SingleChildLayoutDelegate {
+  _GeniePlacementDelegate({
+    required this.sourceRect,
+    required this.progress,
+    required this.safeViewport,
+    required this.offset,
+    required this.endIsRight,
+    required this.opensAbove,
+    required this.linked,
+    required this.maxWidth,
+  });
+  final Rect? sourceRect;
+  final double progress;
+  final Rect safeViewport;
+  final Offset offset;
+  final bool endIsRight;
+  final bool opensAbove;
+  final bool linked;
+  final double maxWidth;
+
+  @override
+  BoxConstraints getConstraintsForChild(BoxConstraints constraints) =>
+      BoxConstraints(
+        maxWidth: math.min(maxWidth, safeViewport.width),
+        maxHeight: safeViewport.height,
+      );
+
+  @override
+  Offset getPositionForChild(Size size, Size childSize) {
+    final anchor =
+        sourceRect ??
+        Rect.fromLTWH(
+          endIsRight ? safeViewport.right : safeViewport.left,
+          safeViewport.top,
+          0,
+          0,
+        );
+    final x = endIsRight ? anchor.right - childSize.width : anchor.left;
+    final y = opensAbove
+        ? anchor.top + offset.dy - childSize.height
+        : anchor.bottom + offset.dy;
+    final desired = Offset(
+      x.clamp(
+        safeViewport.left,
+        math.max(safeViewport.left, safeViewport.right - childSize.width),
+      ),
+      y.clamp(
+        safeViewport.top,
+        math.max(safeViewport.top, safeViewport.bottom - childSize.height),
+      ),
+    );
+    final followerOrigin = linked
+        ? Offset(
+            endIsRight ? anchor.right - size.width : anchor.left,
+            opensAbove
+                ? anchor.top - size.height + offset.dy
+                : anchor.bottom + offset.dy,
+          )
+        : offset;
+    // Start at the source mouth, then move into the safe viewport as the
+    // card expands, rather than beginning the morph away from its button.
+    final resolved = Offset.lerp(
+      Offset(x, y),
+      desired,
+      Curves.easeOutCubic.transform(progress.clamp(0.0, 1.0)),
+    )!;
+    return resolved - followerOrigin;
+  }
+
+  @override
+  bool shouldRelayout(_GeniePlacementDelegate oldDelegate) => true;
 }
 
 class _DropPopout extends StatelessWidget {
@@ -490,12 +638,14 @@ SafaehAnchoredCardPlacement safaehAnchoredCardPlacement({
 class _ScrimHolePainter extends CustomPainter {
   _ScrimHolePainter({
     required this.sourceRect,
+    this.sourceRectBuilder,
     required this.sourceShape,
     required this.textDirection,
     required this.animation,
   }) : super(repaint: animation);
 
   final Rect? sourceRect;
+  final Rect? Function()? sourceRectBuilder;
   final ShapeBorder sourceShape;
   final TextDirection textDirection;
   final Animation<double> animation;
@@ -504,7 +654,7 @@ class _ScrimHolePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final progress = animation.value.clamp(0.0, 1.0);
     var scrim = Path()..addRect(Offset.zero & size);
-    final rect = sourceRect;
+    final rect = sourceRectBuilder?.call() ?? sourceRect;
     if (rect != null) {
       final cutout = sourceShape.getOuterPath(
         rect,
@@ -600,10 +750,10 @@ class _GenieMorphState extends State<_GenieMorph> {
     final mouth = Curves.easeInOutCubic.transform(warp);
     final scaleX = buttonFrac + (1 - buttonFrac) * mouth;
     final scaleY = (buttonFrac * 0.45) + (1 - buttonFrac * 0.45) * rise;
-    final anchorX = widget.fromRight ? (1 - buttonFrac) : (-1 + buttonFrac);
-    final alignment = widget.opensAbove
-        ? Alignment(anchorX, 1)
-        : const Alignment(0, -1);
+    final alignment = Alignment(
+      widget.fromRight ? 1 : -1,
+      widget.opensAbove ? 1 : -1,
+    );
     return Transform(
       alignment: alignment,
       transform: Matrix4.diagonal3Values(scaleX, scaleY, 1),

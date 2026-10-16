@@ -710,7 +710,19 @@ class _AdaptiveSheetHost extends StatelessWidget {
     final resolvedContentPadding =
         contentPadding ??
         (isWide ? tokens.sheetBodyInsetWide : tokens.sheetBodyInset);
-    final contentBody = Padding(padding: resolvedContentPadding, child: child);
+    final contentBody = Padding(
+      padding: resolvedContentPadding,
+      // Wide panels already clear the physical edge. Descendant SafeAreas
+      // must not apply the screen's camera/gesture strips a second time.
+      child: isWide
+          ? MediaQuery.removePadding(
+              context: context,
+              removeLeft: true,
+              removeRight: true,
+              child: child,
+            )
+          : child,
+    );
     final sheetContent = !isWide
         ? ScrollConfiguration(
             // The phone sheet consumes a top-edge pull to dismiss itself.

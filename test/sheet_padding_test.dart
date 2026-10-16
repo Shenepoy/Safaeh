@@ -3,6 +3,39 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:safaeh/safaeh.dart';
 
 void main() {
+  testWidgets('wide sheet removes horizontal display insets from its body', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 500);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(left: 64, right: 24);
+    addTearDown(tester.view.reset);
+    EdgeInsets? bodyPadding;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSafaeh<void>(
+              context: context,
+              child: Builder(
+                builder: (context) {
+                  bodyPadding = MediaQuery.paddingOf(context);
+                  return const SizedBox(width: 200, height: 100);
+                },
+              ),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(bodyPadding?.left, 0);
+    expect(bodyPadding?.right, 0);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('wide tile picker sits below the header inset', (tester) async {
     tester.view.physicalSize = const Size(900, 800);
     tester.view.devicePixelRatio = 1;
@@ -48,10 +81,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        builder: (context, child) => Directionality(
-          textDirection: TextDirection.rtl,
-          child: child!,
-        ),
+        builder: (context, child) =>
+            Directionality(textDirection: TextDirection.rtl, child: child!),
         home: Scaffold(
           body: Builder(
             builder: (context) => TextButton(

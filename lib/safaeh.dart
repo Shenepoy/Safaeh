@@ -52,3 +52,8 @@ export 'src/theme.dart';
 export 'src/tile_picker.dart';
 export 'src/timed_confirm.dart';
 export 'src/user_text.dart';
+
+export 'src/device_cutout_scope.dart';
+export 'src/display_cutout_layout.dart';
+export 'src/cutout_aware_fab_location.dart';
+export 'src/cycle_button.dart';

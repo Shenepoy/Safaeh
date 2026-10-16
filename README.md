@@ -696,3 +696,16 @@ See [VERSIONING.md](VERSIONING.md) and [CHANGELOG.md](CHANGELOG.md). Tags are `v
 
 [MPL-2.0](LICENSE) — weak copyleft, commercial use allowed. Modified package
 files stay under MPL; your app can remain closed-source.
+
+## Camera-aware chrome and cycling
+
+Wrap the app shell in `SafaehDeviceCutoutScope` to read native camera paths
+(with Flutter display-feature fallback on unsupported platforms).
+`SafaehDisplayCutoutLayout.of(context)` exposes camera-free horizontal bands
+and floating-control placement; `SafaehCutoutAwareFabLocation` decorates an
+existing FAB location. Supply `leadingClearance` and `topClearance` for
+host-owned navigation and app bars.
+
+`SafaehCycleButton(tooltip: 'Next chart', onPressed: nextChart)` animates one
+turn per activation. The host owns selection, persistence, and which values
+are available, so independent cards can skip values already used elsewhere.

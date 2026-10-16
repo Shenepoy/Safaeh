@@ -1,9 +1,13 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import 'floating_surface.dart';
 import 'floating_surface_renderer.dart';
 import 'rtl.dart';
 import 'theme.dart';
+import 'sidenav_layout.dart';
 
 /// One shell destination in [SafaehSidenav].
 class SafaehSidenavDestination {
@@ -122,6 +126,13 @@ class SafaehSidenavProfile {
   final SafaehLabelBuilder? labelBuilder;
 }
 
+/// A physical display obstruction in screen logical coordinates.
+/// The host should use the exact native path bounds when available.
+class SafaehSidenavCutout {
+  const SafaehSidenavCutout({required this.bounds});
+  final ui.Rect bounds;
+}
+
 /// Temporary drawer (mid), clipping rail (desktop), or overlay rail.
 ///
 /// Set [overlay] to place the rail above sibling content when this widget is
@@ -147,6 +158,7 @@ class SafaehSidenav extends StatelessWidget {
     this.expandedWidth,
     this.duration,
     this.floatingAppearance,
+    this.cutouts,
     this.railKey = const ValueKey('safaeh_nav_rail'),
     this.expandKey = const ValueKey('safaeh_nav_expand'),
     this.collapseKey = const ValueKey('safaeh_nav_collapse'),
@@ -175,12 +187,50 @@ class SafaehSidenav extends StatelessWidget {
 
   /// Appearance used by overlay mode. When omitted, inherits the theme value.
   final SafaehFloatingAppearance? floatingAppearance;
+
+  /// Native camera bounds in screen logical coordinates. A supplied empty list
+  /// is authoritative; null falls back to Flutter display features.
+  final List<SafaehSidenavCutout>? cutouts;
+
   final Key railKey;
   final Key expandKey;
   final Key collapseKey;
 
+  /// Maximum surface extent; small interior cameras never widen the rail.
+  static double widthFor(
+    BuildContext context, {
+    List<SafaehSidenavCutout>? cutouts,
+    required double compactWidth,
+    required double expandedWidth,
+    required bool collapsed,
+  }) {
+    final obstacles = sidenavObstacles(
+      context,
+      cutouts?.map((c) => c.bounds).toList(),
+      compactWidth,
+    );
+    return sidenavSurfaceWidth(
+      (collapsed ? compactWidth : expandedWidth) +
+          _fallbackInset(context, cutouts, obstacles),
+      obstacles,
+    );
+  }
+
+  static double _fallbackInset(
+    BuildContext context,
+    List<SafaehSidenavCutout>? native,
+    List<Rect> obstacles,
+  ) {
+    if (native != null || obstacles.isNotEmpty) return 0;
+    final padding = MediaQuery.paddingOf(context);
+    return Directionality.of(context) == TextDirection.rtl
+        ? padding.right
+        : padding.left;
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (overlay) return _buildOverlay(context);
     final tokens = SafaehTheme.of(context);
     final compact = compactWidth ?? tokens.compactNavWidth;
     final expanded = expandedWidth ?? tokens.expandedNavWidth;
@@ -287,33 +337,210 @@ class SafaehSidenav extends StatelessWidget {
       child: body,
     );
 
-    if (!overlay) return rail;
+    return rail;
+  }
 
-    final appearance = floatingAppearance ?? tokens.floatingAppearance;
-    final overlayRadius = BorderRadiusDirectional.only(
-      topEnd: Radius.circular(tokens.radius),
-      bottomEnd: Radius.circular(tokens.radius),
+  Widget _buildOverlay(BuildContext context) {
+    final tokens = SafaehTheme.of(context);
+    final compact = compactWidth ?? tokens.compactNavWidth;
+    final expanded = expandedWidth ?? tokens.expandedNavWidth;
+    final cs = Theme.of(context).colorScheme;
+    final media = MediaQuery.of(context);
+    final obstacles = sidenavObstacles(
+      context,
+      cutouts?.map((c) => c.bounds).toList(),
+      compact,
     );
-    final overlayShadows = [
-      BoxShadow(
-        color: cs.shadow.withValues(alpha: 0.24),
-        blurRadius: 18,
-        offset: const Offset(2, 0),
+    final motion = safaehResolvedMotion(context, duration ?? tokens.navMotion);
+    final leadingInset = _fallbackInset(context, cutouts, obstacles);
+    final mainItems = <Widget>[
+      _Header(
+        title: title,
+        asDrawer: false,
+        collapsed: collapsed,
+        onFill: cs.onSurface,
+        onToggleCompact: onToggleCompact,
+        expandTooltip: expandTooltip,
+        collapseTooltip: collapseTooltip,
+        compactWidth: compact,
+        expandKey: expandKey,
+        collapseKey: collapseKey,
       ),
+      for (var i = 0; i < destinations.length; i++)
+        _NavTile(
+          tileKey: destinations[i].tileKey ?? ValueKey('safaeh_nav_$i'),
+          label: destinations[i].label,
+          icon: selectedIndex == i
+              ? destinations[i].selectedIcon
+              : destinations[i].icon,
+          selected: selectedIndex == i,
+          collapsed: collapsed,
+          fill: cs.surfaceContainerLow,
+          onFill: cs.onSurface,
+          iconColumnWidth: compact,
+          labelBuilder: destinations[i].labelBuilder,
+          onTap: () => onDestinationSelected(i),
+        ),
     ];
-    final surface = SafaehFloatingSurface(
-      appearance: appearance ?? const SafaehFloatingAppearance(),
-      fallbackColor: chrome.fill,
-      fallbackBorder: Border.all(color: cs.outline.withValues(alpha: 0.36)),
-      fallbackShadows: overlayShadows,
-      borderRadius: overlayRadius,
-      child: rail,
-    );
-
+    final trailingItems = <Widget>[
+      if (profile != null)
+        _NavTile(
+          tileKey: profile!.tileKey ?? const ValueKey('safaeh_nav_profile'),
+          label: profile!.label,
+          subtitle: profile!.subtitle,
+          selected: profile!.selected,
+          collapsed: collapsed,
+          reserveCollapsedHeight: true,
+          fill: cs.surfaceContainerLow,
+          onFill: cs.onSurface,
+          iconColumnWidth: compact,
+          leading:
+              profile!.leading ??
+              SafaehSidenavAvatar(
+                key: const ValueKey('safaeh_nav_profile_avatar'),
+                label: profile!.label,
+              ),
+          trailing: profile!.trailing,
+          labelBuilder: profile!.labelBuilder,
+          onTap: profile!.onTap,
+        ),
+      if (footer != null)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: ExcludeSemantics(
+            excluding: collapsed,
+            child: Opacity(opacity: collapsed ? 0 : 1, child: footer),
+          ),
+        ),
+    ];
+    final mainHeights = List<double>.filled(mainItems.length, 56);
+    final trailingHeights = <double>[
+      if (profile != null) 80,
+      if (footer != null) 36,
+    ];
     return SizedBox.expand(
-      child: Align(alignment: AlignmentDirectional.topStart, child: surface),
+      child: Align(
+        alignment: AlignmentDirectional.topStart,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(
+            begin: collapsed ? compact : expanded,
+            end: collapsed ? compact : expanded,
+          ),
+          duration: motion,
+          curve: Curves.easeInOutCubic,
+          builder: (context, normalWidth, _) => LayoutBuilder(
+            builder: (context, constraints) {
+              final width = sidenavSurfaceWidth(
+                normalWidth + leadingInset,
+                obstacles,
+              );
+              final layout = SidenavLayout(
+                height: constraints.maxHeight,
+                top: media.padding.top,
+                bottom: media.padding.bottom,
+                obstacles: obstacles,
+                mainHeights: mainHeights,
+                trailingHeights: trailingHeights,
+              );
+              final rtl = Directionality.of(context) == TextDirection.rtl;
+              return SizedBox(
+                key: railKey,
+                width: width,
+                height: constraints.maxHeight,
+                child: SafaehFloatingSurface(
+                  appearance:
+                      floatingAppearance ??
+                      tokens.floatingAppearance ??
+                      const SafaehFloatingAppearance(),
+                  fallbackColor: cs.surfaceContainerLow,
+                  fallbackBorder: Border.all(
+                    color: cs.outline.withValues(alpha: 0.36),
+                  ),
+                  fallbackShadows: [
+                    BoxShadow(
+                      color: cs.shadow.withValues(alpha: 0.18),
+                      blurRadius: 16,
+                      offset: const Offset(2, 0),
+                    ),
+                  ],
+                  shape: SidenavRailShape(
+                    normalWidth: normalWidth + leadingInset,
+                    obstacles: obstacles,
+                  ),
+                  child: ClipPath(
+                    clipper: _SidenavControlsClipper(obstacles, rtl),
+                    child: SingleChildScrollView(
+                      child: SizedBox(
+                        height: layout.contentHeight,
+                        child: Stack(
+                          children: [
+                            for (var i = 0; i < mainItems.length; i++)
+                              AnimatedPositionedDirectional(
+                                key: ValueKey('safaeh_nav_row_$i'),
+                                duration: motion,
+                                curve: Curves.easeInOutCubic,
+                                start: leadingInset,
+                                top: layout.mainTops[i],
+                                width: normalWidth,
+                                height: mainHeights[i],
+                                child: mainItems[i],
+                              ),
+                            for (var i = 0; i < trailingItems.length; i++)
+                              AnimatedPositionedDirectional(
+                                key: ValueKey('safaeh_nav_tail_$i'),
+                                duration: motion,
+                                curve: Curves.easeInOutCubic,
+                                start: leadingInset,
+                                top: layout.trailingTops[i],
+                                width: normalWidth,
+                                height: trailingHeights[i],
+                                child: trailingItems[i],
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
     );
   }
+}
+
+/// Masks controls during scrolling; the continuous surface behind them remains.
+class _SidenavControlsClipper extends CustomClipper<Path> {
+  const _SidenavControlsClipper(this.obstacles, this.rtl);
+  final List<Rect> obstacles;
+  final bool rtl;
+  @override
+  Path getClip(Size size) {
+    var path = Path()..addRect(Offset.zero & size);
+    for (final camera in obstacles) {
+      final bounds = camera.inflate(8);
+      final rect = rtl
+          ? Rect.fromLTRB(
+              size.width - bounds.right,
+              bounds.top,
+              size.width - bounds.left,
+              bounds.bottom,
+            )
+          : bounds;
+      path = Path.combine(
+        PathOperation.difference,
+        path,
+        Path()..addRect(rect),
+      );
+    }
+    return path;
+  }
+
+  @override
+  bool shouldReclip(_SidenavControlsClipper oldClipper) =>
+      oldClipper.rtl != rtl || !listEquals(oldClipper.obstacles, obstacles);
 }
 
 class _Header extends StatelessWidget {

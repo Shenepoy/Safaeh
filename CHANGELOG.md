@@ -10,6 +10,23 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-16
+
+### Added
+
+- `SafaehDeviceCutoutScope`, `SafaehDisplayCutoutLayout`, and
+  `SafaehCutoutAwareFabLocation` share physical camera bounds and avoid cutouts
+  on either landscape edge without consuming an entire horizontal inset.
+- `SafaehCycleButton` provides an independent animated one-tap cycle action.
+
+### Fixed
+
+- Landscape sidenav fills the screen edge and places destinations around
+  pinhole cameras or larger edge cutouts.
+- Anchored popouts track a moving trigger and dismiss if it disappears.
+- Wide sheet descendants no longer apply horizontal safe-area insets twice.
+
+
 ## [0.11.0] - 2026-10-15
 
 ### Added
