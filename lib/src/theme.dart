@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'floating_surface.dart';
 
@@ -203,7 +203,8 @@ class SafaehTheme extends InheritedWidget {
 /// floating nav, and page index.
 typedef SafaehLabelBuilder = Widget Function(String data, TextStyle? style);
 
-/// Which navigator [safaehPop] uses. [showSafaeh] / dialog / camera set this.
+/// Which navigator [safaehPop], anchored popouts, and feedback use.
+/// [showSafaeh] / dialog / camera set this. Defaults to the root navigator.
 class SafaehNavigatorScope extends InheritedWidget {
   const SafaehNavigatorScope({
     super.key,

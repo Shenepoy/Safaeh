@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'theme.dart';
 
@@ -62,6 +62,8 @@ class SafaehGenieShader {
 /// Pass [link] so the card follows a live target. [sourceRect] places the
 /// drop card and cuts the genie scrim hole. Supply [sourceRectBuilder] for a
 /// trigger that can move with rotation. The host owns the card.
+/// Uses [SafaehNavigatorScope], defaulting to the root navigator. Anchor rects
+/// must use that navigator overlay's coordinate space.
 Future<T?> showSafaehAnchored<T>({
   required BuildContext context,
   Widget? child,
@@ -78,10 +80,12 @@ Future<T?> showSafaehAnchored<T>({
   assert(child != null || childBuilder != null);
   if (motion == SafaehAnchoredMotion.genie) SafaehGenieShader.preload();
   final captured = sourceRect;
-  final barrierLabel = MaterialLocalizations.of(
+  final barrierLabel = MaterialLocalizations.of(context)
+      .modalBarrierDismissLabel;
+  return Navigator.of(
     context,
-  ).modalBarrierDismissLabel;
-  return Navigator.of(context, rootNavigator: true).push<T>(
+    rootNavigator: SafaehNavigatorScope.of(context),
+  ).push<T>(
     _AnchoredRoute<T>(
       motion: motion,
       link: link,

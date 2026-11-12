@@ -1,14 +1,16 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'floating_surface.dart';
 import 'floating_surface_renderer.dart';
 import 'sheet_handle_drag.dart';
 import 'theme.dart';
 
-typedef SafaehCameraSheetBuilder =
-    Widget Function(BuildContext context, SafaehCameraSheet sheet);
+typedef SafaehCameraSheetBuilder = Widget Function(
+  BuildContext context,
+  SafaehCameraSheet sheet,
+);
 
 /// Handle for compact↔full camera / QR chrome.
 class SafaehCameraSheet {

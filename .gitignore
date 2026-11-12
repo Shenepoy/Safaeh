@@ -52,3 +52,6 @@ Thumbs.db
 
 # Local semantic search index
 .zvec-grep/
+
+# Local dependency resolution; never publish machine paths
+pubspec_overrides.yaml

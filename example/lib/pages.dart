@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:safaeh/safaeh.dart';
 
 import 'catalog.dart';
@@ -754,9 +754,8 @@ class TextInputChoicesDemo extends StatelessWidget {
       validator: validator,
     );
     if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(value ?? t('dismissed'))));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(value ?? t('dismissed'))));
   }
 
   @override
@@ -1049,7 +1048,7 @@ class _DemoPage extends StatelessWidget {
 }
 
 class _DemoSection extends StatelessWidget {
-  const _DemoSection({super.key, required this.title, required this.body});
+  const _DemoSection({required this.title, required this.body});
 
   final String title;
   final String body;
@@ -1071,10 +1070,34 @@ class _DemoSection extends StatelessWidget {
   }
 }
 
+List<SafaehSidenavDestination> _sidenavDemoDestinations(
+  String Function(String) t,
+  int count,
+) => [
+  SafaehSidenavDestination(
+    label: t('groups'),
+    icon: Icons.group_outlined,
+    selectedIcon: Icons.group,
+  ),
+  SafaehSidenavDestination(
+    label: t('settings'),
+    icon: Icons.settings_outlined,
+    selectedIcon: Icons.settings,
+  ),
+  for (var i = 2; i < count; i++)
+    SafaehSidenavDestination(
+      label: '${t('groups')} ${i - 1}',
+      icon: Icons.folder_outlined,
+      selectedIcon: Icons.folder,
+    ),
+];
+
 class SidenavRailDemo extends StatefulWidget {
-  const SidenavRailDemo({super.key, required this.t});
+  const SidenavRailDemo({super.key, required this.t, this.itemCount = 2})
+    : assert(itemCount >= 2);
 
   final String Function(String key) t;
+  final int itemCount;
 
   @override
   State<SidenavRailDemo> createState() => _SidenavRailDemoState();
@@ -1083,6 +1106,12 @@ class SidenavRailDemo extends StatefulWidget {
 class _SidenavRailDemoState extends State<SidenavRailDemo> {
   bool? _collapsedOverride;
   var _index = 0;
+
+  @override
+  void didUpdateWidget(covariant SidenavRailDemo oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_index >= widget.itemCount) _index = widget.itemCount - 1;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1109,18 +1138,7 @@ class _SidenavRailDemoState extends State<SidenavRailDemo> {
           onDestinationSelected: (i) => setState(() => _index = i),
           expandTooltip: t('expand'),
           collapseTooltip: t('collapse'),
-          destinations: [
-            SafaehSidenavDestination(
-              label: t('groups'),
-              icon: Icons.group_outlined,
-              selectedIcon: Icons.group,
-            ),
-            SafaehSidenavDestination(
-              label: t('settings'),
-              icon: Icons.settings_outlined,
-              selectedIcon: Icons.settings,
-            ),
-          ],
+          destinations: _sidenavDemoDestinations(t, widget.itemCount),
           profile: SafaehSidenavProfile(
             label: t('profile_name'),
             subtitle: t('profile_email'),
@@ -1131,7 +1149,7 @@ class _SidenavRailDemoState extends State<SidenavRailDemo> {
         ),
         Expanded(
           child: _DemoPage(
-            title: _index == 0 ? t('groups') : t('settings'),
+            title: _sidenavDemoDestinations(t, widget.itemCount)[_index].label,
             body: t('toggle_rail'),
           ),
         ),
@@ -1141,9 +1159,11 @@ class _SidenavRailDemoState extends State<SidenavRailDemo> {
 }
 
 class SidenavDrawerDemo extends StatefulWidget {
-  const SidenavDrawerDemo({super.key, required this.t});
+  const SidenavDrawerDemo({super.key, required this.t, this.itemCount = 2})
+    : assert(itemCount >= 2);
 
   final String Function(String key) t;
+  final int itemCount;
 
   @override
   State<SidenavDrawerDemo> createState() => _SidenavDrawerDemoState();
@@ -1152,6 +1172,12 @@ class SidenavDrawerDemo extends StatefulWidget {
 class _SidenavDrawerDemoState extends State<SidenavDrawerDemo> {
   var _index = 0;
   var _open = true;
+
+  @override
+  void didUpdateWidget(covariant SidenavDrawerDemo oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_index >= widget.itemCount) _index = widget.itemCount - 1;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1165,18 +1191,7 @@ class _SidenavDrawerDemoState extends State<SidenavDrawerDemo> {
         _index = i;
         _open = false;
       }),
-      destinations: [
-        SafaehSidenavDestination(
-          label: t('groups'),
-          icon: Icons.group_outlined,
-          selectedIcon: Icons.group,
-        ),
-        SafaehSidenavDestination(
-          label: t('settings'),
-          icon: Icons.settings_outlined,
-          selectedIcon: Icons.settings,
-        ),
-      ],
+      destinations: _sidenavDemoDestinations(t, widget.itemCount),
       profile: SafaehSidenavProfile(
         label: t('profile_name'),
         subtitle: t('profile_email'),
@@ -1207,7 +1222,10 @@ class _SidenavDrawerDemoState extends State<SidenavDrawerDemo> {
                   ),
                   Expanded(
                     child: _DemoPage(
-                      title: _index == 0 ? t('groups') : t('settings'),
+                      title: _sidenavDemoDestinations(
+                        t,
+                        widget.itemCount,
+                      )[_index].label,
                       body: t('sidenav_drawer_sub'),
                     ),
                   ),
@@ -1257,9 +1275,11 @@ class _SidenavDrawerDemoState extends State<SidenavDrawerDemo> {
 }
 
 class SidenavOverlayDemo extends StatefulWidget {
-  const SidenavOverlayDemo({super.key, required this.t});
+  const SidenavOverlayDemo({super.key, required this.t, this.itemCount = 2})
+    : assert(itemCount >= 2);
 
   final String Function(String key) t;
+  final int itemCount;
 
   @override
   State<SidenavOverlayDemo> createState() => _SidenavOverlayDemoState();
@@ -1268,6 +1288,12 @@ class SidenavOverlayDemo extends StatefulWidget {
 class _SidenavOverlayDemoState extends State<SidenavOverlayDemo> {
   var _collapsed = true;
   var _index = 0;
+
+  @override
+  void didUpdateWidget(covariant SidenavOverlayDemo oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_index >= widget.itemCount) _index = widget.itemCount - 1;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1292,7 +1318,7 @@ class _SidenavOverlayDemoState extends State<SidenavOverlayDemo> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                t('groups'),
+                _sidenavDemoDestinations(t, widget.itemCount)[_index].label,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: cs.onPrimaryContainer,
                   fontWeight: FontWeight.w800,
@@ -1301,9 +1327,8 @@ class _SidenavOverlayDemoState extends State<SidenavOverlayDemo> {
               const SizedBox(height: 8),
               Text(
                 t('nav_page_copy'),
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: cs.onPrimaryContainer),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: cs.onPrimaryContainer),
               ),
               const SizedBox(height: 24),
               DecoratedBox(
@@ -1315,9 +1340,8 @@ class _SidenavOverlayDemoState extends State<SidenavOverlayDemo> {
                   padding: const EdgeInsets.all(16),
                   child: Text(
                     t('toggle_rail'),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: cs.onPrimaryContainer,
-                    ),
+                    style: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(color: cs.onPrimaryContainer),
                   ),
                 ),
               ),
@@ -1334,18 +1358,7 @@ class _SidenavOverlayDemoState extends State<SidenavOverlayDemo> {
           expandTooltip: t('expand'),
           collapseTooltip: t('collapse'),
           railKey: const ValueKey('safaeh_nav_overlay'),
-          destinations: [
-            SafaehSidenavDestination(
-              label: t('groups'),
-              icon: Icons.group_outlined,
-              selectedIcon: Icons.group,
-            ),
-            SafaehSidenavDestination(
-              label: t('settings'),
-              icon: Icons.settings_outlined,
-              selectedIcon: Icons.settings,
-            ),
-          ],
+          destinations: _sidenavDemoDestinations(t, widget.itemCount),
           profile: SafaehSidenavProfile(
             label: t('profile_name'),
             subtitle: t('profile_email'),
@@ -1681,126 +1694,41 @@ String _floatingStyleName(SafaehFloatingSurfaceStyle style) {
   return '${name[0].toUpperCase()}${name.substring(1)}';
 }
 
-class PageIndexRailDemo extends StatefulWidget {
+class PageIndexRailDemo extends StatelessWidget {
   const PageIndexRailDemo({super.key, required this.t});
-
   final String Function(String key) t;
 
   @override
-  State<PageIndexRailDemo> createState() => _PageIndexRailDemoState();
+  Widget build(BuildContext context) => _PageIndexDemo(t: t);
 }
 
-class _PageIndexRailDemoState extends State<PageIndexRailDemo> {
-  final _scroll = ScrollController();
-  final _alpha = GlobalKey();
-  final _beta = GlobalKey();
-  final _gamma = GlobalKey();
-  late final List<SafaehPageIndexEntry> _entries;
-  String? _active = 'alpha';
-
-  @override
-  void initState() {
-    super.initState();
-    _entries = [
-      SafaehPageIndexEntry(id: 'alpha', label: widget.t('alpha'), key: _alpha),
-      SafaehPageIndexEntry(id: 'beta', label: widget.t('beta'), key: _beta),
-      SafaehPageIndexEntry(id: 'gamma', label: widget.t('gamma'), key: _gamma),
-    ];
-  }
-
-  @override
-  void dispose() {
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final t = widget.t;
-    final wide = SafaehTheme.of(context).isWide(context);
-    final list = ListView(
-      key: const ValueKey('page_index_demo_list'),
-      primary: false,
-      controller: _scroll,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
-      children: [
-        _DemoSection(key: _alpha, title: t('alpha'), body: t('section_copy')),
-        _DemoSection(key: _beta, title: t('beta'), body: t('section_copy')),
-        _DemoSection(key: _gamma, title: t('gamma'), body: t('section_copy')),
-      ],
-    );
-    Future<void> select(SafaehPageIndexEntry entry) async {
-      setState(() => _active = entry.id);
-      await scrollToPageSection(entry.key, controller: _scroll);
-    }
-
-    final body = NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        final next = safaehActivePageSectionId(
-          sections: [('alpha', _alpha), ('beta', _beta), ('gamma', _gamma)],
-          scrollContext: notification.context ?? context,
-        );
-        if (next != null && next != _active) {
-          setState(() => _active = next);
-        }
-        return true;
-      },
-      child: list,
-    );
-    if (!wide) {
-      return Stack(
-        children: [
-          Positioned.fill(child: body),
-          SafaehPageIndexOverlay(
-            title: t('on_this_page'),
-            entries: _entries,
-            activeId: _active,
-            onSelect: select,
-          ),
-        ],
-      );
-    }
-    return Row(
-      children: [
-        Expanded(child: body),
-        SizedBox(
-          width: 168,
-          child: SafaehPageIndex(
-            title: t('on_this_page'),
-            entries: _entries,
-            activeId: _active,
-            onSelect: select,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class PageIndexOverlayDemo extends StatefulWidget {
+class PageIndexOverlayDemo extends StatelessWidget {
   const PageIndexOverlayDemo({super.key, required this.t});
-
   final String Function(String key) t;
 
   @override
-  State<PageIndexOverlayDemo> createState() => _PageIndexOverlayDemoState();
+  Widget build(BuildContext context) => _PageIndexDemo(t: t, overlay: true);
 }
 
-class _PageIndexOverlayDemoState extends State<PageIndexOverlayDemo> {
-  final _scroll = ScrollController();
-  final _alpha = GlobalKey();
-  final _beta = GlobalKey();
-  late final List<SafaehPageIndexEntry> _entries;
-  String? _active = 'alpha';
+class _PageIndexDemo extends StatefulWidget {
+  const _PageIndexDemo({required this.t, this.overlay = false});
+  final String Function(String key) t;
+  final bool overlay;
 
   @override
-  void initState() {
-    super.initState();
-    _entries = [
-      SafaehPageIndexEntry(id: 'alpha', label: widget.t('alpha'), key: _alpha),
-      SafaehPageIndexEntry(id: 'beta', label: widget.t('beta'), key: _beta),
-    ];
-  }
+  State<_PageIndexDemo> createState() => _PageIndexDemoState();
+}
+
+class _PageIndexDemoState extends State<_PageIndexDemo> {
+  final _scroll = ScrollController();
+  final _sections = [
+    ('alpha', GlobalKey()),
+    ('beta', GlobalKey()),
+    ('gamma', GlobalKey()),
+  ];
+  String _active = 'alpha';
+  bool _programmaticScroll = false;
+  int _scrollGeneration = 0;
 
   @override
   void dispose() {
@@ -1808,44 +1736,110 @@ class _PageIndexOverlayDemoState extends State<PageIndexOverlayDemo> {
     super.dispose();
   }
 
+  Future<void> _select(SafaehPageIndexEntry entry) async {
+    final generation = ++_scrollGeneration;
+    setState(() {
+      _active = entry.id;
+      _programmaticScroll = true;
+    });
+    await scrollToPageSection(entry.key, controller: _scroll);
+    if (!mounted || generation != _scrollGeneration) return;
+    // The selected destination stays stable through the final scroll event.
+    // A newer tap or a user drag invalidates this completion.
+    _programmaticScroll = false;
+  }
+
+  bool _onScroll(ScrollNotification notification) {
+    if (notification.depth != 0) return false;
+    if (notification is ScrollStartNotification &&
+        notification.dragDetails != null) {
+      ++_scrollGeneration;
+      _programmaticScroll = false;
+    }
+    if (_programmaticScroll ||
+        (notification is! ScrollUpdateNotification &&
+            notification is! ScrollEndNotification)) {
+      return false;
+    }
+    final next = safaehActivePageSectionId(
+      sections: _sections,
+      scrollContext: notification.context!,
+      metrics: notification.metrics,
+    );
+    if (next != null && next != _active) setState(() => _active = next);
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = widget.t;
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (_) => true,
-            child: ListView(
-              key: const ValueKey('page_index_overlay_demo_list'),
-              primary: false,
-              controller: _scroll,
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+    final entries = [
+      for (final (id, key) in _sections)
+        SafaehPageIndexEntry(id: id, label: t(id), key: key),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide =
+            !widget.overlay &&
+            constraints.maxWidth >= SafaehTheme.of(context).tabletBreakpoint;
+        final body = NotificationListener<ScrollNotification>(
+          onNotification: _onScroll,
+          child: SingleChildScrollView(
+            key: ValueKey(
+              widget.overlay
+                  ? 'page_index_overlay_demo_list'
+                  : 'page_index_demo_list',
+            ),
+            controller: _scroll,
+            primary: false,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+            // Only three sections: keep their anchors mounted so selecting a
+            // distant one never needs exploratory jumps through a lazy list.
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _DemoSection(
-                  key: _alpha,
-                  title: t('alpha'),
-                  body: t('section_copy'),
-                ),
-                _DemoSection(
-                  key: _beta,
-                  title: t('beta'),
-                  body: t('section_copy'),
-                ),
+                for (final (id, key) in _sections)
+                  ConstrainedBox(
+                    key: key,
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight.isFinite
+                          ? constraints.maxHeight * 0.7
+                          : 320,
+                    ),
+                    child: _DemoSection(title: t(id), body: t('section_copy')),
+                  ),
               ],
             ),
           ),
-        ),
-        SafaehPageIndexOverlay(
-          title: t('on_this_page'),
-          entries: _entries,
-          activeId: _active,
-          onSelect: (entry) async {
-            setState(() => _active = entry.id);
-            await scrollToPageSection(entry.key, controller: _scroll);
-          },
-        ),
-      ],
+        );
+        if (!wide) {
+          return Stack(
+            children: [
+              Positioned.fill(child: body),
+              SafaehPageIndexOverlay(
+                title: t('on_this_page'),
+                entries: entries,
+                activeId: _active,
+                onSelect: _select,
+              ),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: body),
+            SizedBox(
+              width: 168,
+              child: SafaehPageIndex(
+                title: t('on_this_page'),
+                entries: entries,
+                activeId: _active,
+                onSelect: _select,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -2258,8 +2252,8 @@ class AnchoredPopoutDemo extends StatelessWidget {
     final first = MaterialLocalizations.of(context).firstDayOfWeekIndex;
     return List<String>.generate(7, (i) {
       final weekday = DateTime.utc(2023, 1, 1 + ((first + i) % 7));
-      return MaterialLocalizations.of(context).narrowWeekdays[weekday.weekday %
-          7];
+      return MaterialLocalizations.of(context)
+          .narrowWeekdays[weekday.weekday % 7];
     });
   }
 
@@ -2324,16 +2318,13 @@ class AnchoredPopoutDemo extends StatelessWidget {
                   month: DateTime(now.year, now.month),
                   firstDate: DateTime(now.year - 1),
                   lastDate: DateTime(now.year + 1, 12, 31),
-                  monthLabel: MaterialLocalizations.of(
-                    context,
-                  ).formatMonthYear(now),
+                  monthLabel: MaterialLocalizations.of(context)
+                      .formatMonthYear(now),
                   weekdayLabels: _weekdays(context),
-                  previousTooltip: MaterialLocalizations.of(
-                    context,
-                  ).previousMonthTooltip,
-                  nextTooltip: MaterialLocalizations.of(
-                    context,
-                  ).nextMonthTooltip,
+                  previousTooltip: MaterialLocalizations.of(context)
+                      .previousMonthTooltip,
+                  nextTooltip: MaterialLocalizations.of(context)
+                      .nextMonthTooltip,
                   onPreviousMonth: () {},
                   onNextMonth: () {},
                   onDayTap: (_) => Navigator.of(context).maybePop(),

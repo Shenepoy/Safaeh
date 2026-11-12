@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Catalog copy for Fukaha's five locales. The package itself has no i18n.
 const catalogTranslations = <String, Map<String, String>>{
@@ -11,8 +11,7 @@ const catalogTranslations = <String, Map<String, String>>{
     'theme_dark': 'Dark',
     'floating_appearance': 'Floating appearance',
     'preview_phone': 'Phone layout',
-    'sheet_placement_center':
-        'Raise the sheet so the first content center aligns with the phone center',
+    'sheet_placement_center': 'Raise the sheet so the first content center aligns with the phone center',
     'sheet_placement_bottom': 'Use a compact bottom sheet',
     'sheet': 'Adaptive sheet',
     'sheet_sub': 'Phone sheet ↔ tablet dialog',
@@ -153,8 +152,7 @@ const catalogTranslations = <String, Map<String, String>>{
     'beta': 'Beta',
     'gamma': 'Gamma',
     'aside': 'Aside',
-    'band_copy':
-        'SafaehContentBand centers a max-width column from incoming constraints. Aside is hidden on narrow screens.',
+    'band_copy': 'SafaehContentBand centers a max-width column from incoming constraints. Aside is hidden on narrow screens.',
     'aside_copy': 'Manual SafaehEndAsideLayout offsets.',
     'aligned_title': 'Aligned title',
     'morphing_app_bar': 'Morphing app bar',
@@ -378,8 +376,7 @@ const catalogTranslations = <String, Map<String, String>>{
     'beta': 'بيتا',
     'gamma': 'غاما',
     'aside': 'جانب',
-    'band_copy':
-        'SafaehContentBand يوسّط عموداً بحد أقصى من القيود الواردة. الجانب يُخفى على الشاشات الضيقة.',
+    'band_copy': 'SafaehContentBand يوسّط عموداً بحد أقصى من القيود الواردة. الجانب يُخفى على الشاشات الضيقة.',
     'aside_copy': 'إزاحات SafaehEndAsideLayout اليدوية.',
     'aligned_title': 'عنوان محاذى',
     'morphing_app_bar': 'شريط التطبيق المتحوّل',
@@ -910,8 +907,7 @@ const catalogTranslations = <String, Map<String, String>>{
     'theme_dark': 'Oscuro',
     'floating_appearance': 'Apariencia flotante',
     'preview_phone': 'Diseño de teléfono',
-    'sheet_placement_center':
-        'Elevar la hoja para alinear el centro del primer contenido con el del teléfono',
+    'sheet_placement_center': 'Elevar la hoja para alinear el centro del primer contenido con el del teléfono',
     'sheet_placement_bottom': 'Usar una hoja inferior compacta',
     'sheet': 'Hoja adaptativa',
     'sheet_sub': 'Hoja de teléfono ↔ diálogo de tablet',
@@ -1057,8 +1053,7 @@ const catalogTranslations = <String, Map<String, String>>{
     'beta': 'Beta',
     'gamma': 'Gamma',
     'aside': 'Lateral',
-    'band_copy':
-        'SafaehContentBand centra una columna de ancho máximo desde las restricciones entrantes. El lateral se oculta en pantallas estrechas.',
+    'band_copy': 'SafaehContentBand centra una columna de ancho máximo desde las restricciones entrantes. El lateral se oculta en pantallas estrechas.',
     'aside_copy': 'Desplazamientos manuales de SafaehEndAsideLayout.',
     'aligned_title': 'Título alineado',
     'morphing_app_bar': 'Barra de aplicación adaptable',

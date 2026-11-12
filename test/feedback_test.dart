@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:safaeh/safaeh.dart';
 import 'package:toastification/toastification.dart';
@@ -69,6 +69,50 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Close feedback', skipOffstage: false), findsNothing);
   });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('custom feedback uses modern ${brightness.name} text theme', (
+      tester,
+    ) async {
+      final color = brightness == Brightness.dark ? Colors.lime : Colors.teal;
+      final base = ThemeData(brightness: brightness);
+      final theme = base.copyWith(
+        textTheme: base.textTheme.copyWith(
+          bodyLarge: TextStyle(color: color, fontSize: 27),
+        ),
+      );
+      late TextStyle builderStyle;
+      await tester.pumpWidget(
+        SafaehFeedbackHost(
+          child: MaterialApp(
+            theme: theme,
+            home: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => context.showSafaehCustomFeedback(
+                  duration: Duration.zero,
+                  builder: (context, _) {
+                    builderStyle = DefaultTextStyle.of(context).style;
+                    return const Text('Custom themed message');
+                  },
+                ),
+                child: const Text('Show'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Show'));
+      await tester.pumpAndSettle();
+
+      final context = tester.element(find.text('Custom themed message'));
+      final textStyle = DefaultTextStyle.of(context).style;
+      expect(textStyle.color, color);
+      expect(textStyle.fontSize, 27);
+      expect(builderStyle.color, color);
+      expect(builderStyle.fontSize, 27);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
 
   testWidgets('feedback dismisses on a swipe in any direction', (tester) async {
     Future<void> show(WidgetTester tester) async {

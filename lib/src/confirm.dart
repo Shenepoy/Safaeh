@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'adaptive_sheet.dart';
 import 'content_panel.dart';

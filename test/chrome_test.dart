@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:safaeh/safaeh.dart';
 
@@ -73,9 +73,7 @@ void main() {
   testWidgets('SafaehGlyphAvatar falls back when letter is empty', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      _host(child: const SafaehGlyphAvatar(letter: '')),
-    );
+    await tester.pumpWidget(_host(child: const SafaehGlyphAvatar(letter: '')));
     expect(find.text('?'), findsOneWidget);
   });
 
@@ -88,7 +86,9 @@ void main() {
 
   testWidgets('SafaehKpiCard shows label and value', (tester) async {
     await tester.pumpWidget(
-      _host(child: const SafaehKpiCard(label: 'Total', value: '12.00')),
+      _host(
+        child: const SafaehKpiCard(label: 'Total', value: '12.00'),
+      ),
     );
     expect(find.text('Total'), findsOneWidget);
     expect(find.text('12.00'), findsOneWidget);

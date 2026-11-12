@@ -1,12 +1,14 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Builds the single action slot of a [SafaehMorphingAppBar].
 ///
 /// [page] is clamped to the range of [SafaehMorphingAppBar.titles] before the
 /// builder is called. Use [SafaehMorphingAppBarAction] for actions that should
 /// fade in around a particular page.
-typedef SafaehMorphingAppBarActionBuilder =
-    Widget Function(BuildContext context, double page);
+typedef SafaehMorphingAppBarActionBuilder = Widget Function(
+  BuildContext context,
+  double page,
+);
 
 /// An app bar whose title and host-provided chrome follow a page position.
 ///

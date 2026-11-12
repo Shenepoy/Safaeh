@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' show DisplayFeatureType;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Screen-space obstacles are normalized to distance from the leading edge.
 /// Native geometry is authoritative; Flutter features are only a fallback.

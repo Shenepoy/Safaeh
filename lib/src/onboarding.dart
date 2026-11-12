@@ -1,7 +1,7 @@
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'rtl.dart';
 import 'theme.dart';
@@ -182,8 +182,10 @@ class SafaehOnboardingHostActions {
 }
 
 /// Optional host-supplied background builder.
-typedef SafaehOnboardingBackgroundBuilder =
-    Widget Function(BuildContext context, SafaehOnboardingDesign design);
+typedef SafaehOnboardingBackgroundBuilder = Widget Function(
+  BuildContext context,
+  SafaehOnboardingDesign design,
+);
 
 /// A reusable onboarding shell with six complete visual directions.
 class SafaehOnboarding extends StatefulWidget {
@@ -1519,9 +1521,8 @@ class _OrbitTracker extends StatelessWidget {
           const SizedBox(width: 10),
           Text(
             '${current + 1} / $total',
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+            style: Theme.of(context).textTheme.labelLarge
+                ?.copyWith(fontWeight: FontWeight.w800),
           ),
         ],
       ),

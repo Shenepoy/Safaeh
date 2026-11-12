@@ -1,7 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:safaeh/safaeh.dart';
 import 'package:safaeh_example/app.dart';
@@ -38,11 +37,7 @@ Future<void> _capture(
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: theme,
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
         home: SafaehTheme(
           data: const SafaehThemeData(),
           child: ColoredBox(

@@ -22,7 +22,7 @@ and callbacks from the host application.
 
 <p align="center">
   <a href="https://pub.dev/packages/safaeh"><img alt="pub.dev" src="https://img.shields.io/pub/v/safaeh.svg?style=flat-square&label=pub.dev&color=8B6914" /></a>
-  <a href="https://github.com/Zyzto/Safaeh"><img alt="repo" src="https://img.shields.io/badge/github-Zyzto%2FSafaeh-C0C0C0?style=flat-square" /></a>
+  <a href="https://github.com/Shenepoy/Safaeh"><img alt="repo" src="https://img.shields.io/badge/github-Shenepoy%2FSafaeh-C0C0C0?style=flat-square" /></a>
   <img alt="flutter" src="https://img.shields.io/badge/Flutter-%3E%3D3.11-C0C0C0?style=flat-square&logo=flutter&logoColor=white" />
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MPL--2.0-8B6914?style=flat-square" /></a>
 </p>
@@ -69,7 +69,7 @@ overlays. Then you need:
 
 **Safaeh** is that chrome layer. Used in Hisab.
 
-On pub.dev: [`safaeh`](https://pub.dev/packages/safaeh) · Repo: [Zyzto/Safaeh](https://github.com/Zyzto/Safaeh).
+On pub.dev: [`safaeh`](https://pub.dev/packages/safaeh) · Repo: [Shenepoy/Safaeh](https://github.com/Shenepoy/Safaeh).
 
 ---
 
@@ -136,9 +136,13 @@ Captured with [`widgets_to_image`](https://pub.dev/packages/widgets_to_image) (`
 
 ## Install
 
+Version 1.0 requires Flutter 3.50 / Dart 3.14 and uses
+`package:material_ui/material_ui.dart`. Migrate host Material imports and
+public theme types together; legacy SDK Material types are not interchangeable.
+
 ```yaml
 dependencies:
-  safaeh: ^0.6.0
+  safaeh: ^1.0.0
 ```
 
 Or:
@@ -153,15 +157,15 @@ Git tag pin (see [VERSIONING.md](VERSIONING.md)):
 dependencies:
   safaeh:
     git:
-      url: https://github.com/Zyzto/Safaeh.git
-      ref: v0.6.0
+      url: https://github.com/Shenepoy/Safaeh.git
+      ref: v1.0.0
 ```
 
 ```dart
 import 'package:safaeh/safaeh.dart';
 ```
 
-Current version: **0.6.0**.
+Current version: **1.0.0**.
 See [doc/chrome.md](doc/chrome.md) and [doc/debug-menu.md](doc/debug-menu.md).
 
 ---
@@ -671,6 +675,16 @@ cd example && flutter pub get && dart analyze --fatal-infos && flutter test
 `example/test/widget_images_test.dart` writes widget PNGs to [`screenshots/`](screenshots/).
 
 To run on a device, generate the other platforms (`flutter create . --platforms=android,ios` inside `example/`). Details: [example/README.md](example/README.md).
+
+A separate development Widgetbook lives in `widgetbook/` in the repository
+checkout. It includes component knobs, light/dark themes, RTL locales, viewport
+presets, and isolated modal previews. See `widgetbook/README.md` for setup and
+`widgetbook/COVERAGE.md` for the inventory. It is excluded from pub.dev archives
+and adds no dependencies to consumer applications.
+
+```bash
+cd widgetbook && flutter pub get --enforce-lockfile && flutter run -d chrome
+```
 
 Package tests:
 

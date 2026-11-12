@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:toastification/toastification.dart';
+
+import 'theme.dart';
 
 /// Close timers armed after a toast is inserted.
 ///
@@ -36,8 +38,10 @@ typedef SafaehFeedbackInsetBuilder = double Function(BuildContext context);
 /// Builds custom feedback content and receives a dismissal callback owned by
 /// Safaeh. Apps can use this for richer messages while keeping placement and
 /// animation consistent with ordinary feedback.
-typedef SafaehFeedbackBuilder =
-    Widget Function(BuildContext context, VoidCallback dismiss);
+typedef SafaehFeedbackBuilder = Widget Function(
+  BuildContext context,
+  VoidCallback dismiss,
+);
 
 /// Mounts the shared feedback overlay and its placement policy.
 ///
@@ -350,13 +354,23 @@ extension SafaehFeedbackContext on BuildContext {
     // first. The insert then sticks on screen.
     item = toastification.showCustom(
       context: this,
-      overlayState: Navigator.maybeOf(this, rootNavigator: true)?.overlay,
-      builder: (context, holder) => _FeedbackSwipe(
-        onTap: () => dismiss(),
-        onSwipe: () => dismiss(animate: false),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: builder(context, () => dismiss()),
+      overlayState: Navigator.maybeOf(
+        this,
+        rootNavigator: SafaehNavigatorScope.of(this),
+      )?.overlay,
+      // Toastification still supplies an SDK Material default text style.
+      // Restore the modern host style for both the builder and its content.
+      builder: (context, holder) => DefaultTextStyle(
+        style: Theme.of(context).textTheme.bodyLarge ?? const TextStyle(),
+        child: Builder(
+          builder: (context) => _FeedbackSwipe(
+            onTap: () => dismiss(),
+            onSwipe: () => dismiss(animate: false),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: builder(context, () => dismiss()),
+            ),
+          ),
         ),
       ),
     );

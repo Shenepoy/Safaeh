@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'onboarding.dart';
 
@@ -141,13 +141,12 @@ class SafaehAuthLabels {
   };
 }
 
-typedef SafaehAuthProviderBuilder =
-    Widget Function(
-      BuildContext context,
-      SafaehAuthProvider provider,
-      String label,
-      VoidCallback? onPressed,
-    );
+typedef SafaehAuthProviderBuilder = Widget Function(
+  BuildContext context,
+  SafaehAuthProvider provider,
+  String label,
+  VoidCallback? onPressed,
+);
 
 /// Generic sign-in/signup presentation with no account or network knowledge.
 class SafaehAuthFlow extends StatefulWidget {
@@ -349,13 +348,17 @@ class _SafaehAuthFlowState extends State<SafaehAuthFlow> {
             Row(
               children: [
                 const Expanded(child: Divider()),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    widget.labels.emailDivider,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      letterSpacing: 0.2,
+                Expanded(
+                  flex: 3,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      widget.labels.emailDivider,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        letterSpacing: 0.2,
+                      ),
                     ),
                   ),
                 ),

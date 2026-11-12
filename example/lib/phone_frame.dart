@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:safaeh/safaeh.dart';
 
 /// Edadat-style device chrome (`edadat/example/lib/app.dart` `_PhoneFrame`):

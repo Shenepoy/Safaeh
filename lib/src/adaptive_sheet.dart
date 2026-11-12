@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 
 import 'floating_surface.dart';
@@ -19,15 +19,16 @@ const EdgeInsets kSheetContentPadding = EdgeInsets.fromLTRB(
 );
 
 /// Builds a wide-dialog entrance (fade + scale).
-typedef SafaehTransition =
-    Widget Function({
-      required Animation<double> animation,
-      required Widget child,
-    });
+typedef SafaehTransition = Widget Function({
+  required Animation<double> animation,
+  required Widget child,
+});
 
 /// Optional title widget (e.g. bidi-aware [Text] from the host app).
-typedef SafaehTitleBuilder =
-    Widget Function(BuildContext context, TextStyle? style);
+typedef SafaehTitleBuilder = Widget Function(
+  BuildContext context,
+  TextStyle? style,
+);
 
 /// Reuses a [SafaehLabelBuilder] on a sheet title.
 SafaehTitleBuilder safaehTitleFromLabel(
@@ -682,9 +683,8 @@ class _AdaptiveSheetHost extends StatelessWidget {
             button: barrierDismissible,
             label: barrierDismissible
                 ? (dismissLabel ??
-                      MaterialLocalizations.of(
-                        context,
-                      ).modalBarrierDismissLabel)
+                      MaterialLocalizations.of(context)
+                          .modalBarrierDismissLabel)
                 : null,
             onTap: barrierDismissible
                 ? () => safaehPop(context, dismissValue)
@@ -729,9 +729,8 @@ class _AdaptiveSheetHost extends StatelessWidget {
             // Keep the child scrollable's physics and notifications intact,
             // but avoid painting a second material stretch/glow over the
             // sheet while that gesture is handed to the sheet.
-            behavior: ScrollConfiguration.of(
-              context,
-            ).copyWith(overscroll: false),
+            behavior: ScrollConfiguration.of(context)
+                .copyWith(overscroll: false),
             child: contentBody,
           )
         : contentBody;
@@ -884,9 +883,8 @@ class _AdaptiveSheetHost extends StatelessWidget {
           );
 
     final host = SafaehTheme(
-      data: SafaehTheme.of(
-        context,
-      ).copyWith(enterCurve: enterCurve, exitCurve: exitCurve),
+      data: SafaehTheme.of(context)
+          .copyWith(enterCurve: enterCurve, exitCurve: exitCurve),
       child: SafaehNavigatorScope(
         useRootNavigator: useRootNavigator,
         child: Stack(

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'theme.dart';
 
@@ -129,14 +129,12 @@ class SheetHandleBar extends StatelessWidget {
                   : (expanded
                         ? (collapseLabel ??
                               dismissLabel ??
-                              MaterialLocalizations.of(
-                                context,
-                              ).modalBarrierDismissLabel)
+                              MaterialLocalizations.of(context)
+                                  .modalBarrierDismissLabel)
                         : (expandLabel ??
                               dismissLabel ??
-                              MaterialLocalizations.of(
-                                context,
-                              ).modalBarrierDismissLabel))),
+                              MaterialLocalizations.of(context)
+                                  .modalBarrierDismissLabel))),
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onVerticalDragUpdate: onVerticalDragUpdate,

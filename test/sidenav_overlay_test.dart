@@ -1,11 +1,103 @@
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:safaeh/safaeh.dart';
 import 'package:safaeh/src/floating_surface_renderer.dart';
 
 void main() {
+  for (final direction in TextDirection.values) {
+    testWidgets('overlay shares one width and fades labels in $direction', (
+      tester,
+    ) async {
+      var collapsed = true;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Directionality(
+            textDirection: direction,
+            child: StatefulBuilder(
+              builder: (context, setState) => Stack(
+                children: [
+                  SafaehSidenav(
+                    overlay: true,
+                    compactWidth: 64,
+                    expandedWidth: 240,
+                    collapsed: collapsed,
+                    onToggleCompact: () =>
+                        setState(() => collapsed = !collapsed),
+                    title: 'Janan',
+                    selectedIndex: 0,
+                    onDestinationSelected: _noopIndex,
+                    destinations: const [
+                      SafaehSidenavDestination(
+                        label: 'Measurements',
+                        icon: Icons.monitor_heart_outlined,
+                        selectedIcon: Icons.monitor_heart,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      final rail = find.byKey(const ValueKey('safaeh_nav_rail'));
+      final tile = find.byKey(const ValueKey('safaeh_nav_0'));
+      final icon = find.descendant(of: tile, matching: find.byType(Icon));
+      final center = tester.getCenter(icon);
+      double labelOpacity() => tester
+          .widget<Opacity>(
+            find
+                .ancestor(
+                  of: find.text('Measurements'),
+                  matching: find.byType(Opacity),
+                )
+                .first,
+          )
+          .opacity;
+      void expectAligned() {
+        expect(
+          tester.getSize(tile).width,
+          closeTo(tester.getSize(rail).width - 16, 0.01),
+        );
+        expect(tester.getCenter(icon), center);
+        expect(tester.takeException(), isNull);
+      }
+
+      expect(labelOpacity(), 0);
+      await tester.tap(find.byKey(const ValueKey('safaeh_nav_expand')));
+      await tester.pump();
+      for (var frame = 0; frame < 20; frame++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        expectAligned();
+      }
+      expect(labelOpacity(), 1);
+      await tester.tap(find.byKey(const ValueKey('safaeh_nav_collapse')));
+      await tester.pump();
+      expect(labelOpacity(), 1, reason: 'labels must not blink off on tap');
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(labelOpacity(), allOf(greaterThan(0), lessThan(1)));
+      expectAligned();
+      // Reversing an unfinished close must continue from the current width.
+      final interruptedWidth = tester.getSize(rail).width;
+      await tester.tap(find.byKey(const ValueKey('safaeh_nav_expand')));
+      await tester.pump();
+      expect(tester.getSize(rail).width, interruptedWidth);
+      for (var frame = 0; frame < 20; frame++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        expectAligned();
+      }
+      await tester.tap(find.byKey(const ValueKey('safaeh_nav_collapse')));
+      await tester.pump();
+      for (var frame = 0; frame < 20; frame++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        expectAligned();
+      }
+      expect(tester.getSize(rail).width, 64);
+      expect(labelOpacity(), 0);
+    });
+  }
   testWidgets(
     'interior camera stays inside the surface and clear of every button',
     (tester) async {

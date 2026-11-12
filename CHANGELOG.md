@@ -10,6 +10,37 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-12
+
+### Breaking changes
+
+- Migrate widgets and public UI types to `package:material_ui`. Consumers must
+  migrate their Material imports and theme types together with this upgrade.
+- Require Flutter 3.50.0 / Dart 3.14.0. Update CI, examples, widget tests, and
+  localization delegates for the standalone UI packages.
+
+### Added
+
+- An unpublished Widgetbook development catalog with component knobs,
+  environment controls, isolated previews, and CI web artifacts.
+
+### Fixed
+
+- Custom feedback builders and plain text inherit the modern host text theme,
+  including dark-mode colors, across the legacy toast dependency boundary.
+- Long sidenav destination lists scroll within rails and drawers while keeping
+  the header and profile visible; Widgetbook sidenav previews offer an item-count
+  slider from 2 to 50, defaulting to 20.
+- Anchored popouts and feedback honor `SafaehNavigatorScope` when hosted in a
+  nested preview or navigator; the default remains the root navigator.
+- Long localized auth-divider labels wrap at large text sizes.
+- Sidenav rail buttons retain their height and icon positions while expanding
+  or collapsing with enlarged text; overlay rows accommodate enlarged labels.
+- Page-index jumps cancel superseded animations even when the new target is
+  already aligned. Optional scroll metrics improve active-section tracking;
+  both catalog index layouts keep selection stable during jumps and follow
+  manual scrolling.
+
 ## [0.12.0] - 2026-10-16
 
 ### Added

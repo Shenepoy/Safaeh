@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'adaptive_sheet.dart';
 import 'option_tile.dart';
@@ -29,8 +29,10 @@ class SafaehAction<T> {
 }
 
 /// Builds a custom action row. Tap / pop stay on the sheet.
-typedef SafaehActionTileBuilder<T> =
-    Widget Function(BuildContext context, SafaehAction<T> action);
+typedef SafaehActionTileBuilder<T> = Widget Function(
+  BuildContext context,
+  SafaehAction<T> action,
+);
 
 /// Action menu. Wide = dialog, phone = bottom sheet.
 Future<T?> showSafaehActionSheet<T>({

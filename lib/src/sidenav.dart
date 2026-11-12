@@ -1,6 +1,6 @@
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/foundation.dart';
 
 import 'floating_surface.dart';
@@ -258,22 +258,35 @@ class SafaehSidenav extends StatelessWidget {
             collapseKey: collapseKey,
           ),
           const SizedBox(height: 8),
-          for (var i = 0; i < destinations.length; i++)
-            _NavTile(
-              tileKey: destinations[i].tileKey ?? ValueKey('safaeh_nav_$i'),
-              label: destinations[i].label,
-              icon: selectedIndex == i
-                  ? destinations[i].selectedIcon
-                  : destinations[i].icon,
-              selected: selectedIndex == i,
-              collapsed: railCollapsed,
-              fill: chrome.fill,
-              onFill: chrome.onFill,
-              iconColumnWidth: compact,
-              labelBuilder: destinations[i].labelBuilder,
-              onTap: () => onDestinationSelected(i),
+          Expanded(
+            child: SingleChildScrollView(
+              primary: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < destinations.length; i++)
+                    _NavTile(
+                      tileKey:
+                          destinations[i].tileKey ?? ValueKey('safaeh_nav_$i'),
+                      label: destinations[i].label,
+                      icon: selectedIndex == i
+                          ? destinations[i].selectedIcon
+                          : destinations[i].icon,
+                      selected: selectedIndex == i,
+                      collapsed: railCollapsed,
+                      // Scaled labels can be taller than the icon. Retain their
+                      // layout height so collapsing only changes the rail's width.
+                      reserveCollapsedHeight: true,
+                      fill: chrome.fill,
+                      onFill: chrome.onFill,
+                      iconColumnWidth: compact,
+                      labelBuilder: destinations[i].labelBuilder,
+                      onTap: () => onDestinationSelected(i),
+                    ),
+                ],
+              ),
             ),
-          const Spacer(),
+          ),
           if (profile != null)
             _NavTile(
               tileKey: profile!.tileKey ?? const ValueKey('safaeh_nav_profile'),
@@ -344,7 +357,8 @@ class SafaehSidenav extends StatelessWidget {
     final tokens = SafaehTheme.of(context);
     final compact = compactWidth ?? tokens.compactNavWidth;
     final expanded = expandedWidth ?? tokens.expandedNavWidth;
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     final media = MediaQuery.of(context);
     final obstacles = sidenavObstacles(
       context,
@@ -353,11 +367,12 @@ class SafaehSidenav extends StatelessWidget {
     );
     final motion = safaehResolvedMotion(context, duration ?? tokens.navMotion);
     final leadingInset = _fallbackInset(context, cutouts, obstacles);
-    final mainItems = <Widget>[
+    List<Widget> mainItems(double reveal) => <Widget>[
       _Header(
         title: title,
         asDrawer: false,
         collapsed: collapsed,
+        reveal: reveal,
         onFill: cs.onSurface,
         onToggleCompact: onToggleCompact,
         expandTooltip: expandTooltip,
@@ -375,6 +390,7 @@ class SafaehSidenav extends StatelessWidget {
               : destinations[i].icon,
           selected: selectedIndex == i,
           collapsed: collapsed,
+          reveal: reveal,
           fill: cs.surfaceContainerLow,
           onFill: cs.onSurface,
           iconColumnWidth: compact,
@@ -382,7 +398,7 @@ class SafaehSidenav extends StatelessWidget {
           onTap: () => onDestinationSelected(i),
         ),
     ];
-    final trailingItems = <Widget>[
+    List<Widget> trailingItems(double reveal) => <Widget>[
       if (profile != null)
         _NavTile(
           tileKey: profile!.tileKey ?? const ValueKey('safaeh_nav_profile'),
@@ -390,6 +406,7 @@ class SafaehSidenav extends StatelessWidget {
           subtitle: profile!.subtitle,
           selected: profile!.selected,
           collapsed: collapsed,
+          reveal: reveal,
           reserveCollapsedHeight: true,
           fill: cs.surfaceContainerLow,
           onFill: cs.onSurface,
@@ -409,13 +426,57 @@ class SafaehSidenav extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: ExcludeSemantics(
             excluding: collapsed,
-            child: Opacity(opacity: collapsed ? 0 : 1, child: footer),
+            child: Opacity(opacity: reveal, child: footer),
           ),
         ),
     ];
-    final mainHeights = List<double>.filled(mainItems.length, 56);
+    // Keep row slots independent of the animated width, but allow scaled
+    // labels to grow beyond the default slots without overflowing.
+    double labelHeight(String text, TextStyle? style, bool selected) {
+      final painter = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: style?.copyWith(
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+          ),
+        ),
+        textDirection: Directionality.of(context),
+        textScaler: media.textScaler,
+        locale: Localizations.maybeLocaleOf(context),
+        maxLines: 1,
+      )..layout();
+      final height = painter.height;
+      painter.dispose();
+      return height;
+    }
+
+    final mainHeights = <double>[
+      56,
+      for (var i = 0; i < destinations.length; i++)
+        (24 +
+                labelHeight(
+                  destinations[i].label,
+                  theme.textTheme.bodyMedium,
+                  selectedIndex == i,
+                ))
+            .clamp(56, double.infinity),
+    ];
     final trailingHeights = <double>[
-      if (profile != null) 80,
+      if (profile != null)
+        (24 +
+                labelHeight(
+                  profile!.label,
+                  theme.textTheme.bodyMedium,
+                  profile!.selected,
+                ) +
+                (profile!.subtitle == null
+                    ? 0
+                    : labelHeight(
+                        profile!.subtitle!,
+                        theme.textTheme.labelSmall,
+                        false,
+                      )))
+            .clamp(80, double.infinity),
       if (footer != null) 36,
     ];
     return SizedBox.expand(
@@ -442,6 +503,18 @@ class SafaehSidenav extends StatelessWidget {
                 mainHeights: mainHeights,
                 trailingHeights: trailingHeights,
               );
+              // A single width animation drives the surface and its rows.
+              // Animating the already-interpolated width again makes the
+              // selected pill trail the edge and get clipped during closing.
+              final progress = ((normalWidth - compact) / (expanded - compact))
+                  .clamp(0.0, 1.0);
+              final reveal = const Interval(
+                0.35,
+                1,
+                curve: Curves.easeOut,
+              ).transform(progress);
+              final rows = mainItems(reveal);
+              final tails = trailingItems(reveal);
               final rtl = Directionality.of(context) == TextDirection.rtl;
               return SizedBox(
                 key: railKey,
@@ -474,27 +547,23 @@ class SafaehSidenav extends StatelessWidget {
                         height: layout.contentHeight,
                         child: Stack(
                           children: [
-                            for (var i = 0; i < mainItems.length; i++)
-                              AnimatedPositionedDirectional(
+                            for (var i = 0; i < rows.length; i++)
+                              PositionedDirectional(
                                 key: ValueKey('safaeh_nav_row_$i'),
-                                duration: motion,
-                                curve: Curves.easeInOutCubic,
                                 start: leadingInset,
                                 top: layout.mainTops[i],
                                 width: normalWidth,
                                 height: mainHeights[i],
-                                child: mainItems[i],
+                                child: rows[i],
                               ),
-                            for (var i = 0; i < trailingItems.length; i++)
-                              AnimatedPositionedDirectional(
+                            for (var i = 0; i < tails.length; i++)
+                              PositionedDirectional(
                                 key: ValueKey('safaeh_nav_tail_$i'),
-                                duration: motion,
-                                curve: Curves.easeInOutCubic,
                                 start: leadingInset,
                                 top: layout.trailingTops[i],
                                 width: normalWidth,
                                 height: trailingHeights[i],
-                                child: trailingItems[i],
+                                child: tails[i],
                               ),
                           ],
                         ),
@@ -555,8 +624,10 @@ class _Header extends StatelessWidget {
     this.onToggleCompact,
     this.expandTooltip,
     this.collapseTooltip,
+    this.reveal,
   });
 
+  final double? reveal;
   final String title;
   final bool asDrawer;
   final bool collapsed;
@@ -612,7 +683,11 @@ class _Header extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(child: titleWidget),
+          Expanded(
+            child: ClipRect(
+              child: Opacity(opacity: reveal ?? 1, child: titleWidget),
+            ),
+          ),
         ],
       ),
     );
@@ -635,6 +710,7 @@ class _NavTile extends StatelessWidget {
     this.labelBuilder,
     this.iconColumnWidth,
     this.reserveCollapsedHeight = false,
+    this.reveal,
   });
 
   final Key tileKey;
@@ -651,6 +727,7 @@ class _NavTile extends StatelessWidget {
   final SafaehLabelBuilder? labelBuilder;
   final double? iconColumnWidth;
   final bool reserveCollapsedHeight;
+  final double? reveal;
 
   @override
   Widget build(BuildContext context) {
@@ -714,13 +791,22 @@ class _NavTile extends StatelessWidget {
                         width: slotWidth,
                         child: Center(child: mark),
                       ),
-                      if (!collapsed || reserveCollapsedHeight)
+                      if (reveal != null ||
+                          !collapsed ||
+                          reserveCollapsedHeight)
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsetsDirectional.only(
                               start: 12,
                             ),
-                            child: collapsed
+                            child: reveal != null
+                                ? ClipRect(
+                                    child: Opacity(
+                                      opacity: reveal!,
+                                      child: labelColumn,
+                                    ),
+                                  )
+                                : collapsed
                                 ? ExcludeSemantics(
                                     child: IgnorePointer(
                                       child: Opacity(
@@ -774,14 +860,11 @@ class _NavTile extends StatelessWidget {
       ),
     );
 
-    if (collapsed) {
-      return Semantics(
-        button: true,
-        selected: selected,
-        child: Tooltip(message: label, child: tile),
-      );
-    }
-    return Semantics(button: true, selected: selected, child: tile);
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Tooltip(message: collapsed ? label : '', child: tile),
+    );
   }
 
   Widget _labelText({

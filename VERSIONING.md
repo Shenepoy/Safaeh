@@ -24,7 +24,7 @@ Prefer **pub.dev**:
 
 ```yaml
 dependencies:
-  safaeh: ^0.4.2
+  safaeh: ^1.0.0
 ```
 
 Or pin a **git tag** (not `main` or a raw commit):
@@ -33,8 +33,8 @@ Or pin a **git tag** (not `main` or a raw commit):
 dependencies:
   safaeh:
     git:
-      url: https://github.com/Zyzto/Safaeh.git
-      ref: v0.4.2
+      url: https://github.com/Shenepoy/Safaeh.git
+      ref: v1.0.0
 ```
 
 ## Release checklist
@@ -66,8 +66,14 @@ Optional `VERSION` file, if present, must match pubspec.
 
 | Workflow | Trigger | What it does |
 |----------|---------|----------------|
-| [CI](.github/workflows/ci.yml) | push/PR to `main`, or **Run workflow** | version check, `dart analyze --fatal-infos`, `flutter test --coverage`, example analyze + test, `widgets_to_image` captures. On `main` (not PRs) a green run then builds `example/` web and deploys [shenepoy.github.io/Safaeh](https://shenepoy.github.io/Safaeh/) |
+| [CI](.github/workflows/ci.yml) | push/PR to `main`, or **Run workflow** | version check, `dart analyze --fatal-infos`, `flutter test --coverage`, example analyze + test, `widgets_to_image` captures; separate Widgetbook format/analyze/test/release-web job with a review artifact. On `main` (not PRs), deploys the example and `/Safaeh/widgetbook/` together to [shenepoy.github.io/Safaeh](https://shenepoy.github.io/Safaeh/) |
 | [Release](.github/workflows/release.yml) | tag `v*.*.*` | tag↔pubspec check, CHANGELOG check, tests, GitHub Release, pub.dev publish |
 
 `scripts/check_version.sh` verifies pubspec semver, a matching CHANGELOG
 heading, and an optional `VERSION` file.
+
+Widgetbook is an unpublished application. Its nested `.pubignore` excludes it
+from Safaeh archives; keep the root dependency and export boundaries intact.
+Before release, run `flutter pub publish --dry-run` at the repository root and
+verify that no `widgetbook/` files appear. The catalog tooling alone needs no
+package release. Changes to library behavior follow the normal SemVer policy.

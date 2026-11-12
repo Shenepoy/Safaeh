@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Material chevrons and back arrows already set [IconData.matchTextDirection].
 /// Keep the LTR glyph. Swapping to the opposite icon in RTL mirrors twice.

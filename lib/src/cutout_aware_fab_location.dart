@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:safaeh/safaeh.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Applies native cutout avoidance after normal keyboard and FAB placement.
 class SafaehCutoutAwareFabLocation extends FloatingActionButtonLocation {

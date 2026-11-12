@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'adaptive_sheet.dart';
 import 'option_tile.dart';
@@ -30,19 +30,20 @@ class SafaehTileOption<T> {
 
 /// Builds a custom row for [SafaehTilePickerBody]. Tap, pop, and multi-select
 /// stay on the body (the row is visual). Use [onSelected] to intercept.
-typedef SafaehTileBuilder<T> =
-    Widget Function(
-      BuildContext context,
-      SafaehTileOption<T> option,
-      bool selected,
-    );
+typedef SafaehTileBuilder<T> = Widget Function(
+  BuildContext context,
+  SafaehTileOption<T> option,
+  bool selected,
+);
 
 /// Host-owned tile search. [query] is the raw field text (not lowercased).
 ///
 /// The default matcher uses ASCII [String.toLowerCase]. Pass this for
 /// locale-aware or token-aware filtering without adding `intl` here.
-typedef SafaehTileSearchMatch<T> =
-    bool Function(SafaehTileOption<T> option, String query);
+typedef SafaehTileSearchMatch<T> = bool Function(
+  SafaehTileOption<T> option,
+  String query,
+);
 
 /// List-row picker body: optional in-body title, [header], [SafaehOptionList].
 ///
@@ -182,9 +183,8 @@ class _SafaehTilePickerBodyState<T> extends State<SafaehTilePickerBody<T>> {
     final tokens = SafaehTheme.of(context);
     final breakpoint = widget.tabletBreakpoint ?? tokens.tabletBreakpoint;
     final showInBodyTitle = MediaQuery.sizeOf(context).width < breakpoint;
-    final titleStyle = Theme.of(
-      context,
-    ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700);
+    final titleStyle = Theme.of(context).textTheme.titleMedium
+        ?.copyWith(fontWeight: FontWeight.w700);
     final titleText = widget.title ?? '';
     final showTitle =
         widget.showTitleInBody &&

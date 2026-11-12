@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'adaptive_sheet.dart';
 import 'floating_surface.dart';
@@ -132,9 +132,8 @@ class _SafaehDialogHost extends StatelessWidget {
     );
 
     return SafaehTheme(
-      data: SafaehTheme.of(
-        context,
-      ).copyWith(enterCurve: enterCurve, exitCurve: exitCurve),
+      data: SafaehTheme.of(context)
+          .copyWith(enterCurve: enterCurve, exitCurve: exitCurve),
       child: SafaehNavigatorScope(
         useRootNavigator: useRootNavigator,
         child: Stack(

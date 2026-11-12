@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Circle (or rounded-square) glyph for groups, senders, and list leadings.
 ///

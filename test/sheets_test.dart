@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:safaeh/safaeh.dart';
 
@@ -706,9 +706,8 @@ void main() {
       MaterialApp(
         builder: (context, child) {
           return MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(padding: const EdgeInsets.only(top: 47)),
+            data: MediaQuery.of(context)
+                .copyWith(padding: const EdgeInsets.only(top: 47)),
             child: child!,
           );
         },
@@ -748,9 +747,8 @@ void main() {
       MaterialApp(
         builder: (context, child) {
           return MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(padding: const EdgeInsets.only(top: 47)),
+            data: MediaQuery.of(context)
+                .copyWith(padding: const EdgeInsets.only(top: 47)),
             child: child!,
           );
         },

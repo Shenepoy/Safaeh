@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:safaeh/safaeh.dart';
 
@@ -66,9 +66,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(body: SafaehUserText('عشاء')),
-      ),
+      const MaterialApp(home: Scaffold(body: SafaehUserText('عشاء'))),
     );
     final text = tester.widget<Text>(find.text('عشاء'));
     expect(text.textDirection, TextDirection.rtl);

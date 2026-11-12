@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 
 import 'bottom_nav.dart';
@@ -567,7 +567,12 @@ Future<void> scrollToPageSection(
         .offset
         .clamp(position.minScrollExtent, position.maxScrollExtent);
     final motion = safaehResolvedMotion(ctx, ensureDuration);
-    if ((target - position.pixels).abs() < 0.5) return true;
+    if ((target - position.pixels).abs() < 0.5) {
+      // A previous section jump may still be animating away from this target.
+      // Cancel it even when the newly selected section is already aligned.
+      position.jumpTo(target);
+      return true;
+    }
     if (motion == Duration.zero) {
       position.jumpTo(target);
     } else {
@@ -620,18 +625,42 @@ Future<void> scrollToPageSection(
 /// Resolve the active section from scroll position (section tops vs viewport).
 ///
 /// Pass ids and keys only — do not allocate translated labels on the scroll path.
+/// Supply [metrics] to track the nearest section along the reading area as the
+/// page scrolls, including short final sections that cannot reach the top.
+/// Without metrics, section tops crossing [activationOffset] remain the rule.
 String? safaehActivePageSectionId({
   required List<(String id, GlobalKey key)> sections,
   required BuildContext scrollContext,
   double activationOffset = 96,
+  ScrollMetrics? metrics,
 }) {
   if (sections.isEmpty) return null;
+  if (metrics != null) {
+    if (metrics.extentBefore <= 1) return sections.first.$1;
+    if (metrics.extentAfter <= 1) return sections.last.$1;
+  }
   final scrollBox = scrollContext.findRenderObject();
   if (scrollBox is! RenderBox || !scrollBox.hasSize) {
     return sections.first.$1;
   }
 
   final viewportTop = scrollBox.localToGlobal(Offset.zero).dy;
+  final progress =
+      metrics == null || metrics.maxScrollExtent <= metrics.minScrollExtent
+      ? 0.0
+      : ((metrics.pixels - metrics.minScrollExtent) /
+                (metrics.maxScrollExtent - metrics.minScrollExtent))
+            .clamp(0.0, 1.0);
+  final readingOffset =
+      activationOffset +
+      (metrics == null
+          ? 0.0
+          : (metrics.viewportDimension - activationOffset - 32).clamp(
+                  0.0,
+                  double.infinity,
+                ) *
+                progress);
+  var closestDistance = double.infinity;
   String? active = sections.first.$1;
   for (final section in sections) {
     final ctx = section.$2.currentContext;
@@ -639,8 +668,12 @@ String? safaehActivePageSectionId({
     final box = ctx.findRenderObject();
     if (box is! RenderBox || !box.hasSize) continue;
     final sectionTop = box.localToGlobal(Offset.zero).dy;
-    if (sectionTop - viewportTop <= activationOffset) {
+    final distance = (sectionTop - viewportTop - readingOffset).abs();
+    if (metrics != null
+        ? distance < closestDistance
+        : sectionTop - viewportTop <= activationOffset) {
       active = section.$1;
+      closestDistance = distance;
     }
   }
   return active;

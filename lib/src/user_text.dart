@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Unicode FSI (U+2068) / PDI (U+2069): isolate user-generated content inside
 /// mixed-direction strings (e.g. `"$title – $amount"`, translated templates).

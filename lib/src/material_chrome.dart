@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Radii and chrome metrics passed to [applySafaehMaterialChrome].
 class SafaehMaterialRadii {

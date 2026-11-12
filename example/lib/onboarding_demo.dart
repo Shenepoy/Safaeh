@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:safaeh/safaeh.dart';
 
 import 'app.dart';
@@ -85,9 +85,10 @@ class _OnboardingDesignDemoState extends State<OnboardingDesignDemo> {
                           SafaehOnboardingControlPlacement.bottomCenter,
                       steps: _steps(t),
                       labels: SafaehOnboardingLabels(
-                        stepProgress: (current, total) => t('ob_progress')
-                            .replaceAll('{current}', '$current')
-                            .replaceAll('{total}', '$total'),
+                        stepProgress: (current, total) =>
+                            t('ob_progress')
+                                .replaceAll('{current}', '$current')
+                                .replaceAll('{total}', '$total'),
                       ),
                       actions: SafaehOnboardingHostActions(
                         languageControl: IconButton(

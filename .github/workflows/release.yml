@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FLUTTER_VERSION: "3.47.1"
+  FLUTTER_VERSION: "3.50.0"
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
@@ -78,7 +78,7 @@ jobs:
           generate_release_notes: true
 
   # Requires Automated publishing on pub.dev Admin → GitHub Actions
-  # for safaeh → Zyzto/Safaeh, tag pattern v{{version}}.
+  # for safaeh → Shenepoy/Safaeh, tag pattern v{{version}}.
   # Docs: https://dart.dev/tools/pub/automated-publishing
   publish:
     name: Publish to pub.dev

@@ -20,7 +20,7 @@
 
 <p align="center">
   <a href="https://pub.dev/packages/safaeh"><img alt="pub.dev" src="https://img.shields.io/pub/v/safaeh.svg?style=flat-square&label=pub.dev&color=8B6914" /></a>
-  <a href="https://github.com/Zyzto/Safaeh"><img alt="repo" src="https://img.shields.io/badge/github-Zyzto%2FSafaeh-C0C0C0?style=flat-square" /></a>
+  <a href="https://github.com/Shenepoy/Safaeh"><img alt="repo" src="https://img.shields.io/badge/github-Shenepoy%2FSafaeh-C0C0C0?style=flat-square" /></a>
   <img alt="flutter" src="https://img.shields.io/badge/Flutter-%3E%3D3.11-C0C0C0?style=flat-square&logo=flutter&logoColor=white" />
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MPL--2.0-8B6914?style=flat-square" /></a>
 </p>
@@ -59,6 +59,10 @@
 
 <div dir="rtl" lang="ar">
 
+يتطلب الإصدار 1.0 كلاً من Flutter 3.50 وDart 3.14، ويستخدم
+`package:material_ui/material_ui.dart`. يجب ترحيل استيرادات Material وأنواع
+السمات في التطبيق المضيف مع الحزم؛ أنواع SDK القديمة غير قابلة للتبادل.
+
 ## لماذا؟
 
 تطبيقات Flutter تجمع bottom sheets وdialogs وrails وoverlays للكاميرا متفرقة. ثم تحتاج:
@@ -69,7 +73,7 @@
 
 **صفائح** هي طبقة الـ chrome هذه. مستخدمة في حساب.
 
-على <span dir="ltr">pub.dev</span>: <span dir="ltr"><a href="https://pub.dev/packages/safaeh"><code>safaeh</code></a></span> · المستودع: <span dir="ltr"><a href="https://github.com/Zyzto/Safaeh">Zyzto/Safaeh</a></span>.
+على <span dir="ltr">pub.dev</span>: <span dir="ltr"><a href="https://pub.dev/packages/safaeh"><code>safaeh</code></a></span> · المستودع: <span dir="ltr"><a href="https://github.com/Shenepoy/Safaeh">Shenepoy/Safaeh</a></span>.
 
 </div>
 
@@ -154,7 +158,7 @@
 
 ```yaml
 dependencies:
-  safaeh: ^0.6.0
+  safaeh: ^1.0.0
 ```
 
 <div dir="rtl" lang="ar">
@@ -177,8 +181,8 @@ flutter pub add safaeh
 dependencies:
   safaeh:
     git:
-      url: https://github.com/Zyzto/Safaeh.git
-      ref: v0.6.0
+      url: https://github.com/Shenepoy/Safaeh.git
+      ref: v1.0.0
 ```
 
 ```dart
@@ -523,6 +527,12 @@ cd example && flutter pub get && dart analyze --fatal-infos && flutter test
 <span dir="ltr"><code>example/test/widget_images_test.dart</code></span> يكتب صور الودجات إلى <span dir="ltr"><a href="screenshots/"><code>screenshots/</code></a></span>.
 
 للتشغيل على جهاز، ولّد platforms الأخرى أولاً (<span dir="ltr"><code>flutter create . --platforms=android,ios</code></span> داخل <span dir="ltr"><code>example/</code></span>). التفاصيل: <span dir="ltr"><a href="example/README.md">example/README.md</a></span>.
+
+يوجد كتالوج تطوير مستقل باستخدام <span dir="ltr"><code>Widgetbook</code></span> في مجلد <span dir="ltr"><code>widgetbook/</code></span> داخل نسخة المستودع، مع إعدادات للمكوّنات والسمة واللغة وحجم العرض ومعاينات مستقلة للنوافذ. تعليمات التشغيل في <span dir="ltr"><code>widgetbook/README.md</code></span> وجدول التغطية في <span dir="ltr"><code>widgetbook/COVERAGE.md</code></span>. هذا المجلد مستبعد من أرشيف <span dir="ltr"><code>pub.dev</code></span> ولا يضيف اعتمادات إلى تطبيقات مستخدمي الحزمة.
+
+```bash
+cd widgetbook && flutter pub get --enforce-lockfile && flutter run -d chrome
+```
 
 اختبارات الحزمة:
 
