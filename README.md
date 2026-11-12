@@ -723,3 +723,13 @@ host-owned navigation and app bars.
 `SafaehCycleButton(tooltip: 'Next chart', onPressed: nextChart)` animates one
 turn per activation. The host owns selection, persistence, and which values
 are available, so independent cards can skip values already used elsewhere.
+
+### Content-sized tab forms
+
+Use `SafaehTabView(children: forms)` under a `DefaultTabController`, or pass an
+explicit `controller` shared with your Material `TabBar`. It works inside a
+vertical scroll view without a fixed height and animates to the selected form's
+height. Inactive forms retain their state but are excluded from keyboard focus,
+semantics, and ticker animations. It supports reduced motion and stable child
+keys for reordering; it does not add swipe navigation. All children stay mounted,
+so use it for small form groups.

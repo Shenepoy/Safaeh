@@ -10,6 +10,11 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+### Added
+
+- `SafaehTabView`: content-sized tab forms with animated height, retained child
+  state, inactive focus/semantics/ticker exclusion, and reduced-motion support.
+
 ## [1.0.0] - 2026-11-12
 
 ### Breaking changes
