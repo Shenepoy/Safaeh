@@ -164,6 +164,26 @@ confirmation sheets, text-input sheets, and host bodies that use a primary
 scrollable. Descendants can toggle the gesture while the route is open
 with `SafaehSheet.of(context).enableDrag`.
 
+### Android glass-sheet performance
+
+The default phone-sheet transition uses a slide without a whole-sheet fade on
+native Android. Glass stays enabled; the sheet starts below the viewport and
+uses the configured entrance/exit curves and motion duration. Other platforms
+keep the fade-and-slide transition, and wide dialogs keep their existing motion.
+
+Profiling on a Samsung SM-S721B isolated the expensive combination: an animated
+`Opacity` ancestor around a glass `BackdropFilter`. With identical static sheet
+content, removing only the fade reduced median raster time from about 30 ms to
+10 ms. These profile-mode measurements excluded the first of four openings;
+they describe that device, not a guarantee for every Android GPU.
+
+Hosts supplying `slideUp` directly or through `SafaehRouteOptions` still own that
+transition. Prefer the default, or avoid wrapping the entire frosted sheet in
+`Opacity`/`FadeTransition` on native Android. Keep the starting translation large
+enough to put the whole sheet offscreen so removing the fade does not make a
+short sheet appear abruptly. The default translates the viewport-aligned panel
+by its full height.
+
 ## Confirm result
 
 `showSafaehConfirm` returns `true` if confirmed and `null` if the route

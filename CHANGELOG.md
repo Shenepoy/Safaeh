@@ -10,6 +10,15 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-13
+
+### Fixed
+
+- Native Android phone sheets slide without a whole-sheet opacity layer,
+  avoiding expensive fade-over-blur rendering while retaining frosted surfaces.
+  Other platforms, wide dialogs, and custom `slideUp` transitions keep their
+  existing behavior.
+
 ## [1.1.0] - 2026-11-12
 
 ### Added

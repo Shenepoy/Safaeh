@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
@@ -1029,13 +1030,17 @@ Widget _defaultSlideUp({
     builder: (context, child) {
       final t = animation.value.clamp(0.0, 1.0);
       final curved = safaehCurveFor(context, animation).transform(t);
-      return Opacity(
-        opacity: curved,
-        child: FractionalTranslation(
-          translation: Offset(0, 1 - curved),
-          child: child,
-        ),
+      final translated = FractionalTranslation(
+        translation: Offset(0, 1 - curved),
+        child: child,
       );
+      // Whole-sheet opacity puts glass backdrop blur inside an offscreen
+      // layer, exceeding Android's raster budget during both open and close.
+      // Keep the blur and full-viewport slide without the extra opacity layer.
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        return translated;
+      }
+      return Opacity(opacity: curved, child: translated);
     },
     child: child,
   );
