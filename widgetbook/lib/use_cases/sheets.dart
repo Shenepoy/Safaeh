@@ -271,3 +271,192 @@ Widget pickerStory(
     },
   );
 }
+
+Widget templateStory(BuildContext context) {
+  final withFooter = context.knobs.boolean(
+    label: 'Show footer',
+    initialValue: true,
+  );
+  final compact = context.knobs.boolean(label: 'Compact spacing');
+  final title = context.catalogString(
+    label: 'Title',
+    initialValue: storyText(context, 'sheet'),
+  );
+  return StoryPage(
+    child: SizedBox(
+      height: 420,
+      child: SafaehSheetTemplate(
+        padding: compact ? const EdgeInsets.all(12) : null,
+        header: SafaehSheetHeading(
+          title: title,
+          leading: const Icon(Icons.edit_outlined),
+        ),
+        body: SafaehSheetSurface(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                TextFormField(
+                  decoration: InputDecoration(
+                    labelText: storyText(context, 'name'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                for (var i = 0; i < 12; i++)
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Text(storyText(context, 'shell_body')),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        footer: withFooter
+            ? FilledButton(
+                onPressed: () {},
+                child: Text(storyText(context, 'apply')),
+              )
+            : null,
+      ),
+    ),
+  );
+}
+
+Widget sheetLoadingStory(BuildContext context) {
+  final cached = context.knobs.boolean(label: 'Preloaded');
+  final fail = context.knobs.boolean(
+    label: 'Fail first read',
+    initialValue: true,
+  );
+  final ar = Localizations.localeOf(context).languageCode == 'ar';
+  return StoryPage(
+    child: SafaehSheetDataLoader<String>(
+      key: ValueKey((cached, fail)),
+      header: SafaehSheetHeading(
+        title: storyText(context, 'sheet'),
+        leading: const Icon(Icons.group_outlined),
+      ),
+      initialData: cached ? storyText(context, 'shell_body') : null,
+      labels: SafaehSheetLoadLabels(
+        loading: ar ? 'جارٍ تحميل التفاصيل…' : 'Loading details…',
+        error: ar
+            ? 'تعذّر تحميل التفاصيل. حاول مرة أخرى.'
+            : 'Couldn’t load these details. Please try again.',
+        retry: ar ? 'إعادة المحاولة' : 'Retry',
+      ),
+      load: (retry) async {
+        final result = storyText(context, 'shell_body');
+        await Future<void>.delayed(const Duration(seconds: 2));
+        if (fail && !retry) throw StateError('Preview read failed');
+        return result;
+      },
+      builder: (_, value) => SafaehSheetSurface(
+        child: Padding(padding: const EdgeInsets.all(24), child: Text(value)),
+      ),
+    ),
+  );
+}
+
+Widget sheetActionStory(BuildContext context) => _SheetActionStory(
+  state: context.knobs.object.dropdown(
+    label: 'State',
+    options: SafaehSheetActionState.values,
+    initialOption: SafaehSheetActionState.cooldown,
+    labelBuilder: (value) => value.name,
+  ),
+  destructive: context.knobs.boolean(label: 'Destructive'),
+  auxiliary: context.knobs.boolean(
+    label: 'Custom auxiliary slots',
+    initialValue: true,
+  ),
+);
+
+class _SheetActionStory extends StatefulWidget {
+  const _SheetActionStory({
+    required this.state,
+    required this.destructive,
+    required this.auxiliary,
+  });
+  final SafaehSheetActionState state;
+  final bool destructive, auxiliary;
+  @override
+  State<_SheetActionStory> createState() => _SheetActionStoryState();
+}
+
+class _SheetActionStoryState extends State<_SheetActionStory>
+    with SingleTickerProviderStateMixin {
+  late final _activity = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 3),
+  );
+  @override
+  void initState() {
+    super.initState();
+    _updateActivity();
+  }
+
+  void _updateActivity() {
+    _activity.stop();
+    if (widget.state == SafaehSheetActionState.working ||
+        widget.state == SafaehSheetActionState.cooldown) {
+      _activity.repeat();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _SheetActionStory oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.state != widget.state) _updateActivity();
+  }
+
+  @override
+  void dispose() {
+    _activity.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    final labels = [
+      ar ? 'حفظ' : 'Save',
+      ar ? 'جارٍ الحفظ…' : 'Saving…',
+      ar ? 'حاول مرة أخرى' : 'Try again',
+    ];
+    return StoryPage(
+      child: SafaehSheetActionButton(
+        state: widget.state,
+        activity: _activity,
+        cooldownProgress: .5,
+        label:
+            labels[widget.state == SafaehSheetActionState.failed
+                ? 2
+                : widget.state == SafaehSheetActionState.working
+                ? 1
+                : 0],
+        stateLabels: labels,
+        reserveActionSpace: widget.auxiliary,
+        color: widget.destructive ? cs.error : cs.primary,
+        foregroundColor: widget.destructive ? cs.onError : cs.onPrimary,
+        leading:
+            widget.auxiliary && widget.state == SafaehSheetActionState.failed
+            ? IconButton(
+                onPressed: () {},
+                icon: const Icon(Icons.info_outline),
+                tooltip: ar ? 'تفاصيل' : 'Details',
+              )
+            : null,
+        trailing:
+            widget.auxiliary && widget.state == SafaehSheetActionState.failed
+            ? IconButton(
+                onPressed: () {},
+                icon: const Icon(Icons.copy),
+                tooltip: ar ? 'نسخ' : 'Copy',
+              )
+            : null,
+        onPressed: () {},
+      ),
+    );
+  }
+}

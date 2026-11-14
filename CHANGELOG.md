@@ -10,6 +10,27 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-11-14
+
+### Added
+
+- Composable `SafaehSheetTemplate`, `SafaehSheetHeading`, and opaque
+  `SafaehSheetSurface`, with app-wide `SafaehSheetTemplateStyle` defaults and
+  per-sheet overrides. Optional feedback/footer slots stay reachable while
+  content scrolls; immediate-selection lists need no action footer.
+- `SafaehSheetDataLoader`: cached initial data, timeout/retry, retained editor
+  state, ignored late results, host error reporting, localized status copy,
+  and custom loading/error builders.
+- `SafaehSheetActionButton`: center-bloom cooldown, layered directional work
+  sweep, stable labels/auxiliary slots, disabled busy input, and error glow.
+  Action execution and retry policy remain host-owned.
+- Three Widgetbook stories and a host customization guide for sheet templates.
+
+### Fixed
+
+- Local inherited theme overrides now cross `showSafaeh`'s modal route;
+  app-wide themes above the navigator remain live.
+
 ## [1.1.1] - 2026-11-13
 
 ### Fixed

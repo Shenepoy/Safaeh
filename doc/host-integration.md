@@ -3,6 +3,13 @@
 Safaeh is chrome only. Copy, routing, state, and camera plugins stay in the
 host. This note is the contract Hisab (and other apps) should follow.
 
+## Sheet template seam
+
+[Safaeh sheet templates](sheet-templates.md) provide content slots, pinned
+footers, reading surfaces, safe read/loading states, and action animations.
+The host keeps validation, persistence, action policies, localization, and
+logging. Existing sheet helpers are unchanged; template adoption is additive.
+
 ## Onboarding design seam
 
 Safaeh ships six complete public onboarding directions:

@@ -41,7 +41,11 @@ void main() {
       expect(find.byType(PreviewHost), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pump(const Duration(seconds: 1));
+      // Drain the simulated read; real futures belong to the host and cannot
+      // be cancelled by disposing the sheet loader.
+      await tester.pump(
+        Duration(seconds: story.path == 'sheets/sheet-loading/default' ? 3 : 1),
+      );
     });
   }
 

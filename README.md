@@ -110,6 +110,15 @@ Captured with [`widgets_to_image`](https://pub.dev/packages/widgets_to_image) (`
 
 ---
 
+## Customizable sheet templates
+
+Use `SafaehSheetTemplate` for a scrolling body with optional header, feedback,
+and pinned footer slots. `SafaehSheetSurface`, `SafaehSheetHeading`,
+`SafaehSheetDataLoader`, and `SafaehSheetActionButton` share the reusable
+presentation while the host keeps its data, translations, actions, and logs.
+Set defaults through `SafaehThemeData.sheetTemplate` and override individual
+slots or styles where needed. [Integration and customization examples](doc/sheet-templates.md).
+
 ## Features at a glance
 
 | Area | What you get |

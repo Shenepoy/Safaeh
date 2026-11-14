@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'floating_surface.dart';
+import 'sheet_template_style.dart';
 
 /// Compact fraction of screen height for camera / QR sheets (60–70% band).
 const double kSafaehCameraCompactHeightFraction = 0.65;
@@ -28,9 +29,12 @@ class SafaehThemeData {
     this.sheetBodyInset = const EdgeInsets.fromLTRB(12, 16, 12, 20),
     this.sheetBodyInsetWide = const EdgeInsets.fromLTRB(16, 16, 16, 20),
     this.floatingAppearance,
+    this.sheetTemplate = const SafaehSheetTemplateStyle(),
   });
 
   static const fallback = SafaehThemeData();
+
+  final SafaehSheetTemplateStyle sheetTemplate;
 
   final double tabletBreakpoint;
 
@@ -92,6 +96,7 @@ class SafaehThemeData {
     EdgeInsets? sheetBodyInset,
     EdgeInsets? sheetBodyInsetWide,
     SafaehFloatingAppearance? floatingAppearance,
+    SafaehSheetTemplateStyle? sheetTemplate,
   }) {
     return SafaehThemeData(
       tabletBreakpoint: tabletBreakpoint ?? this.tabletBreakpoint,
@@ -116,6 +121,7 @@ class SafaehThemeData {
       sheetBodyInset: sheetBodyInset ?? this.sheetBodyInset,
       sheetBodyInsetWide: sheetBodyInsetWide ?? this.sheetBodyInsetWide,
       floatingAppearance: floatingAppearance ?? this.floatingAppearance,
+      sheetTemplate: sheetTemplate ?? this.sheetTemplate,
     );
   }
 
@@ -152,7 +158,8 @@ class SafaehThemeData {
             contentMaxWidthDesktop == other.contentMaxWidthDesktop &&
             sheetBodyInset == other.sheetBodyInset &&
             sheetBodyInsetWide == other.sheetBodyInsetWide &&
-            floatingAppearance == other.floatingAppearance;
+            floatingAppearance == other.floatingAppearance &&
+            sheetTemplate == other.sheetTemplate;
   }
 
   @override
@@ -177,11 +184,12 @@ class SafaehThemeData {
     sheetBodyInset,
     sheetBodyInsetWide,
     floatingAppearance,
+    sheetTemplate,
   ]);
 }
 
 /// Provides [SafaehThemeData] to sheets, page index, and sidenav.
-class SafaehTheme extends InheritedWidget {
+class SafaehTheme extends InheritedTheme {
   const SafaehTheme({super.key, required this.data, required super.child});
 
   final SafaehThemeData data;
@@ -194,6 +202,10 @@ class SafaehTheme extends InheritedWidget {
   static SafaehThemeData? maybeOf(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<SafaehTheme>()?.data;
   }
+
+  @override
+  Widget wrap(BuildContext context, Widget child) =>
+      SafaehTheme(data: data, child: child);
 
   @override
   bool updateShouldNotify(SafaehTheme oldWidget) => data != oldWidget.data;

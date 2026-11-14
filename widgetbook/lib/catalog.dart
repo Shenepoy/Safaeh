@@ -135,6 +135,9 @@ final catalogDirectories = <WidgetbookNode>[
         'Multiple': (context) => pickerStory(context, tiles: true, multi: true),
       }),
       _component('Sheet shell', {'Default': shellStory}),
+      _component('Sheet template', {'Default': templateStory}),
+      _component('Sheet loading', {'Default': sheetLoadingStory}),
+      _component('Sheet action', {'Default': sheetActionStory}),
       _component('Sheet padding', {
         'Default': _demo((t) => SheetPaddingDemo(t: t)),
       }),
