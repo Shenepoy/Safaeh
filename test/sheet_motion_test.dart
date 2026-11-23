@@ -62,7 +62,7 @@ void main() {
           reason: 'Keep the frosted surface throughout the transition',
         );
         await tester.pumpAndSettle();
-        expect(tester.getBottomLeft(panel).dy, closeTo(800, 1));
+        expect(tester.getBottomLeft(panel).dy, closeTo(802, .1));
 
         Navigator.of(tester.element(find.text('sheet-body'))).pop();
         await tester.pump();

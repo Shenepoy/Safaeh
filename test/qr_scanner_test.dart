@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:safaeh/safaeh.dart';
 
 void main() {
-  testWidgets('QR overlay shows title, hint, and close', (tester) async {
+  testWidgets('compact QR overlay shows title and hint without close', (
+    tester,
+  ) async {
     final scanLine = AlwaysStoppedAnimation<double>(0.4);
     await tester.pumpWidget(
       MaterialApp(
@@ -25,8 +27,27 @@ void main() {
 
     expect(find.text('Scan invite'), findsOneWidget);
     expect(find.text('Point at a code'), findsOneWidget);
-    expect(find.byIcon(Icons.close), findsOneWidget);
+    expect(find.byIcon(Icons.close), findsNothing);
     expect(find.byIcon(Icons.open_in_full), findsOneWidget);
+  });
+
+  testWidgets('expanded QR overlay retains its close control', (tester) async {
+    var closed = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SafaehQrScannerOverlay(
+            scanLine: const AlwaysStoppedAnimation<double>(.4),
+            title: const Text('Scan invite'),
+            expanded: true,
+            onClose: () => closed = true,
+            onToggleExpanded: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byIcon(Icons.close));
+    expect(closed, isTrue);
   });
 
   testWidgets('QR overlay paints a host preview behind the frame', (

@@ -43,6 +43,7 @@ void main() {
           ),
         );
 
+        await tester.pumpAndSettle();
         final decorated = tester.widget<DecoratedBox>(
           _fillDecoration(find.byKey(surfaceKey)),
         );
@@ -282,6 +283,7 @@ void main() {
       ),
     );
 
+    await tester.pumpAndSettle();
     final decorated = tester.widget<DecoratedBox>(
       _fillDecoration(find.byKey(surfaceKey)),
     );

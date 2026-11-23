@@ -629,6 +629,11 @@ class _AdaptiveSheetHost extends StatelessWidget {
 
     final expandPhone =
         !isWide && phonePlacement == SafaehPhoneSheetPlacement.center;
+    // Bury the bottom outline below the viewport (or keyboard). Grow the
+    // backing by the same amount so the visible content keeps its position
+    // and safe-area clearance. Floating/centered panels keep all four edges.
+    final bottomBleed = !isWide && !expandPhone ? 2.0 : 0.0;
+    final panelMaxHeight = effectiveMaxHeight + bottomBleed;
     final BorderRadius panelRadius = isWide
         ? BorderRadius.circular(radius)
         : BorderRadius.vertical(top: Radius.circular(radius));
@@ -776,7 +781,7 @@ class _AdaptiveSheetHost extends StatelessWidget {
     // entire panel in SafeArea would shrink the panel above the home-indicator
     // inset and leave the underlying page visible beneath it.
     final panelContent = Padding(
-      padding: EdgeInsets.only(bottom: phoneBottomInset),
+      padding: EdgeInsets.only(bottom: phoneBottomInset + bottomBleed),
       child: panelBody,
     );
 
@@ -792,7 +797,7 @@ class _AdaptiveSheetHost extends StatelessWidget {
                   clipBehavior: Clip.antiAlias,
                   shape: sheetShape,
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(maxHeight: effectiveMaxHeight),
+                    constraints: BoxConstraints(maxHeight: panelMaxHeight),
                     child: panelContent,
                   ),
                 )
@@ -804,15 +809,13 @@ class _AdaptiveSheetHost extends StatelessWidget {
                     fallbackBorder: null,
                     shape: sheetShape,
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: effectiveMaxHeight,
-                      ),
+                      constraints: BoxConstraints(maxHeight: panelMaxHeight),
                       child: panelContent,
                     ),
                   ),
                 )
         : ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: effectiveMaxHeight),
+            constraints: BoxConstraints(maxHeight: panelMaxHeight),
             child: AnimatedContainer(
               key: const ValueKey('safaeh_panel'),
               duration: motion,
@@ -849,6 +852,9 @@ class _AdaptiveSheetHost extends StatelessWidget {
             child: panel,
           )
         : panel;
+    if (bottomBleed > 0) {
+      sheet = Transform.translate(offset: Offset(0, bottomBleed), child: sheet);
+    }
     if (!isWide) {
       sheet = _PhoneSheetDragDismiss(
         motion: motion,

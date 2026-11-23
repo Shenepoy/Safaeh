@@ -9,6 +9,7 @@ export 'src/action_sheet.dart';
 export 'src/adaptive_sheet.dart';
 export 'src/async_body.dart';
 export 'src/auth_flow.dart';
+export 'src/backdrop_filter.dart';
 export 'src/bordered_list_chrome.dart';
 export 'src/bottom_nav.dart';
 export 'src/camera_sheet.dart';

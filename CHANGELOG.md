@@ -10,6 +10,19 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [1.2.6] - 2026-11-23
+
+### Fixed
+
+- QR scanner chrome shows a close control only when expanded; compact sheets
+  use the camera host's guarded drag/barrier dismissal.
+- Bottom-anchored phone sheets extend their backing two logical pixels past
+  the viewport so the bottom outline is hidden, preserving content positions
+  and safe-area clearance. Centered phone panels and wide dialogs are unchanged.
+- Shared `SafaehBackdropFilter` gently fades blur strength in after a modal
+  entrance, retaining foreground content and honoring reduced motion. Floating
+  sheets, dialogs, navigation, and camera surfaces use it automatically.
+
 ## [1.2.5] - 2026-11-14
 
 ### Added

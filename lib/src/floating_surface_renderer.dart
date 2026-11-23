@@ -1,7 +1,6 @@
-import 'dart:ui' as ui;
-
 import 'package:material_ui/material_ui.dart';
 
+import 'backdrop_filter.dart';
 import 'floating_surface.dart';
 
 /// Shared implementation for package-owned floating surfaces.
@@ -65,11 +64,9 @@ class SafaehFloatingSurface extends StatelessWidget {
 
     final filtered = visual.blurSigma == 0
         ? content
-        : BackdropFilter(
-            filter: ui.ImageFilter.blur(
-              sigmaX: visual.blurSigma,
-              sigmaY: visual.blurSigma,
-            ),
+        : SafaehBackdropFilter(
+            sigmaX: visual.blurSigma,
+            sigmaY: visual.blurSigma,
             child: content,
           );
     final clipped = surface == null

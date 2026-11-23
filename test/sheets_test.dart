@@ -1501,7 +1501,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final panel = find.byKey(const ValueKey('safaeh_panel'));
-    expect(tester.getBottomLeft(panel).dy, closeTo(800, 1));
+    expect(tester.getBottomLeft(panel).dy, closeTo(802, .1));
   });
 
   testWidgets(

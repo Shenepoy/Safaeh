@@ -115,7 +115,7 @@ class SafaehQrScannerOverlay extends StatelessWidget {
   }
 }
 
-/// Close, title, optional torch, expand/collapse.
+/// Title, optional torch, expand/collapse, and a close control when expanded.
 class SafaehQrTopBar extends StatelessWidget {
   const SafaehQrTopBar({
     super.key,
@@ -150,11 +150,12 @@ class SafaehQrTopBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         child: Row(
           children: [
-            IconButton(
-              tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-              onPressed: onClose,
-              icon: const Icon(Icons.close, color: Colors.white),
-            ),
+            if (expanded)
+              IconButton(
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                onPressed: onClose,
+                icon: const Icon(Icons.close, color: Colors.white),
+              ),
             Expanded(child: title),
             torch ?? const SizedBox(width: 48),
             IconButton(
