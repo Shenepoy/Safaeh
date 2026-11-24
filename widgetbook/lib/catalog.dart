@@ -7,6 +7,7 @@ import 'use_cases/common.dart';
 import 'use_cases/controls.dart';
 import 'use_cases/display.dart';
 import 'use_cases/flows.dart';
+import 'use_cases/itinerary.dart';
 import 'use_cases/layout.dart';
 import 'use_cases/sheets.dart';
 import 'preview_host.dart';
@@ -187,6 +188,21 @@ final catalogDirectories = <WidgetbookNode>[
       }),
       _component('Aligned chrome', {
         'Default': _demo((t) => AlignedChromeDemo(t: t), fullPage: true),
+      }),
+    ],
+  ),
+  WidgetbookFolder(
+    name: 'Itinerary',
+    children: [
+      _component('Status indicator', {'Default': statusIndicatorStory}),
+      _component('Snap sheet', {'Default': snapSheetStory}),
+      _component('Timeline', {
+        'Default': (_) => const TimelineStory(reorderable: false),
+        'Reorderable': (_) => const TimelineStory(reorderable: true),
+      }),
+      _component('Section chips', {
+        'Default': (_) => const SectionChipsStory(reorderable: false),
+        'Reorderable': (_) => const SectionChipsStory(reorderable: true),
       }),
     ],
   ),

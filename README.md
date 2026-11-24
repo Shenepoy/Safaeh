@@ -129,6 +129,7 @@ slots or styles where needed. [Integration and customization examples](doc/sheet
 | **Dialog** | `showSafaehDialog` centered panel (`railWidthOf` is ignored for alignment) |
 | **Theme** | `SafaehTheme` / `SafaehThemeData` for breakpoint, motion, radius, rail widths, camera compact height, `contentMaxWidth`, desktop band tokens, `sheetBodyInset`, `floatingAppearance`; `copyWith` |
 | **Chrome** | `SafaehEmptyState`, `SafaehInlineBanner`, `SafaehMetaChip`, `SafaehGlyphAvatar`, `SafaehKpiCard`, `SafaehBorderedListChrome`, `SafaehSectionHeader`, `SafaehLtrText`, `SafaehUserText`, `SafaehAsyncBody`, `SafaehErrorBody`, `SafaehAccentSurfaces`, `applySafaehMaterialChrome` |
+| **Itinerary & map** | `SafaehSnapSheet` (non-modal snap sheet, side panel on wide), `SafaehTimeline` (ordered stops, legs, reorder), `SafaehSectionChips`, `SafaehStatusIndicator`, `SafaehConnectivityBar`, `SafaehStatusColors` (semantic color override) |
 | **Debug** | `showSafaehDebugMenu`, `SafaehDebugMenuFab`, host-registered `SafaehDebugSection`s, `SafaehL10nEditOverlay` behind `SafaehL10nBackend` |
 | **Motion** | `safaehResolvedMotion` zeros durations when animations are disabled |
 | **Nav** | `SafaehSidenav` temporary drawer (`asDrawer: true`), clipping rail, or overlay rail (`overlay: true`); `SafaehFloatingNavBar` (same `SafaehSidenavDestination`); keyboard-aware bottom-nav metrics and FAB placement |

@@ -65,3 +65,9 @@ export 'src/sheet_template.dart';
 export 'src/sheet_template_style.dart';
 export 'src/sheet_data_loader.dart';
 export 'src/sheet_action_button.dart';
+
+export 'src/status_colors.dart';
+export 'src/status_indicator.dart';
+export 'src/snap_sheet.dart';
+export 'src/timeline.dart';
+export 'src/section_chips.dart';

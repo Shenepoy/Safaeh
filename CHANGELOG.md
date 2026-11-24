@@ -10,6 +10,26 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-24
+
+### Added
+
+- `SafaehSnapSheet` and `SafaehSnapSheetController`: a non-modal bottom sheet
+  over live content with snap points and scroll hand-off, that becomes a
+  fixed side panel at the tablet breakpoint. Content behind it is not rebuilt
+  while it moves.
+- `SafaehStatusIndicator`, `SafaehSyncState` and `SafaehConnectivityBar`:
+  saved / syncing / offline / failed indicator and a collapsing connectivity
+  bar, with host-supplied localized labels and reduced-motion support.
+- `SafaehTimeline`: connected ordered stops with numbered markers, optional leg
+  rows, drag-to-reorder and drag feedback.
+- `SafaehSectionChips` and `SafaehSection`: a scrollable chip bar for
+  user-defined sections with optional add, long press and reorder.
+- `SafaehStatusColors`: optional theme extension that overrides the semantic
+  success / warning / danger colors. `SafaehStatusColors.of(context)` falls
+  back to the existing `ColorScheme` getters, so current hosts are unchanged.
+- Widgetbook "Itinerary" folder with six stories for the new widgets.
+
 ## [1.2.6] - 2026-11-23
 
 ### Fixed
