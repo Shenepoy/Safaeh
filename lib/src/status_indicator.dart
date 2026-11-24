@@ -319,30 +319,40 @@ class _SafaehSyncChipState extends State<SafaehSyncChip> {
                       showLabel ? 16 : size / 2,
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AnimatedSwitcher(
-                        duration: duration,
-                        child: _ChipIcon(
-                          key: ValueKey(widget.state),
-                          state: widget.state,
-                          color: colors.foreground,
-                        ),
-                      ),
-                      if (showLabel) ...[
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            widget.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: textStyle,
+                  // The row keeps its natural size while the container animates
+                  // between the pill and the circle, so a transient frame can
+                  // be narrower than the row. Scale it down instead of
+                  // overflowing.
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedSwitcher(
+                          duration: duration,
+                          child: _ChipIcon(
+                            key: ValueKey(widget.state),
+                            state: widget.state,
+                            color: colors.foreground,
                           ),
                         ),
+                        if (showLabel) ...[
+                          const SizedBox(width: 6),
+                          // Capped width: the row sits in a FittedBox, which
+                          // gives it unbounded constraints.
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 220),
+                            child: Text(
+                              widget.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: textStyle,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               );

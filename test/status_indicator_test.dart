@@ -254,4 +254,33 @@ void main() {
     expect(find.text('Back online'), findsNothing);
     expect(find.text('Offline'), findsNothing);
   });
+
+  testWidgets('collapsing with animations on never overflows', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              width: 360,
+              child: Row(
+                children: const [
+                  SafaehSyncChip(
+                    state: SafaehSyncState.saved,
+                    label: 'Synced and up to date',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    // Frame by frame through the 2 second delay and the shrink animation.
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(tester.takeException(), isNull, reason: 'frame $i');
+    }
+    expect(find.text('Synced and up to date'), findsNothing);
+  });
 }

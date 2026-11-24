@@ -10,6 +10,15 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-11-25
+
+### Fixed
+
+- `SafaehSyncChip` no longer flashes an overflow error for a few frames while
+  it collapses from the pill to the circle (or expands back). Its content now
+  scales down during the transition, and a long label is capped at 220 logical
+  pixels. A test runs the whole collapse with animations on.
+
 ## [1.3.0] - 2026-11-24
 
 ### Added
