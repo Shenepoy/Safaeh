@@ -134,4 +134,124 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
+
+  group('SafaehSyncChip', () {
+    testWidgets('saved shows its label, then collapses to the icon', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(
+          const SafaehSyncChip(state: SafaehSyncState.saved, label: 'Synced'),
+          disableAnimations: true,
+        ),
+      );
+      expect(find.text('Synced'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 3));
+      expect(find.text('Synced'), findsNothing);
+      expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
+    });
+
+    testWidgets('offline keeps its label and a state change re-expands', (
+      tester,
+    ) async {
+      Widget chip(SafaehSyncState state, String label) => _host(
+        SafaehSyncChip(state: state, label: label),
+        disableAnimations: true,
+      );
+      await tester.pumpWidget(chip(SafaehSyncState.offline, 'Offline'));
+      await tester.pump(const Duration(seconds: 5));
+      expect(find.text('Offline'), findsOneWidget);
+
+      await tester.pumpWidget(chip(SafaehSyncState.saved, 'Synced'));
+      await tester.pump(const Duration(seconds: 3));
+      expect(find.text('Synced'), findsNothing);
+      await tester.pumpWidget(chip(SafaehSyncState.failed, 'Failed'));
+      expect(find.text('Failed'), findsOneWidget);
+    });
+
+    testWidgets('tap calls back and is exposed as a button', (tester) async {
+      final handle = tester.ensureSemantics();
+      var taps = 0;
+      await tester.pumpWidget(
+        _host(
+          SafaehSyncChip(
+            state: SafaehSyncState.offline,
+            label: 'Offline',
+            onTap: () => taps++,
+          ),
+          disableAnimations: true,
+        ),
+      );
+      await tester.tap(find.text('Offline'));
+      expect(taps, 1);
+      expect(
+        tester.getSemantics(find.byType(SafaehSyncChip)),
+        matchesSemantics(
+          label: 'Offline',
+          isButton: true,
+          hasTapAction: true,
+          isLiveRegion: true,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('colorsBuilder restyles a state', (tester) async {
+      await tester.pumpWidget(
+        _host(
+          SafaehSyncChip(
+            state: SafaehSyncState.failed,
+            label: 'Failed',
+            colorsBuilder: (context, state) => (
+              background: const Color(0xFF123456),
+              foreground: const Color(0xFFFFFFFF),
+            ),
+          ),
+          disableAnimations: true,
+        ),
+      );
+      final box = tester.widget<AnimatedContainer>(
+        find.byType(AnimatedContainer),
+      );
+      expect((box.decoration! as BoxDecoration).color, const Color(0xFF123456));
+    });
+
+    testWidgets('is at least 44 pixels tall and renders in RTL', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(
+          const SafaehSyncChip(
+            state: SafaehSyncState.saved,
+            label: 'تمت المزامنة',
+          ),
+          disableAnimations: true,
+          dir: TextDirection.rtl,
+        ),
+      );
+      await tester.pump(const Duration(seconds: 3));
+      expect(tester.getSize(find.byType(SafaehSyncChip)).height, 44);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  testWidgets('connectivity bar shows a recovered message then collapses', (
+    tester,
+  ) async {
+    Widget bar(SafaehSyncState state) => _host(
+      SafaehConnectivityBar(
+        state: state,
+        label: 'Offline',
+        recoveredLabel: 'Back online',
+      ),
+      disableAnimations: true,
+    );
+    await tester.pumpWidget(bar(SafaehSyncState.offline));
+    expect(find.text('Offline'), findsOneWidget);
+    await tester.pumpWidget(bar(SafaehSyncState.saved));
+    expect(find.text('Back online'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
+    expect(find.text('Back online'), findsNothing);
+    expect(find.text('Offline'), findsNothing);
+  });
 }

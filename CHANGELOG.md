@@ -18,9 +18,12 @@ See [VERSIONING.md](VERSIONING.md).
   over live content with snap points and scroll hand-off, that becomes a
   fixed side panel at the tablet breakpoint. Content behind it is not rebuilt
   while it moves.
-- `SafaehStatusIndicator`, `SafaehSyncState` and `SafaehConnectivityBar`:
-  saved / syncing / offline / failed indicator and a collapsing connectivity
-  bar, with host-supplied localized labels and reduced-motion support.
+- `SafaehStatusIndicator`, `SafaehSyncState`, `SafaehSyncChip` and
+  `SafaehConnectivityBar`: saved / syncing / offline / failed indicator, a
+  pill that collapses to a circle after a delay and is tappable (the pattern
+  Hisab's sync chip uses, with per-state color override), and a collapsing
+  connectivity bar with an optional "back online" confirmation. Labels are
+  host-supplied and localized; reduced motion is honored.
 - `SafaehTimeline`: connected ordered stops with numbered markers, optional leg
   rows, drag-to-reorder and drag feedback.
 - `SafaehSectionChips` and `SafaehSection`: a scrollable chip bar for

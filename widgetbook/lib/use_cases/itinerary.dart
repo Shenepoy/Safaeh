@@ -47,11 +47,18 @@ Widget statusIndicatorStory(BuildContext context) {
               initialValue: true,
             ),
           ),
+          SafaehSyncChip(
+            key: ValueKey(state),
+            state: state,
+            label: label,
+            onTap: () {},
+          ),
           SafaehConnectivityBar(
             state: state,
             label: label,
             retryLabel: 'Retry',
             onRetry: () {},
+            recoveredLabel: 'Back online',
             showWhenSyncing: context.knobs.boolean(label: 'Show when syncing'),
           ),
         ],

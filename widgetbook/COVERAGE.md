@@ -33,7 +33,7 @@ claim that every combination of settings or every interaction is tested.
 | `camera_sheet`, `qr_scanner` | Camera → Camera sheet mock feed, QR overlay/permission message; root camera/QR tests |
 | `onboarding`, `auth_flow` | Onboarding → Flow and Auth, all six designs; auth mode/busy/error knobs; root accessibility test |
 | `debug_menu`, `l10n_editor` | Developer tools → Debug menu body in local sheet, Translation editor in memory |
-| `status_colors`, `status_indicator` | Itinerary → Status indicator (state, label, custom status colors), Connectivity bar; root status tests |
+| `status_colors`, `status_indicator` | Itinerary → Status indicator (state, label, custom status colors), Sync chip, Connectivity bar with recovered message; root status tests |
 | `snap_sheet` | Itinerary → Snap sheet (initial snap, phone drag, wide side panel); root snap sheet tests |
 | `timeline` | Itinerary → Timeline default and reorderable; root timeline tests |
 | `section_chips` | Itinerary → Section chips default and reorderable; root section chip tests |

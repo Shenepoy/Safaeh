@@ -39,6 +39,13 @@ Widget _combined({TextDirection dir = TextDirection.ltr}) {
               ),
               const Padding(
                 padding: EdgeInsets.all(8),
+                child: SafaehSyncChip(
+                  state: SafaehSyncState.offline,
+                  label: 'Offline',
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.all(8),
                 child: SafaehStatusIndicator(
                   state: SafaehSyncState.syncing,
                   label: 'Syncing 2 changes',
