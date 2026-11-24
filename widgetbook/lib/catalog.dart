@@ -195,6 +195,7 @@ final catalogDirectories = <WidgetbookNode>[
     name: 'Itinerary',
     children: [
       _component('Status indicator', {'Default': statusIndicatorStory}),
+      _component('Sync chip', {'Default': syncChipStory}),
       _component('Snap sheet', {'Default': snapSheetStory}),
       _component('Timeline', {
         'Default': (_) => const TimelineStory(reorderable: false),

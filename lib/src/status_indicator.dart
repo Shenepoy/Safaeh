@@ -212,28 +212,26 @@ class SafaehSyncChip extends StatefulWidget {
   )?
   colorsBuilder;
 
+  /// Container colors, as Hisab's sync chip uses: primary container when
+  /// saved, tertiary container while syncing, error container when offline or
+  /// failed. Hosts that want other colors pass [colorsBuilder].
   static SafaehSyncChipColors defaultColors(
     BuildContext context,
     SafaehSyncState state,
   ) {
-    final status = SafaehStatusColors.of(context);
     final scheme = Theme.of(context).colorScheme;
     return switch (state) {
       SafaehSyncState.saved => (
-        background: status.success,
-        foreground: status.onSuccess,
+        background: scheme.primaryContainer,
+        foreground: scheme.onPrimaryContainer,
       ),
       SafaehSyncState.syncing => (
-        background: scheme.surfaceContainerHighest,
-        foreground: scheme.onSurfaceVariant,
+        background: scheme.tertiaryContainer,
+        foreground: scheme.onTertiaryContainer,
       ),
-      SafaehSyncState.offline => (
-        background: status.warning,
-        foreground: status.onWarning,
-      ),
-      SafaehSyncState.failed => (
-        background: status.danger,
-        foreground: status.onDanger,
+      SafaehSyncState.offline || SafaehSyncState.failed => (
+        background: scheme.errorContainer,
+        foreground: scheme.onErrorContainer,
       ),
     };
   }
@@ -327,11 +325,10 @@ class _SafaehSyncChipState extends State<SafaehSyncChip> {
                     children: [
                       AnimatedSwitcher(
                         duration: duration,
-                        child: _StateIcon(
+                        child: _ChipIcon(
                           key: ValueKey(widget.state),
                           state: widget.state,
                           color: colors.foreground,
-                          size: 20,
                         ),
                       ),
                       if (showLabel) ...[
@@ -361,6 +358,38 @@ class _SafaehSyncChipState extends State<SafaehSyncChip> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Icon used inside [SafaehSyncChip]: a cloud for saved and offline, and a
+/// small progress ring while syncing (a static sync icon when animations are
+/// disabled).
+class _ChipIcon extends StatelessWidget {
+  const _ChipIcon({super.key, required this.state, required this.color});
+
+  final SafaehSyncState state;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    const size = 20.0;
+    if (state == SafaehSyncState.syncing) {
+      if (MediaQuery.disableAnimationsOf(context)) {
+        return Icon(Icons.sync, size: size, color: color);
+      }
+      return SizedBox(
+        width: size,
+        height: size,
+        child: CircularProgressIndicator(strokeWidth: 2, color: color),
+      );
+    }
+    return Icon(
+      state == SafaehSyncState.saved
+          ? Icons.cloud_done_outlined
+          : Icons.cloud_off_outlined,
+      size: size,
+      color: color,
     );
   }
 }

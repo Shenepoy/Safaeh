@@ -148,7 +148,7 @@ void main() {
       expect(find.text('Synced'), findsOneWidget);
       await tester.pump(const Duration(seconds: 3));
       expect(find.text('Synced'), findsNothing);
-      expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
+      expect(find.byIcon(Icons.cloud_done_outlined), findsOneWidget);
     });
 
     testWidgets('offline keeps its label and a state change re-expands', (

@@ -67,6 +67,48 @@ Widget statusIndicatorStory(BuildContext context) {
   );
 }
 
+Widget syncChipStory(BuildContext context) {
+  final label = context.catalogString(label: 'Label', initialValue: 'Synced');
+  return StoryPage(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 16,
+      children: [
+        for (final state in SafaehSyncState.values) ...[
+          Text(state.name, style: Theme.of(context).textTheme.labelMedium),
+          Row(
+            spacing: 16,
+            children: [
+              // Roomy slot: shows the label until it collapses.
+              SafaehSyncChip(
+                key: ValueKey('open-${state.name}'),
+                state: state,
+                label: switch (state) {
+                  SafaehSyncState.saved => label,
+                  SafaehSyncState.syncing => 'Syncing',
+                  SafaehSyncState.offline => 'Offline',
+                  SafaehSyncState.failed => 'Sync failed',
+                },
+                onTap: () {},
+              ),
+              // Narrow slot: always the circle, as in a tight app bar.
+              SizedBox(
+                width: 52,
+                child: SafaehSyncChip(
+                  key: ValueKey('compact-${state.name}'),
+                  state: state,
+                  label: state.name,
+                  onTap: () {},
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
 Widget snapSheetStory(BuildContext context) {
   final first = context.knobs.int.slider(
     label: 'Initial snap',

@@ -20,8 +20,9 @@ See [VERSIONING.md](VERSIONING.md).
   while it moves.
 - `SafaehStatusIndicator`, `SafaehSyncState`, `SafaehSyncChip` and
   `SafaehConnectivityBar`: saved / syncing / offline / failed indicator, a
-  pill that collapses to a circle after a delay and is tappable (the pattern
-  Hisab's sync chip uses, with per-state color override), and a collapsing
+  pill that collapses to a circle after a delay and is tappable (the look and
+  behavior of Hisab's sync chip: container colors, cloud icons, progress ring
+  while syncing, with per-state color override), and a collapsing
   connectivity bar with an optional "back online" confirmation. Labels are
   host-supplied and localized; reduced motion is honored.
 - `SafaehTimeline`: connected ordered stops with numbered markers, optional leg
@@ -31,7 +32,7 @@ See [VERSIONING.md](VERSIONING.md).
 - `SafaehStatusColors`: optional theme extension that overrides the semantic
   success / warning / danger colors. `SafaehStatusColors.of(context)` falls
   back to the existing `ColorScheme` getters, so current hosts are unchanged.
-- Widgetbook "Itinerary" folder with six stories for the new widgets.
+- Widgetbook "Itinerary" folder with seven stories for the new widgets.
 
 ## [1.2.6] - 2026-11-23
 
