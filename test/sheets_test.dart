@@ -1283,8 +1283,6 @@ void main() {
   testWidgets('a custom tile picker row supports keyboard activation', (
     tester,
   ) async {
-    final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
     int? selected;
     await tester.pumpWidget(
       MaterialApp(
@@ -1299,7 +1297,7 @@ void main() {
         ),
       ),
     );
-    expect(find.bySemanticsLabel('Custom option'), findsOneWidget);
+    expect(find.semantics.byLabel('Custom option'), findsOne);
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pump();

@@ -206,8 +206,19 @@ void main() {
     expect(feedback, findsOneWidget);
     expect(Overlay.of(tester.element(feedback)), same(overlay));
     expect(MediaQuery.sizeOf(tester.element(feedback)).width, 390);
-    await tester.ensureVisible(find.text('Meta chip').first);
-    await tester.tap(find.text('Meta chip').first);
+    await tester.enterText(
+      find.ancestor(
+        of: find.text('Search'),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is FormField<String>,
+        ),
+      ),
+      'Meta',
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+    expect(feedback, findsOneWidget);
+    await tester.tap(find.text('Meta chip').hitTestable());
     await tester.pumpAndSettle();
     expect(find.byType(SafaehMetaChip), findsOneWidget);
     expect(feedback, findsNothing);

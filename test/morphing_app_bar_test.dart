@@ -179,8 +179,6 @@ void main() {
   testWidgets('a partially faded action leaves focus and semantics', (
     tester,
   ) async {
-    final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
     final node = FocusNode();
     addTearDown(node.dispose);
 
@@ -204,13 +202,13 @@ void main() {
     node.requestFocus();
     await tester.pump();
     expect(node.hasFocus, isTrue);
-    expect(find.bySemanticsLabel('Open search'), findsOneWidget);
+    expect(find.semantics.byLabel('Open search'), findsOne);
 
     await showAction(0.75);
     await tester.pump();
     expect(node.canRequestFocus, isFalse);
     expect(node.hasFocus, isFalse);
-    expect(find.bySemanticsLabel('Open search'), findsNothing);
+    expect(find.semantics.byLabel('Open search'), findsNothing);
   });
 }
 

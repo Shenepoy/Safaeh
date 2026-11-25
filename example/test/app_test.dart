@@ -134,7 +134,12 @@ void main() {
     expect(language, findsNothing);
     expect(find.byType(SafaehDebugMenuFab), findsNothing);
 
-    final field = tester.element(find.widgetWithText(TextField, 'Name'));
+    final field = tester.element(
+      find.descendant(
+        of: find.byKey(const ValueKey('safaeh_panel')).hitTestable(),
+        matching: find.widgetWithText(TextField, 'Name'),
+      ),
+    );
     final route = ModalRoute.of(field)!;
     expect(route.settings.name, '/demo/sheet');
     route.navigator!.pop();
