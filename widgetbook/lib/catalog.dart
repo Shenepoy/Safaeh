@@ -158,6 +158,7 @@ final catalogDirectories = <WidgetbookNode>[
           (t, count) => SidenavOverlayDemo(t: t, itemCount: count),
         ),
       }),
+      _component('Branch sidenav', {'Default': branchSidenavStory}),
       _component('Floating nav', {
         'Default': _demo((t) => FloatingNavDemo(t: t), fullPage: true),
       }),

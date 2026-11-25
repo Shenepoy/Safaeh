@@ -1,6 +1,6 @@
 # Public interface coverage
 
-The catalog registers 81 named stories. This table accounts for every source
+The catalog registers 82 named stories. This table accounts for every source
 module exported by `lib/safaeh.dart`; helpers are exercised through their
 owning component or an existing behavioral test. Rendering coverage is not a
 claim that every combination of settings or every interaction is tested.
@@ -25,6 +25,7 @@ claim that every combination of settings or every interaction is tested.
 | `sheet_template`, `sheet_template_style`, `sheet_data_loader`, `sheet_action_button` | Sheets → Sheet template, Sheet loading, Sheet action; theme/local slots, cached/read/retry states, action states and auxiliary controls; root template tests |
 | `sheet_shell` | Sheets → Sheet shell, Sheet padding |
 | `sidenav`, `floating_nav` | Navigation → Sidenav rail/drawer/overlay, Floating nav |
+| `branch_sidenav` | Navigation → Branch sidenav: open a list, then a page inside it; collapse; root branch sidenav tests |
 | `page_index`, `morphing_app_bar` | Navigation → Page index rail/overlay, App bar morphing |
 | `content_band`, `content_aside`, `content_aligned` | Layout → Content band, End aside, Aligned chrome, Aligned page |
 | `bottom_nav` | Layout → Keyboard and navigation; simulated keyboard inset; root bottom-nav tests |

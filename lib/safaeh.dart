@@ -45,6 +45,7 @@ export 'src/section_header.dart';
 export 'src/semantic_status.dart';
 export 'src/sheet_handle_drag.dart';
 export 'src/sheet_shell.dart';
+export 'src/branch_sidenav.dart';
 export 'src/sidenav.dart';
 export 'src/status_body.dart';
 export 'src/swatch_picker.dart';

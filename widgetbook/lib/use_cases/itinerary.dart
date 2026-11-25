@@ -208,3 +208,103 @@ class _SectionChipsStoryState extends State<SectionChipsStory> {
     ),
   );
 }
+
+/// Branching rail: tap a list to open its sections, then a page inside one.
+Widget branchSidenavStory(BuildContext context) =>
+    const SizedBox(height: 640, child: _BranchSidenavDemo());
+
+class _BranchSidenavDemo extends StatefulWidget {
+  const _BranchSidenavDemo();
+
+  @override
+  State<_BranchSidenavDemo> createState() => _BranchSidenavDemoState();
+}
+
+class _BranchSidenavDemoState extends State<_BranchSidenavDemo> {
+  bool _inList = false;
+  bool _openPage = false;
+  bool _collapsed = false;
+  Key _selected = const ValueKey('lists');
+
+  void _go(Key id, {bool? inList, bool? openPage}) => setState(() {
+    _selected = id;
+    if (inList != null) _inList = inList;
+    if (openPage != null) _openPage = openPage;
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    SafaehBranchNavItem item(
+      String id,
+      String label,
+      IconData icon, {
+      int depth = 0,
+      VoidCallback? onTap,
+    }) => SafaehBranchNavItem(
+      id: ValueKey(id),
+      label: label,
+      icon: icon,
+      depth: depth,
+      onTap: onTap ?? () => _go(ValueKey(id)),
+    );
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SafaehBranchSidenav(
+          title: _inList ? 'Rome in 4 days' : 'Maanaa',
+          collapsed: _collapsed,
+          onToggleCompact: () => setState(() => _collapsed = !_collapsed),
+          expandTooltip: 'Show labels',
+          collapseTooltip: 'Hide labels',
+          selectedId: _selected,
+          items: [
+            item(
+              'lists',
+              'Trips',
+              Icons.luggage_outlined,
+              onTap: () =>
+                  _go(const ValueKey('lists'), inList: false, openPage: false),
+            ),
+            if (!_inList)
+              item(
+                'rome',
+                'Open "Rome in 4 days"',
+                Icons.folder_open_outlined,
+                onTap: () => _go(const ValueKey('plan'), inList: true),
+              ),
+            if (_inList) ...[
+              item(
+                'plan',
+                'Plan',
+                Icons.view_list_outlined,
+                depth: 1,
+                onTap: () => _go(const ValueKey('plan'), openPage: false),
+              ),
+              if (_openPage)
+                item('stop', 'Colosseum', Icons.account_balance, depth: 2),
+              item(
+                'assistant',
+                'Assistant',
+                Icons.chat_bubble_outline,
+                depth: 1,
+              ),
+              item('spend', 'Spend', Icons.payments_outlined, depth: 1),
+            ],
+          ],
+          pinnedItems: [item('profile', 'Profile', Icons.person_outline)],
+        ),
+        Expanded(
+          child: Center(
+            child: _inList && !_openPage
+                ? FilledButton(
+                    onPressed: () =>
+                        _go(const ValueKey('stop'), openPage: true),
+                    child: const Text('Open the Colosseum stop'),
+                  )
+                : const SizedBox(),
+          ),
+        ),
+      ],
+    );
+  }
+}

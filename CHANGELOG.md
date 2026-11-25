@@ -10,6 +10,19 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-25
+
+### Added
+
+- `SafaehBranchSidenav` and `SafaehBranchNavItem`: a rail whose rows branch
+  with the current context, ported from Hisab's shell sidenav. Rows are
+  reconciled by id, so rows that stay keep their place while new rows grow
+  and fade in and gone rows shrink out. Rows indent by depth; when the
+  selected row is two levels deep its parent turns bold with an expand arrow.
+  The title crossfades between contexts, pinned rows (settings, account) stay
+  at the bottom, collapsing morphs the width, and the same content works as a
+  temporary drawer. `SafaehSidenav` is unchanged.
+
 ## [1.4.0] - 2026-11-25
 
 ### Added
