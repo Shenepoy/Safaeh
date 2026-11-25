@@ -1,29 +1,49 @@
 import 'dart:async';
 
 import 'package:flutter/gestures.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:material_ui/material_ui.dart';
+// Toastification's public factory returns a singleton with one queue per
+// alignment. Use its manager to keep separate queues for separate hosts.
+// ignore: implementation_imports
+import 'package:toastification/src/core/toastification_manager.dart';
 import 'package:toastification/toastification.dart';
 
 import 'theme.dart';
 
-/// Close timers armed after a toast is inserted.
-///
-/// Toastification starts its own timer before the toast is in the tree. A
-/// result that arrives while the app is not drawing (a Bluetooth scan finishing
-/// in the background) can expire that timer first. The later insert then leaves
-/// a toast that never closes. These timers start on the next frame instead.
-final List<Timer> _feedbackCloseTimers = [];
-int _feedbackCloseGeneration = 0;
+typedef _DismissFeedback = void Function({bool animate, bool remove});
 
-/// Cancels every pending feedback close. Host disposal and "dismiss all" use
-/// this so a removed tree does not keep timers alive.
-void _cancelFeedbackCloseTimers() {
-  _feedbackCloseGeneration++;
-  for (final timer in _feedbackCloseTimers) {
-    timer.cancel();
+class _FeedbackQueue {
+  final pending = <_DismissFeedback>{};
+  final active =
+      <
+        ToastificationItem,
+        ({ToastificationManager? manager, _DismissFeedback dismiss})
+      >{};
+
+  void dismissAll({bool remove = true}) {
+    for (final dismiss in [
+      ...pending,
+      for (final entry in active.values) entry.dismiss,
+    ]) {
+      dismiss(remove: remove);
+    }
   }
-  _feedbackCloseTimers.clear();
+
+  void prune(ToastificationManager? manager) {
+    final findItem = manager == null
+        ? toastification.findToastificationItem
+        : manager.findToastificationItem;
+    for (final entry in active.entries.toList()) {
+      if (identical(manager, entry.value.manager) &&
+          findItem(entry.key.id) == null) {
+        entry.value.dismiss(remove: false);
+      }
+    }
+  }
 }
+
+final _unhostedFeedback = _FeedbackQueue();
 
 /// The visual meaning of a Safaeh feedback message.
 enum SafaehFeedbackType { info, success, error }
@@ -85,6 +105,38 @@ class SafaehFeedbackHost extends StatefulWidget {
 }
 
 class _SafaehFeedbackHostState extends State<SafaehFeedbackHost> {
+  final _feedback = _FeedbackQueue();
+  final _managers = <(OverlayState, Alignment), ToastificationManager>{};
+
+  OverlayState? get _descendantOverlay {
+    NavigatorState? navigator;
+    void visit(Element element) {
+      if (navigator != null) return;
+      if (element is StatefulElement && element.state is NavigatorState) {
+        navigator = element.state as NavigatorState;
+      } else {
+        element.visitChildElements(visit);
+      }
+    }
+
+    context.visitChildElements(visit);
+    return navigator?.overlay;
+  }
+
+  ToastificationManager _managerFor(
+    OverlayState overlay,
+    BuildContext context,
+  ) {
+    final config =
+        ToastificationConfigProvider.maybeOf(context)?.config ??
+        const ToastificationConfig();
+    final alignment = config.alignment.resolve(Directionality.of(context));
+    return _managers.putIfAbsent((
+      overlay,
+      alignment,
+    ), () => ToastificationManager(alignment: alignment, config: config));
+  }
+
   @override
   void initState() {
     super.initState();
@@ -100,8 +152,7 @@ class _SafaehFeedbackHostState extends State<SafaehFeedbackHost> {
   }
 
   void _onRelayout() {
-    // ignore: invalid_use_of_visible_for_testing_member
-    toastification.managers.removeWhere(
+    _managers.removeWhere(
       (_, manager) =>
           // ignore: invalid_use_of_visible_for_testing_member
           manager.notifications.isEmpty &&
@@ -114,11 +165,10 @@ class _SafaehFeedbackHostState extends State<SafaehFeedbackHost> {
   @override
   void dispose() {
     widget.relayout?.removeListener(_onRelayout);
-    _cancelFeedbackCloseTimers();
+    _feedback.dismissAll(remove: false);
     // dismissAll() schedules another timer. These testing-visible members are
     // the only way to cancel auto-close timers in the same turn.
-    // ignore: invalid_use_of_visible_for_testing_member
-    for (final manager in toastification.managers.values) {
+    for (final manager in _managers.values) {
       // ignore: invalid_use_of_visible_for_testing_member
       for (final item in manager.notifications.toList()) {
         item.dispose();
@@ -127,19 +177,20 @@ class _SafaehFeedbackHostState extends State<SafaehFeedbackHost> {
       manager.notifications.clear();
       // ignore: invalid_use_of_visible_for_testing_member
       final entry = manager.overlayEntry;
-      if (entry != null && entry.mounted) {
+      if (entry != null) {
         entry.remove();
         entry.dispose();
       }
       // ignore: invalid_use_of_visible_for_testing_member
       manager.overlayEntry = null;
     }
+    _managers.clear();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return ToastificationWrapper(
+    return ToastificationConfigProvider(
       config: ToastificationConfig(
         alignment: widget.alignment,
         itemWidth: widget.itemWidthBuilder?.call(context) ?? widget.itemWidth,
@@ -328,65 +379,93 @@ extension SafaehFeedbackContext on BuildContext {
     Duration duration = const Duration(seconds: 8),
   }) {
     if (!mounted) return;
+    final host = findAncestorStateOfType<_SafaehFeedbackHostState>();
+    final feedback = host?._feedback ?? _unhostedFeedback;
+    final root = SafaehNavigatorScope.of(this);
+    final overlay =
+        Navigator.maybeOf(this, rootNavigator: root)?.overlay ??
+        host?._descendantOverlay ??
+        Overlay.maybeOf(this, rootOverlay: root);
+    final manager = overlay == null ? null : host?._managerFor(overlay, this);
     var closed = false;
+    var inserted = false;
+    var removeOnInsert = false;
     Timer? closeTimer;
     late final ToastificationItem item;
 
-    void dismiss({bool animate = true}) {
-      if (closed) return;
-      closed = true;
-      final timer = closeTimer;
-      closeTimer = null;
-      if (timer != null) {
-        timer.cancel();
-        _feedbackCloseTimers.remove(timer);
+    void removeItem(bool animate) {
+      if (manager == null) {
+        toastification.dismiss(item, showRemoveAnimation: animate);
+      } else {
+        manager.dismiss(item, showRemoveAnimation: animate);
       }
-      toastification.dismiss(item, showRemoveAnimation: animate);
     }
 
-    final generation = _feedbackCloseGeneration;
-    // Keep [context] for ToastificationConfig (width, alignment, insets).
-    // Pass the navigator overlay explicitly so BetterFeedback's root Overlay
-    // does not steal toasts via Overlay.maybeOf(rootOverlay: true).
-    //
-    // Do not pass autoCloseDuration. That timer starts before the toast is
-    // inserted, and with no frame (background Bluetooth result) it expires
-    // first. The insert then sticks on screen.
-    item = toastification.showCustom(
-      context: this,
-      overlayState: Navigator.maybeOf(
-        this,
-        rootNavigator: SafaehNavigatorScope.of(this),
-      )?.overlay,
-      // Toastification still supplies an SDK Material default text style.
-      // Restore the modern host style for both the builder and its content.
-      builder: (context, holder) => DefaultTextStyle(
-        style: Theme.of(context).textTheme.bodyLarge ?? const TextStyle(),
-        child: Builder(
-          builder: (context) => _FeedbackSwipe(
-            onTap: () => dismiss(),
-            onSwipe: () => dismiss(animate: false),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: builder(context, () => dismiss()),
+    void dismiss({bool animate = true, bool remove = true}) {
+      if (closed) return;
+      closed = true;
+      closeTimer?.cancel();
+      closeTimer = null;
+      feedback.pending.remove(dismiss);
+      feedback.active.remove(item);
+      if (remove && inserted) {
+        removeItem(animate);
+      } else {
+        removeOnInsert = remove;
+      }
+    }
+
+    Widget buildFeedback(BuildContext context, ToastificationItem _) =>
+        DefaultTextStyle(
+          style: Theme.of(context).textTheme.bodyLarge ?? const TextStyle(),
+          child: Builder(
+            builder: (context) => _FeedbackSwipe(
+              onTap: () => dismiss(),
+              onSwipe: () => dismiss(animate: false),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: builder(context, () => dismiss()),
+              ),
             ),
           ),
-        ),
-      ),
-    );
-    if (duration <= Duration.zero) return;
+        );
+    item = manager == null
+        ? toastification.showCustom(
+            context: this,
+            overlayState: overlay,
+            builder: buildFeedback,
+          )
+        : manager.showCustom(
+            overlayState: overlay!,
+            scheduler: SchedulerBinding.instance,
+            builder: buildFeedback,
+            animationBuilder: null,
+            animationDuration: null,
+            callbacks: const ToastificationCallbacks(),
+          );
+    feedback.pending.add(dismiss);
+    // Start the timer after insertion so background results can't expire
+    // before the app renders the toast's first frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (closed || generation != _feedbackCloseGeneration) return;
-      closeTimer = Timer(duration, dismiss);
-      _feedbackCloseTimers.add(closeTimer!);
+      if (host != null && !host.mounted) return;
+      inserted = true;
+      feedback.pending.remove(dismiss);
+      if (closed) {
+        if (removeOnInsert) removeItem(false);
+        return;
+      }
+      feedback.active[item] = (manager: manager, dismiss: dismiss);
+      if (duration > Duration.zero) closeTimer = Timer(duration, dismiss);
+      // The manager can evict old items to enforce its capacity.
+      feedback.prune(manager);
     });
   }
 
   /// Dismisses all feedback messages currently shown by the host.
   void dismissSafaehFeedbacks() {
     if (!mounted) return;
-    _cancelFeedbackCloseTimers();
-    toastification.dismissAll(delayForAnimation: true);
+    final host = findAncestorStateOfType<_SafaehFeedbackHostState>();
+    (host?._feedback ?? _unhostedFeedback).dismissAll();
   }
 }
 

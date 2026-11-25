@@ -78,6 +78,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(controller.snapIndex, 2);
     expect(seen, contains(2));
+
+    tester.view.physicalSize = const Size(960, 844);
+    await tester.pumpWidget(
+      _app(size: const Size(960, 844), controller: controller),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(DraggableScrollableSheet), findsNothing);
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpWidget(
+      _app(size: const Size(390, 844), controller: controller),
+    );
+    await tester.pumpAndSettle();
+    expect(controller.snapIndex, 2);
+    expect(
+      tester.getTopLeft(find.byType(ClipRRect).first).dy,
+      closeTo(844 * 0.08, 2),
+    );
+
     await controller.snapTo(0);
     await tester.pumpAndSettle();
     expect(controller.snapIndex, 0);

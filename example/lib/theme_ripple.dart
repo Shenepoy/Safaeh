@@ -5,10 +5,10 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
-/// Fukaha's theme reveal: 900ms expanding circle, ease-in-out cubic.
+/// Theme reveal: 900ms expanding circle, ease-in-out cubic.
 const Duration kThemeRippleDuration = Duration(milliseconds: 900);
 
-/// Fukaha language fallback: old snapshot fades + eases to 0.995 scale.
+/// Language transition: old snapshot fades + eases to 0.995 scale.
 const Duration kLanguageFadeDuration = Duration(milliseconds: 420);
 const Curve kLanguageMotion = Cubic(0.2, 0, 0, 1);
 

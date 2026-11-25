@@ -53,6 +53,7 @@ Future<T?> showSafaehCameraSheet<T>({
   double Function(BuildContext context)? railWidthOf,
   bool barrierDismissible = true,
   bool useRootNavigator = true,
+  RouteSettings? routeSettings,
   String? handleExpandLabel,
   String? handleCollapseLabel,
   String? handleDismissLabel,
@@ -64,6 +65,7 @@ Future<T?> showSafaehCameraSheet<T>({
   return showGeneralDialog<T>(
     context: context,
     useRootNavigator: useRootNavigator,
+    routeSettings: routeSettings,
     barrierDismissible: false,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     barrierColor: Colors.transparent,

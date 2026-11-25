@@ -1,50 +1,24 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:safaeh/safaeh.dart';
+import 'package:safaeh_example/dropdown_demo.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import '../text_knob.dart';
 import 'common.dart';
 
-Widget dropdownStory(BuildContext context) {
-  final expanded = context.knobs.boolean(label: 'Expand');
-  final iconOnly = context.knobs.boolean(label: 'Icon only');
-  return _DropdownStory(expanded: expanded, iconOnly: iconOnly);
-}
+Widget dropdownStory(BuildContext context) => StoryPage(
+  child: DropdownChoiceDemo(
+    t: (key) => storyText(context, key),
+    expanded: context.knobs.boolean(label: 'Expand'),
+    iconOnly: context.knobs.boolean(label: 'Icon only'),
+  ),
+);
 
-class _DropdownStory extends StatefulWidget {
-  const _DropdownStory({required this.expanded, required this.iconOnly});
-  final bool expanded;
-  final bool iconOnly;
-  @override
-  State<_DropdownStory> createState() => _DropdownStoryState();
-}
+Widget scrollableDropdownStory(BuildContext context) =>
+    const StoryPage(child: ScrollableDropdownDemo());
 
-class _DropdownStoryState extends State<_DropdownStory> {
-  int _selected = 0;
-  @override
-  Widget build(BuildContext context) => StoryPage(
-    child: SafaehAnchoredDropdownChip<int>(
-      icon: Icons.filter_list,
-      label: storyText(context, _selected == 0 ? 'cash' : 'card'),
-      options: [
-        SafaehDropdownOption(
-          value: 0,
-          label: storyText(context, 'cash'),
-          icon: Icons.payments_outlined,
-        ),
-        SafaehDropdownOption(
-          value: 1,
-          label: storyText(context, 'card'),
-          icon: Icons.credit_card,
-        ),
-      ],
-      selected: _selected,
-      expand: widget.expanded,
-      iconOnly: widget.iconOnly,
-      onSelected: (value) => setState(() => _selected = value),
-    ),
-  );
-}
+Widget toggleDropdownStory(BuildContext context) =>
+    StoryPage(child: ToggleDropdownDemo(t: (key) => storyText(context, key)));
 
 Widget anchoredStory(BuildContext context) => _AnchoredStory(
   motion: context.knobs.object.dropdown(

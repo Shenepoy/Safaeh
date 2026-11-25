@@ -1,14 +1,16 @@
 # Safaeh example
 
-Catalog of `package:safaeh` chrome in five Fukaha locales (en, ar, ja, zh,
-es) — `example/lib/app.dart`, `catalog.dart`, `gallery.dart`, `pages.dart`.
-The gallery sits in `SafaehContentBand`. Wide bands lay section cards in two
-or three columns on the same scrolling page. Section titles open the
-standalone demo (sheet, page, or camera host). Locale + light/dark toggles.
-No `mobile_scanner`, Riverpod, or `easy_localization`. Profile name/email
-go through catalog keys; emails stay LTR in Arabic via `catalogIsolateLabel`.
+The [example gallery](https://shenepoy.github.io/Safaeh/) shows Safaeh
+integration patterns in English, Arabic, Japanese, Chinese, and Spanish.
+Search by component or filter by section. Select a card title to open its
+standalone demo or use the phone icon to run it inside a simulated phone.
+Routes and feedback opened inside that preview stay within its viewport.
+The standalone demos have shareable URLs, such as the
+[morphing app bar](https://shenepoy.github.io/Safaeh/#/demo/morphing_app_bar).
+A link to a modal demo opens a page with an **Open demo** button.
 
-Live: [shenepoy.github.io/Safaeh](https://shenepoy.github.io/Safaeh/)
+The [Widgetbook catalog](https://shenepoy.github.io/Safaeh/widgetbook/) includes
+additional components, variants, and configurable preview settings.
 
 `web/` is in-tree for GitHub Pages. A green [CI](../.github/workflows/ci.yml)
 run on `main` builds `example/` (`flutter build web --release --base-href /Safaeh/`)
@@ -53,25 +55,19 @@ flutter pub get
 flutter run
 ```
 
-## What it shows
+## Browse order
 
-1. **Adaptive sheet** — phone bottom sheet ↔ tablet dialog
-2. **Card picker** — `SafaehOptionPickerBody` / `showSafaehPicker`
-3. **Tile picker** — `SafaehTilePickerBody` + header / disabled row
-4. **Multi picker** — search + `showSafaehMultiTilePicker`
-5. **Status body** — busy and empty `SafaehStatusBody`
-6. **Confirm / text input** — `SafaehConfirmSheet` / `SafaehTextInputSheet`
-7. **Sheet shell** — shared title, body, and action row
-8. **Sheet morph** — nested 320 and 420 previews
-9. **Option tiles** — selected / disabled / destructive
-10. **Dialog** — `showSafaehDialog` with theme radius and width
-11. **Sidenav** — rail and `asDrawer: true` temporary drawer
-12. **Floating nav** — `SafaehFloatingNavBar`
-13. **Page index** — side rail and overlay + scroll helper
-14. **Content band / end aside / aligned chrome** — `safaehBandMetrics`
-15. **Morphing app bar** — page-aware title, action, and bottom chrome
-16. **Camera host / QR overlay / QR message** — QR chrome sits in the
-    camera bottom panel (`SafaehCameraSheetHost`)
-17. **Feedback** — shared host, typed surfaces, action messages, and custom
-    feedback builders
-18. **Language + theme toggles**
+1. Sheets and dialogs
+2. Controls
+3. Navigation
+4. Layout
+5. Feedback and status
+6. Display
+7. Onboarding
+8. Camera and QR
+9. Developer tools
+
+Sheets open with the adaptive sheet and dialog, followed by confirmation,
+text input, pickers, and sheet construction examples. Controls opens with
+the three dropdown variants in one demo. The gallery preserves the same
+order on narrow and wide layouts.

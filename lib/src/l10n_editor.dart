@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'adaptive_sheet.dart';
 import 'debug_menu.dart';
 import 'sheet_shell.dart';
+import 'theme.dart';
 
 final _placeholderPattern = RegExp(r'\{\{[^}]+\}\}|\{[^}]*\}');
 
@@ -217,6 +218,7 @@ class SafaehL10nEditOverlay extends StatefulWidget {
 
   final SafaehL10nBackend backend;
   final SafaehL10nOverrideStore store;
+
   final GlobalKey<NavigatorState> navigatorKey;
   final Widget child;
   final SafaehL10nEditorLabels labels;
@@ -427,6 +429,9 @@ Future<T?> _showLtrSheet<T>({
 }) {
   return showSafaeh<T>(
     context: context,
+    route: SafaehRouteOptions(
+      useRootNavigator: SafaehNavigatorScope.of(context),
+    ),
     title: title,
     titleBuilder: (ctx, style) => Text(
       title,

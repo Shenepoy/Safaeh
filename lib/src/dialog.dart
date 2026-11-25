@@ -42,6 +42,7 @@ Future<T?> showSafaehDialog<T>({
   return showGeneralDialog<T>(
     context: context,
     useRootNavigator: resolvedRoot,
+    routeSettings: route?.routeSettings,
     barrierDismissible: resolvedBarrier,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     barrierColor:
@@ -115,7 +116,7 @@ class _SafaehDialogHost extends StatelessWidget {
         maxWidth: maxWidth ?? double.infinity,
         maxHeight: maxHeight ?? double.infinity,
       ),
-      child: builder(context),
+      child: Builder(builder: builder),
     );
     if (appearance != null) {
       panel = SafaehFloatingSurface(
@@ -143,7 +144,11 @@ class _SafaehDialogHost extends StatelessWidget {
               Positioned.fill(
                 child: GestureDetector(
                   behavior: HitTestBehavior.translucent,
-                  onTap: () => safaehPop(context),
+                  onTap: () {
+                    if (ModalRoute.of(context)?.isCurrent == true) {
+                      Navigator.of(context).pop();
+                    }
+                  },
                   child: const SizedBox.expand(),
                 ),
               ),

@@ -10,13 +10,41 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-25
+
+### Added
+
+- Add scrollable anchored dropdowns and dropdowns with independent toggles.
+- Let adaptive sheets, dialogs, and camera sheets accept route settings.
+- Add component search, section filters, and shareable demo URLs to the gallery.
+  Show all three dropdown variants together and align the gallery and
+  Widgetbook browse order.
+
+### Fixed
+
+- Keep modal drafts and snap positions across responsive layout changes.
+- Dismiss nested sheets and dialogs on the navigator that opened them.
+- Scope feedback queues and timers to their host.
+- Keep gallery demo overlays inside the simulated phone and hide gallery
+  controls while a modal is open.
+- Apply anchored drop popout width and anchor updates, honor reduced motion in
+  controls, and improve keyboard and screen-reader access to picker options.
+- Improve app bar title alignment and hit testing during navigation transitions.
+- Stop page-index scrolling when its viewport detaches and handle recovery
+  labels being removed from the connectivity banner.
+
+### Documentation
+
+- Document shared interaction patterns for sheets, dropdowns, side navigation,
+  app bars, and the rest of the component library.
+
 ## [1.5.0] - 2026-11-25
 
 ### Added
 
 - `SafaehBranchSidenav` and `SafaehBranchNavItem`: a rail whose rows branch
-  with the current context, ported from Hisab's shell sidenav. Rows are
-  reconciled by id, so rows that stay keep their place while new rows grow
+  with the current context. Rows are reconciled by id, so rows that stay
+  keep their place while new rows grow
   and fade in and gone rows shrink out. Rows indent by depth; when the
   selected row is two levels deep its parent turns bold with an expand arrow.
   The title crossfades between contexts, pinned rows (settings, account) stay
@@ -52,10 +80,10 @@ See [VERSIONING.md](VERSIONING.md).
   while it moves.
 - `SafaehStatusIndicator`, `SafaehSyncState`, `SafaehSyncChip` and
   `SafaehConnectivityBar`: saved / syncing / offline / failed indicator, a
-  pill that collapses to a circle after a delay and is tappable (the look and
-  behavior of Hisab's sync chip: container colors, cloud icons, progress ring
-  while syncing, with per-state color override), and a collapsing
-  connectivity bar with an optional "back online" confirmation. Labels are
+  tappable pill that collapses to a circle after a delay (with container
+  colors, cloud icons, a progress ring while syncing, and per-state color
+  overrides), and a collapsing connectivity bar with an optional "back
+  online" confirmation. Labels are
   host-supplied and localized; reduced motion is honored.
 - `SafaehTimeline`: connected ordered stops with numbered markers, optional leg
   rows, drag-to-reorder and drag feedback.
@@ -565,7 +593,7 @@ milestone exception to the usual MINOR = features rule.
   titles open the standalone demo (live sheet or pushed page). Camera and
   QR titles both use `showSafaehCameraSheet` so the panel slides up. Wide
   bands spread section cards across columns on the same page. Each card has
-  its own phone-frame preview (Edadat bezel). Sheet cards include a reach
+  its own phone-frame preview. Sheet cards include a reach
   toggle above the bezel that raises the sheet so the first content
   center aligns with the phone center. Camera and QR demos fill the
   panel with a mock
@@ -578,8 +606,8 @@ milestone exception to the usual MINOR = features rule.
 
 ## [0.1.0] - 2026-08-21
 
-First standalone release (extracted from Hisab). Host apps keep i18n,
-routing, Riverpod, and camera plugins.
+First standalone release. Host apps keep localization, routing, state
+management, and camera plugins.
 
 ### Added
 - **Sheets:** `showSafaeh` (phone sheet ↔ tablet dialog morph),

@@ -24,8 +24,8 @@ class SafaehSnapSheetController {
 /// and is not rebuilt while the sheet moves.
 ///
 /// At [SafaehThemeData.tabletBreakpoint] and wider the sheet becomes a fixed
-/// side panel of [sidePanelWidth] at the start edge (end edge in RTL is
-/// handled by [Directionality]).
+/// side panel of [sidePanelWidth] at the start edge. Returning to the phone
+/// layout restores the last settled snap point.
 class SafaehSnapSheet extends StatefulWidget {
   const SafaehSnapSheet({
     super.key,
@@ -84,6 +84,7 @@ class _SafaehSnapSheetState extends State<SafaehSnapSheet> {
   @override
   void didUpdateWidget(SafaehSnapSheet oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _index = _index.clamp(0, widget.snapFractions.length - 1);
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller?._state = null;
       widget.controller?._state = this;
@@ -112,7 +113,7 @@ class _SafaehSnapSheetState extends State<SafaehSnapSheet> {
         curve: tokens.sheetRollEnter,
       );
     }
-    _settle(target);
+    if (mounted && _drag.isAttached) _settle(_drag.size);
   }
 
   void _dragBy(double deltaDy, double height) {
@@ -204,7 +205,7 @@ class _SafaehSnapSheetState extends State<SafaehSnapSheet> {
             },
             child: DraggableScrollableSheet(
               controller: _drag,
-              initialChildSize: fractions[widget.initialSnap],
+              initialChildSize: fractions[_index],
               minChildSize: fractions.first,
               maxChildSize: fractions.last,
               snap: true,

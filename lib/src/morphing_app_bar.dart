@@ -97,8 +97,8 @@ class SafaehMorphingAppBar extends StatelessWidget
 ///
 /// Place several instances in a [Stack] returned by
 /// [SafaehMorphingAppBar.actionsBuilder]. The action accepts input only when
-/// its opacity reaches [interactiveThreshold], so an outgoing action does not
-/// intercept taps during the transition.
+/// its opacity reaches [interactiveThreshold]. Below the threshold, it is
+/// excluded from pointer input, keyboard focus, and the semantics tree.
 class SafaehMorphingAppBarAction extends StatelessWidget {
   /// Creates a page-aware action.
   const SafaehMorphingAppBarAction({
@@ -126,9 +126,16 @@ class SafaehMorphingAppBarAction extends StatelessWidget {
     final opacity = (1.0 - (page - targetPage).abs())
         .clamp(0.0, 1.0)
         .toDouble();
-    return IgnorePointer(
-      ignoring: opacity < interactiveThreshold,
-      child: Opacity(opacity: opacity, child: child),
+    final interactive = opacity > 0 && opacity >= interactiveThreshold;
+    return ExcludeFocus(
+      excluding: !interactive,
+      child: ExcludeSemantics(
+        excluding: !interactive,
+        child: IgnorePointer(
+          ignoring: !interactive,
+          child: Opacity(opacity: opacity, child: child),
+        ),
+      ),
     );
   }
 }

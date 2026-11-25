@@ -1,14 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:safaeh/safaeh.dart';
-import 'package:toastification/toastification.dart';
 
 void main() {
-  tearDown(() {
-    // The underlying toast manager is a singleton shared by widget tests.
-    toastification.dismissAll(delayForAnimation: false);
-  });
-
   testWidgets('feedback host renders shared messages and actions', (
     tester,
   ) async {
@@ -171,16 +165,63 @@ void main() {
       ),
     );
     await tester.tap(find.text('Show'));
-    await tester.pump();
-    expect(toastification.managers.values, isNotEmpty);
+    await tester.pumpAndSettle();
+    expect(find.text('Stay'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
-    expect(
-      toastification.managers.values.every(
-        (manager) => manager.notifications.isEmpty,
+    expect(find.text('Stay'), findsNothing);
+  });
+
+  testWidgets('removing one host leaves the other host feedback intact', (
+    tester,
+  ) async {
+    var firstVisible = true;
+    late StateSetter update;
+    Widget host(String name) => Expanded(
+      key: ValueKey(name),
+      child: SafaehFeedbackHost(
+        itemWidth: 240,
+        child: SafaehNavigatorScope(
+          useRootNavigator: false,
+          child: Navigator(
+            onGenerateRoute: (_) => MaterialPageRoute<void>(
+              builder: (context) => Scaffold(
+                body: TextButton(
+                  onPressed: () => context.showSafaehFeedback('$name message'),
+                  child: Text('Show $name'),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
-      isTrue,
     );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: StatefulBuilder(
+          builder: (context, setState) {
+            update = setState;
+            return Row(
+              children: [if (firstVisible) host('First'), host('Second')],
+            );
+          },
+        ),
+      ),
+    );
+    await tester.tap(find.text('Show First'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Show Second'));
+    await tester.pumpAndSettle();
+    expect(find.text('First message'), findsOneWidget);
+    expect(find.text('Second message'), findsOneWidget);
+
+    update(() => firstVisible = false);
+    await tester.pumpAndSettle();
+    expect(find.text('First message'), findsNothing);
+    expect(find.text('Second message'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 
   testWidgets('a toast shown above the navigator still closes', (tester) async {

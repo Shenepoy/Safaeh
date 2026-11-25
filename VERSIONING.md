@@ -18,13 +18,13 @@ Git tags are `vMAJOR.MINOR.PATCH` (example: `v0.2.0`).
 
 The tag **must** match `version:` in [`pubspec.yaml`](pubspec.yaml) (build metadata `+N` is ignored for tagging).
 
-## Consumer apps (e.g. Hisab)
+## Consumer apps
 
 Prefer **pub.dev**:
 
 ```yaml
 dependencies:
-  safaeh: ^1.0.0
+  safaeh: ^1.6.0
 ```
 
 Or pin a **git tag** (not `main` or a raw commit):
@@ -34,7 +34,7 @@ dependencies:
   safaeh:
     git:
       url: https://github.com/Shenepoy/Safaeh.git
-      ref: v1.0.0
+      ref: v1.6.0
 ```
 
 ## Release checklist

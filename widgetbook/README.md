@@ -1,8 +1,14 @@
 # Safaeh Widgetbook
 
-An unpublished development catalog with 71 stories. Use the existing `example/`
-gallery for complete demonstrations and Widgetbook for inspecting components,
-states, and layout edges. See [COVERAGE.md](COVERAGE.md) for the inventory.
+[Open Safaeh Widgetbook](https://shenepoy.github.io/Safaeh/widgetbook/) to
+inspect components, variants, and layout states. The
+[example gallery](https://shenepoy.github.io/Safaeh/) shows complete
+integration patterns. See [COVERAGE.md](COVERAGE.md) for the story inventory.
+
+The catalog opens with Sheets, Controls, Navigation, and Layout, followed by
+Feedback, Display, Onboarding, Camera, Itinerary, and Developer tools.
+Controls starts with Dropdown, with Default, Scrollable, and Toggles
+available as separate stories.
 
 ## Run and verify
 
@@ -26,8 +32,7 @@ flutter build web --release --base-href /Safaeh/widgetbook/
 Serve the last build under `/Safaeh/widgetbook/`, matching its base href. For a
 standalone server rooted at `build/web`, build with `--base-href /` instead.
 CI uploads `widgetbook-web` for review and includes it in the existing Pages
-artifact on `main`. It uses a single deployment for both applications. No live
-catalog URL is advertised until the first deployment is verified.
+artifact on `main`. Pages publishes both applications in the same deployment.
 
 ## Preview controls
 
@@ -68,8 +73,9 @@ automatic visual regression comparisons.
    story state when Widgetbook 3.x recreates its URL-keyed builder.
 3. Use `StoryPage` for compact widgets or a full-page scaffold for layouts.
    Keep settings in `PreviewHost`; do not duplicate application wrappers.
-4. Open sheets/dialogs with `useRootNavigator: false`. Anchored popouts and
-   feedback honor the inherited `SafaehNavigatorScope`. Compute anchor rects
+4. Open sheets/dialogs with `useRootNavigator: false`. Anchored popouts,
+   feedback, debug menus, and the translation editor honor the inherited
+   `SafaehNavigatorScope`. Compute anchor rects
    in the selected navigator overlay's coordinates, as `controls.dart` does.
 5. Use `context.catalogString` from `text_knob.dart` for text knobs. It keeps
    the visible editor synchronized with URL changes and localized defaults;

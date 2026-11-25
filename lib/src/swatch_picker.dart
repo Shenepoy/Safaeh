@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'theme.dart';
+
 /// A wrap of selectable color circles.
 ///
 /// The host owns the palette. Pass [showNone] for a clear-color choice that
@@ -12,6 +14,7 @@ class SafaehSwatchPicker extends StatelessWidget {
     this.selected,
     this.showNone = false,
     this.circleSize = 44,
+    this.labelBuilder,
   });
 
   final List<Color> colors;
@@ -19,6 +22,9 @@ class SafaehSwatchPicker extends StatelessWidget {
   final Color? selected;
   final bool showNone;
   final double circleSize;
+
+  /// Localized color name. The null value represents the clear-color choice.
+  final String Function(Color? color)? labelBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +36,9 @@ class SafaehSwatchPicker extends StatelessWidget {
         for (final color in colors)
           _Swatch(
             color: color,
+            label:
+                labelBuilder?.call(color) ??
+                '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}',
             selected: _same(color, selected),
             size: circleSize,
             onTap: () => onSelected(color),
@@ -37,6 +46,9 @@ class SafaehSwatchPicker extends StatelessWidget {
         if (showNone)
           _Swatch(
             color: null,
+            label:
+                labelBuilder?.call(null) ??
+                MaterialLocalizations.of(context).clearButtonTooltip,
             selected: selected == null,
             size: circleSize,
             onTap: () => onSelected(null),
@@ -53,6 +65,7 @@ class SafaehSwatchPicker extends StatelessWidget {
 class _Swatch extends StatelessWidget {
   const _Swatch({
     required this.color,
+    required this.label,
     required this.selected,
     required this.size,
     required this.onTap,
@@ -60,6 +73,7 @@ class _Swatch extends StatelessWidget {
   });
 
   final Color? color;
+  final String label;
   final bool selected;
   final double size;
   final VoidCallback onTap;
@@ -71,12 +85,16 @@ class _Swatch extends StatelessWidget {
     final fill = color ?? scheme.surfaceContainerHighest;
     return Semantics(
       button: true,
+      label: label,
       selected: selected,
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
+          duration: safaehResolvedMotion(
+            context,
+            const Duration(milliseconds: 150),
+          ),
           width: size,
           height: size,
           decoration: BoxDecoration(

@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 ///
 /// [leftOffset] is a **physical** left inset (use a forced-LTR [Row]),
 /// not a start inset. Pass [isRtl] so the aside sits on the end.
-/// Hisab computes offsets via [LayoutBreakpoints.contentBandMetrics].
+/// Use `safaehBandMetrics` to compute the offsets from the incoming width.
 class SafaehEndAsideLayout extends StatelessWidget {
   const SafaehEndAsideLayout({
     super.key,

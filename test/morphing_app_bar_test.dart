@@ -175,6 +175,43 @@ void main() {
     );
     expect(hidden.preferredSize.height, 80);
   });
+
+  testWidgets('a partially faded action leaves focus and semantics', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
+    final node = FocusNode();
+    addTearDown(node.dispose);
+
+    Future<void> showAction(double page) => tester.pumpWidget(
+      MaterialApp(
+        home: SafaehMorphingAppBarAction(
+          page: page,
+          targetPage: 0,
+          child: Focus(
+            focusNode: node,
+            child: Semantics(
+              label: 'Open search',
+              child: const SizedBox.expand(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await showAction(0.25);
+    node.requestFocus();
+    await tester.pump();
+    expect(node.hasFocus, isTrue);
+    expect(find.bySemanticsLabel('Open search'), findsOneWidget);
+
+    await showAction(0.75);
+    await tester.pump();
+    expect(node.canRequestFocus, isFalse);
+    expect(node.hasFocus, isFalse);
+    expect(find.bySemanticsLabel('Open search'), findsNothing);
+  });
 }
 
 Widget _actionBuilder(BuildContext context, double page) =>

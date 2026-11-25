@@ -546,8 +546,8 @@ Future<void> scrollToPageSection(
   double? knownOffset,
   Duration ensureDuration = const Duration(milliseconds: 280),
 }) async {
-  Future<ScrollPosition?> resolvePosition() async {
-    if (controller != null && controller.hasClients) {
+  ScrollPosition? resolvePosition() {
+    if (controller != null && controller.positions.length == 1) {
       return controller.position;
     }
     final ctx = key.currentContext;
@@ -557,7 +557,9 @@ Future<void> scrollToPageSection(
 
   Future<bool> scrollNearest(ScrollPosition position) async {
     final ctx = key.currentContext;
-    if (ctx == null) return false;
+    if (ctx == null || !position.hasPixels || !position.hasContentDimensions) {
+      return false;
+    }
     final box = ctx.findRenderObject();
     if (box == null) return false;
     final viewport = RenderAbstractViewport.maybeOf(box);
@@ -585,38 +587,50 @@ Future<void> scrollToPageSection(
     return true;
   }
 
-  var position = await resolvePosition();
+  final position = resolvePosition();
   if (position != null && key.currentContext != null) {
     if (await scrollNearest(position)) return;
   }
 
   final c = controller;
-  if (c == null || !c.hasClients) return;
+  if (c == null || c.positions.length != 1) return;
+  final searchPosition = c.position;
 
-  void jump(double offset) {
-    c.jumpTo(offset.clamp(0.0, c.position.maxScrollExtent));
+  bool jump({double? offset, double fraction = 0}) {
+    if (c.positions.length != 1 ||
+        !identical(c.position, searchPosition) ||
+        !searchPosition.hasContentDimensions) {
+      return false;
+    }
+    final min = searchPosition.minScrollExtent;
+    final max = searchPosition.maxScrollExtent;
+    searchPosition.jumpTo(
+      (offset ?? (min + (max - min) * fraction)).clamp(min, max),
+    );
+    return true;
   }
 
   if (knownOffset != null) {
-    jump(knownOffset);
+    if (!jump(offset: knownOffset)) return;
   } else {
     for (final frac in const [0.0, 0.3, 0.6, 1.0]) {
-      jump(c.position.maxScrollExtent * frac);
+      if (!jump(fraction: frac)) return;
       await WidgetsBinding.instance.endOfFrame;
       if (key.currentContext != null) break;
     }
   }
 
   await WidgetsBinding.instance.endOfFrame;
-  position = await resolvePosition();
-  if (position != null && await scrollNearest(position)) return;
+  if (c.positions.length != 1 || !identical(c.position, searchPosition)) return;
+  if (await scrollNearest(searchPosition)) return;
 
   for (final frac in const [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]) {
-    jump(c.position.maxScrollExtent * frac);
+    if (!jump(fraction: frac)) return;
     await WidgetsBinding.instance.endOfFrame;
     if (key.currentContext != null) {
-      position = await resolvePosition();
-      if (position != null) await scrollNearest(position);
+      if (c.positions.length == 1 && identical(c.position, searchPosition)) {
+        await scrollNearest(searchPosition);
+      }
       return;
     }
   }

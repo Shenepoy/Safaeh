@@ -1,7 +1,29 @@
 # Host integration
 
-Safaeh is chrome only. Copy, routing, state, and camera plugins stay in the
-host. This note is the contract Hisab (and other apps) should follow.
+Safaeh provides shared layout and interaction patterns. Each host supplies its
+own colors, typography, copy, routing, state, and camera plugins.
+
+## Choose a widget
+
+| Need | Use | Widgetbook |
+|------|-----|------------|
+| A modal choice, confirmation, or form | Safaeh's sheet helper or `SafaehSheetTemplate` for a custom layout | Sheets |
+| A choice attached to a trigger | Safaeh dropdowns for a single value or independent toggles | Controls → Dropdown |
+| A sidebar, phone navigation, or shared toolbar | Safaeh sidenav, floating nav, or app bar | Navigation |
+| Links to sections within a page | `SafaehPageIndex` for a visible index or `SafaehPageIndexOverlay` where space is limited. Give each section a stable key and use the page's scroll controller. | Navigation → Page index |
+| Short forms in content-sized tabs | `SafaehTabView` with a matching `TabController` and stable child keys. Use a pager when the app needs swipes between full pages. | Layout → Tab forms |
+| Onboarding or account screens | `SafaehOnboarding` or `SafaehAuthFlow`, with host-provided state, labels, and callbacks | Onboarding |
+| Camera and scanning | `SafaehCameraSheetHost` for the panel and `SafaehQrScannerOverlay` for viewfinder chrome. Keep permissions, preview, and decoding in the host. | Camera |
+| Transient messages or inline status | `SafaehFeedbackHost` for toasts, `SafaehInlineBanner` for messages in content, and `SafaehAsyncBody` for loading, error, empty, and data states | Feedback |
+| Calendar, color, and cycle controls | `SafaehMonthCalendar`, `SafaehSwatchPicker`, and `SafaehCycleButton`. Supply localized option names through the swatch `labelBuilder`. | Controls |
+| Map or itinerary UI | `SafaehSnapSheet` for a non-modal panel, `SafaehTimeline` for ordered stops, and `SafaehSectionChips` for switching sections. Use the snap sheet's controller for the primary body scrollable. | Itinerary |
+| Layout and display primitives | `SafaehContentBand`, content-aligned layout, and the [shared chrome widgets](chrome.md) | Layout and Display |
+| Debug and translation tools | The [debug menu and translation editor](debug-menu.md), using host-selected access and storage | Developer tools |
+
+Check a narrow and a wide layout plus any relevant breakpoint transition.
+For interactive widgets, exercise keyboard and pointer input, RTL, large
+text, reduced motion, and the host callback or result. Camera, keyboard,
+cutout, and system Back behavior also need device validation.
 
 ## Sheet template seam
 
@@ -9,6 +31,37 @@ host. This note is the contract Hisab (and other apps) should follow.
 footers, reading surfaces, safe read/loading states, and action animations.
 The host keeps validation, persistence, action policies, localization, and
 logging. Existing sheet helpers are unchanged; template adoption is additive.
+
+## Dropdowns
+
+Use `SafaehAnchoredDropdownChip<T>` for a compact, immediate choice attached to
+a trigger, such as sort order or a short list of filter values. Use
+`SafaehAnchoredDropdownChip<T>.scrollable` when more choices should stay
+anchored. The panel scrolls when the rows exceed `maxHeight` (240 logical
+pixels by default), and Safaeh further limits it to the available space. Use
+`SafaehAnchoredToggleDropdownChip<T>` for independent checkbox choices. Pass
+the checked values as `selectedValues` and update them in `onToggled`. Changes
+take effect immediately and the menu stays open for further toggles.
+
+Use `showSafaehTilePicker` when the list needs search or a larger layout. Use
+`showSafaehMultiTilePicker` when multiple choices need a separate confirmation
+step. For a custom anchored panel with richer content, use `showSafaehAnchored`.
+
+Pass the current value as `selected`, its localized text as `label`, and a
+localized label for each `SafaehDropdownOption<T>`. Update the host state in
+`onSelected` so the trigger label and highlighted row reflect the new value.
+Safaeh handles anchoring, menu spacing, and dismissal. Keep automatic width
+sizing for standard chips. Set `expand: true` inside a width-constrained parent
+when the trigger should fill the available space. For `iconOnly: true`, keep
+the `label` meaningful because it becomes the tooltip.
+
+The dropdown uses the host's Material colors and typography. Use
+`labelBuilder` for custom text rendering and the selected-row color options
+for app-specific accents. In Widgetbook, open **Controls → Dropdown → Scrollable**,
+scroll to a later choice, select it, and reopen the menu to check its highlight.
+In **Controls → Dropdown → Toggles**, change two choices without reopening the
+menu. Also check outside tap dismissal, keyboard selection, and menu placement
+at narrow widths and in RTL.
 
 ## Onboarding design seam
 
@@ -60,20 +113,24 @@ await settings.setString('onboarding_design', design.id);
 
 ### Build a design picker
 
-The catalog metadata is public, so a host does not need to import any private
-Safaeh implementation:
+Use the public catalog to populate the choices. `design` is the current value
+in the host's state.
 
 ```dart
-DropdownButton<SafaehOnboardingDesign>(
-  value: design,
-  items: [
+SafaehAnchoredDropdownChip<SafaehOnboardingDesign>(
+  icon: Icons.palette_outlined,
+  label: SafaehOnboardingDesignCatalog.all
+      .firstWhere((info) => info.design == design)
+      .displayName,
+  selected: design,
+  options: [
     for (final info in SafaehOnboardingDesignCatalog.all)
-      DropdownMenuItem(
+      SafaehDropdownOption(
         value: info.design,
-        child: Text(info.displayName),
+        label: info.displayName,
       ),
   ],
-  onChanged: (next) => setState(() => design = next!),
+  onSelected: (next) => setState(() => design = next),
 )
 ```
 
@@ -212,7 +269,8 @@ SafaehRouteOptions? route
 Use one object for shared rail, size, motion, barrier, and navigator
 settings. Named arguments still work; they fill in around the bag.
 `barrierDismissible`, `useRootNavigator`, and `phonePlacement` take the
-bag value when it is non-null.
+bag value when it is non-null. Use `routeSettings` to give adaptive sheets and
+dialogs a name or arguments for navigation observers and browser history.
 
 The bag also carries the appearance for package-owned floating shells:
 
@@ -239,11 +297,126 @@ surface shape. Scrims, camera previews, QR message bodies, caller-owned child
 content, wide page-index rails, and host FABs are not treated as floating
 surfaces.
 
-Every `show*` also takes `useRootNavigator` (default `true`). Picker rows
-and sheet chrome pop through `safaehPop`, which reads
-`SafaehNavigatorScope` so a nested host navigator can opt out.
+Adaptive sheet and dialog helpers that expose `useRootNavigator` default to
+the root navigator. Set it to `false` to open on a nested navigator. Built-in
+dismissal closes the route that owns the sheet or dialog. Use `safaehPop` from
+inside the route for host actions. Anchored popouts and the debug menu read
+`SafaehNavigatorScope` at the call site. The translation editor reads it from
+the navigator supplied to the editor. These helpers default to the root
+navigator when there is no scope.
 
-## Overlay sidenav
+Wrap each independent feedback surface in `SafaehFeedbackHost`. Its feedback
+queue and timers belong to that host. Call `dismissSafaehFeedbacks` from within
+the host whose messages you want to clear.
+
+## Sidenav
+
+Choose navigation chrome based on the available width and how the destinations
+are organized. Use `SafaehThemeData.isWide` and `isDesktop` when the shell
+follows the package breakpoints. The host can configure both breakpoints.
+Use side navigation on large layouts, including desktops, wide web windows,
+tablets, and landscape phones that reach the side-navigation breakpoint.
+Use a bottom or floating bar on narrow phone layouts in either orientation.
+Use the available width to make the same choice when a web window resizes.
+Use `SafaehPageIndex` for links that scroll to sections within one page.
+
+| Need | Use |
+|------|-----|
+| A few top-level destinations in a narrow phone layout | `SafaehFloatingNavBar` using the same `SafaehSidenavDestination` list and selected index as the rail |
+| A temporary, dismissible start-edge panel | `SafaehSidenav(asDrawer: true)` inside `Scaffold.drawer` |
+| A rail that reserves page width | `SafaehSidenav` as the first child of a `Row`, with the page in `Expanded` |
+| A rail that expands over the page | `SafaehSidenav(overlay: true)` above the page in a `Stack` |
+| Contextual destinations that change with the active route | One `SafaehBranchSidenav` with stable item IDs and updated rows |
+
+### Keep navigation fixed during page changes
+
+Mount the permanent rail in the shared app shell, as a sibling of the routed
+page area. Keep the same rail mounted at the start edge while the page scrolls
+or the route changes. Apply page transitions inside the content area. In the
+rail, update the selection and any contextual title or rows in place, keeping
+its width, collapse state, and pinned destinations steady. Change the shell
+layout when the viewport crosses a breakpoint or the user toggles the rail.
+On phones, keep the bottom bar in the shared shell wherever it is visible.
+
+Derive `selectedIndex` or `selectedId` from the active route so Back, deep
+links, and resizing all show the correct selection. The same navigation
+callback should drive the rail, drawer, and bottom bar. Keep `collapsed` in
+the shell and wire `onToggleCompact` with localized expand and collapse
+tooltips. Give the rail or drawer bounded height so its destination list can
+scroll. Use the profile or footer slot for bottom content that should stay
+outside the scrolling list.
+
+For a temporary drawer, let `Scaffold` provide the scrim and dismissal. Close
+the drawer from its own `BuildContext` before navigating to the chosen page:
+
+```dart
+Scaffold(
+  appBar: AppBar(title: Text(pageTitle)),
+  drawer: Drawer(
+    child: Builder(
+      builder: (drawerContext) => SafaehSidenav(
+        asDrawer: true,
+        title: appTitle,
+        destinations: destinations,
+        selectedIndex: selectedIndex,
+        onDestinationSelected: (index) {
+          Scaffold.of(drawerContext).closeDrawer();
+          selectDestination(index);
+        },
+      ),
+    ),
+  ),
+  body: page,
+);
+```
+
+### Branch sidenav
+
+Keep one `SafaehBranchSidenav` mounted within the current shell layout. Build
+its title, rows, and selection from the active route and the context it
+identifies. Keep the same rail mounted while the context data loads or refreshes.
+
+- At the root, show the app title and the depth-0 root destination. Inside a
+  workspace, use the workspace name as `title` and keep the same root row in
+  the first position. Pass `animateSelection: false` on that shared row so its
+  highlight clears immediately as the branch opens.
+- Append enabled workspace sections at depth 1. When a detail page is open,
+  insert its depth-2 row directly after its parent section. Use a fallback
+  label while loading the detail's title. Leaving the detail removes that row,
+  and leaving the workspace removes its section rows and restores the app title.
+- Give each logical row a stable `ValueKey` and preserve its identity across
+  title, selection, and context updates. The rail animates inserted and removed
+  rows and crossfades the title. Pass the active row's key as `selectedId`.
+  Routes without their own row can resolve to their parent section. With a
+  depth-2 row selected, the rail marks its parent as expanded.
+- Keep Settings and Account in `pinnedItems`. Use `leading` and `subtitle` for
+  an account avatar and secondary label. A pinned route selects only its row.
+  An optional `footer` stays below the pinned rows and hides in compact mode.
+- Close any temporary drawer before routing. A tap on the active route can
+  close the drawer without pushing a duplicate. Return to the root through
+  the shell router. Push contextual and account routes when Back should return
+  to the prior page.
+
+### Responsive branch shell
+
+The reference layout uses the bottom bar on narrow top-level routes, a temporary
+drawer in the middle width band, and a permanent clipping rail at desktop
+widths. A landscape phone that reaches the middle band uses the drawer. Use
+`asDrawer: true` inside `Scaffold.drawer` for the tablet presentation, with
+the same title, rows, selection, and callbacks as the rail. Restore focus to
+the menu button after dismissal and let an active modal own focus. Preserve
+the current content and its scroll position across shell width changes.
+
+The reference breakpoints are 600 logical pixels for the drawer and 840 for
+the permanent rail. At smaller desktop widths, start with the icon-only rail
+and allow a temporary expansion. At the expanded workspace breakpoint, use
+the user's saved collapse preference. A reference threshold is 1440 logical
+pixels multiplied by the text scale clamped to 1–1.5. Keep the temporary
+expansion independent of the saved preference. Use the same compact and
+expanded widths for the rendered rail and any layout metrics that need its
+reserved width. The drawer and phone bar reserve no horizontal space.
+
+### Overlay sidenav
 
 Use `SafaehSidenav(overlay: true)` when the rail should expand over the host
 without pushing or resizing the host content. Mount it above the content in a
@@ -275,65 +448,103 @@ The direct `floatingAppearance` wins over
 one in the host when expanded behavior needs modal focus or outside-tap
 dismissal. `asDrawer` and `overlay` are mutually exclusive.
 
-## Pinned morphing app bar
+Only reserve page width for a rail that participates in the layout. When a
+`Row` already gives the page its remaining width, keep `reservedStartWidth`
+at zero. Floating sheets and dialogs stay centered in the full viewport.
+
+### Verify the shell
+
+In Widgetbook, open **Navigation → Sidenav** for Rail, Drawer, and Overlay,
+or **Navigation → Branch sidenav** for contextual rows. Change destinations
+and resize across the shell's breakpoints. Rotate a phone and resize a web
+window to check that navigation follows the available width. Check that Back
+and deep links update the highlighted destination, that the drawer closes on
+selection, and that an overlay expands without moving the page. In RTL, check that the rail
+and drawer open from the start edge. With large text or a short viewport,
+check that the destination list scrolls and pinned rows remain reachable.
+At a fixed viewport width, navigate and press Back. Verify that the permanent
+rail stays mounted in the same position throughout both page transitions.
+For the branch rail, enter a workspace, open a detail, and go Back twice.
+Check that the parent stays in place, only the current route is selected, the
+title follows the context, and the pinned rows keep their vertical positions.
+
+## App bars
+
+Use `SafaehMorphingAppBar` for top-level destinations that share a pager and
+`SafaehContentAlignedAppBar` for detail or standalone pages that align to a
+content band. Keep one visible bar for the current page. The host supplies its
+own theme, localized titles, actions, and navigation callbacks.
+
+### Pinned morphing app bar
 
 Use `SafaehMorphingAppBar` when a shell keeps one app bar pinned while a
-`PageView` moves between destinations. Pass the live page position and one
-already-localized title widget per destination:
+`PageView` moves between destinations. Build the bar in the shared shell and
+let the page transition happen underneath it. Listen to the `PageController`
+in the bar and read `page` only when exactly one scroll position is attached.
+Use the selected destination while the controller attaches or the shell changes
+layout. Keep `titles` in the same order as the pages and reserve equal leading
+and trailing widths when the title needs a stable center.
+
+For a fixed-height toolbar, attach the following widget to `Scaffold.appBar`.
 
 ```dart
-SafaehMorphingAppBar(
-  page: pageController.page ?? 0,
-  titles: [
-    Text(l10n.home),
-    Text(l10n.statistics),
-    Text(l10n.settings),
-  ],
-  leading: const SizedBox(width: kToolbarHeight),
-  actionsBuilder: (context, page) => Stack(
-    alignment: AlignmentDirectional.center,
-    children: [
-      SafaehMorphingAppBarAction(
+PreferredSize(
+  preferredSize: const Size.fromHeight(kToolbarHeight),
+  child: ListenableBuilder(
+    listenable: pageController,
+    builder: (context, _) {
+      final fallback = selectedIndex.toDouble();
+      final page = pageController.positions.length == 1
+          ? (pageController.page ?? fallback)
+          : fallback;
+      return SafaehMorphingAppBar(
         page: page,
-        targetPage: 0,
-        child: IconButton(
-          tooltip: l10n.home,
-          onPressed: openHome,
-          icon: const Icon(Icons.home_outlined),
+        leading: const SizedBox(width: kToolbarHeight),
+        titles: [Text(l10n.home), Text(l10n.settings)],
+        actionsBuilder: (context, page) => SafaehMorphingAppBarAction(
+          page: page,
+          targetPage: 1,
+          child: IconButton(
+            tooltip: l10n.search,
+            onPressed: openSearch,
+            icon: const Icon(Icons.search),
+          ),
         ),
-      ),
-      SafaehMorphingAppBarAction(
-        page: page,
-        targetPage: 2,
-        child: IconButton(
-          tooltip: l10n.settings,
-          onPressed: openSettings,
-          icon: const Icon(Icons.settings_outlined),
-        ),
-      ),
-    ],
-  ),
-  bottom: SafaehMorphingAppBarBottom(
-    factor: (2 - (pageController.page ?? 0)).clamp(0.0, 1.0).toDouble(),
-    height: 48,
-    child: const Center(child: Text('Range controls')),
+      );
+    },
   ),
 );
 ```
 
-`SafaehMorphingAppBar` clamps the page to the title list, crossfades only the
-two adjacent titles, and wraps the `actionsBuilder` result in one stable
-trailing slot. Give it a fixed-width leading spacer when the title must stay
-on the physical center line as the action changes. The package does not
-translate titles or choose routes.
+`SafaehMorphingAppBarAction` fades actions by page position. Below the
+interaction threshold, the action leaves pointer input, keyboard focus, and
+the semantics tree. Stack page-specific actions in the stable trailing slot.
 
-`SafaehMorphingAppBarAction` linearly fades a child around `targetPage` and
-ignores taps below `interactiveThreshold` (0.5 by default). Stack one action
-per destination or use the builder for a host-specific action group.
-`SafaehMorphingAppBarBottom` accepts a 0–1 factor, clips the full-height child,
-and reports the matching preferred height so the scaffold does not retain a
-hidden bottom bar. Keep the factor calculation in the host when its bottom
-chrome represents domain-specific state.
+Use `SafaehMorphingAppBarBottom` when a bottom row should shrink with the page
+position. Let the owning scaffold rebuild with the changing preferred height,
+as in the Widgetbook demo. A fixed-height `PreferredSize` wrapper cannot report
+the shrinking bottom row.
+
+### Content-aligned app bar
+
+Give the bar and body the same content-band metrics. Use
+`SafaehContentAlignedAppBar.forContentArea` with the scaffold's available
+width, or pass the same `leftOffset` and `bandWidth` as the body when the host
+already computes them. The bar measures its leading and trailing controls,
+then fits the title between them. Long titles ellipsize by default. Prefer
+short actions or an overflow menu when space is tight.
+
+Use Back on a phone detail route, the menu button when the shell provides a
+temporary drawer, and an empty leading slot when the permanent rail already
+covers navigation. Keep Back available for standalone flows that need it.
+
+### Verify the app bar
+
+In Widgetbook, open **Navigation → App bar → Morphing**. Swipe between pages,
+use Tab while an action fades, and resize across a shell breakpoint. Check
+that the bar stays fixed, the title and actions follow the active page, and
+faded actions leave keyboard traversal. For a content-aligned bar, verify
+that a long title clears wide actions in LTR and RTL and at large text sizes.
 
 ## `titleBuilder` / `labelBuilder`
 
@@ -350,12 +561,11 @@ Sidenav, floating nav, and page index use `SafaehLabelBuilder`:
 typedef SafaehLabelBuilder = Widget Function(String data, TextStyle? style);
 ```
 
-`safaehTitleFromLabel(data, labelBuilder)` adapts a label wrapper for a
-sheet title so Hisab can reuse one `UserText` helper. The package never
-calls `.tr()`. Phone pickers also render the title in the body; tablet+
-shows it in the header only. Pass the same builder to `showSafaeh*` and
-to `SafaehTilePickerBody` / confirm / text-input bodies when you wrap the
-route yourself.
+`safaehTitleFromLabel(data, labelBuilder)` lets a host reuse its label wrapper
+for sheet titles. Pass already-localized text. Phone pickers render the title
+in the body. The wide route shows it in the header only. When you wrap the
+route yourself, pass the same builder to `showSafaeh*` and to the picker,
+confirm, or text-input body.
 
 `labelBuilder` also wraps sidenav profile **subtitles**. Use that to
 isolate emails and similar tokens in LTR (`Directionality.ltr`) so an
@@ -415,8 +625,8 @@ accent pass:
 - `selectedFill`
 - `selectedBorder`
 
-Hisab `SheetOptionTile` wraps the package tile with `UserText` plus those
-colors. Do not import AccentSurfaces into this package.
+An app-level tile wrapper can pass both colors and render directional text
+with `SafaehUserText`.
 
 ## Band metrics vs host rail math
 
@@ -449,9 +659,9 @@ viewport** while a sibling shell rail eats width (RTL-aware), using
 
 ## Keys the host owns
 
-Hisab still passes `shell_nav_*` keys into `SafaehSidenav` (`railKey`,
-`expandKey`, `collapseKey`, destination `tileKey`). Package defaults are
-`safaeh_nav_*`. Changing either set breaks existing widget tests.
+Pass stable keys into `SafaehSidenav` (`railKey`, `expandKey`, `collapseKey`,
+destination `tileKey`) when host tests rely on them. Package defaults use
+the `safaeh_nav_*` prefix.
 
 ## What stays in the host
 
@@ -461,8 +671,7 @@ Hisab still passes `shell_nav_*` keys into `SafaehSidenav` (`railKey`,
 | Routing | `go_router`; floating sheets ignore reserved rail width |
 | Camera | `mobile_scanner`, permissions, `SystemChrome` |
 | State | Riverpod / whatever the app already uses |
-| Scroll sheets | Hisab `showResponsiveSheet` `isScrollControlled` (unused flag, kept for call sites) |
-| Performance tokens | UiPerf / cheap shadows — not in this package |
+| Sheet content | Scrolling lists, forms, and action callbacks supplied to the route |
 
 ## Still host-owned
 

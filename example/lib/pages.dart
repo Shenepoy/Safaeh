@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:safaeh/safaeh.dart';
 
 import 'catalog.dart';
+import 'dropdown_demo.dart';
 import 'mock_camera.dart';
 import 'onboarding_demo.dart';
 
@@ -427,7 +428,7 @@ Future<void> openExampleDebugMenu(
     identity: SafaehDebugIdentityCard(
       title: t('app_title'),
       package: 'safaeh',
-      version: '0.10.0',
+      version: '1.6.0',
     ),
     statusMessage: t('chrome_ready'),
     sections: [
@@ -447,9 +448,10 @@ Future<void> openExampleDebugMenu(
 }
 
 class L10nEditorDemo extends StatefulWidget {
-  const L10nEditorDemo({super.key, required this.t});
+  const L10nEditorDemo({super.key, required this.t, this.fill = false});
 
   final String Function(String key) t;
+  final bool fill;
 
   @override
   State<L10nEditorDemo> createState() => _L10nEditorDemoState();
@@ -474,24 +476,23 @@ class _L10nEditorDemoState extends State<L10nEditorDemo> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 280,
+    final editor = NavigatorPopHandler<Object?>(
+      onPopWithResult: (_) => _navKey.currentState?.maybePop(),
       child: Navigator(
         key: _navKey,
-        onGenerateRoute: (settings) {
-          return MaterialPageRoute<void>(
-            builder: (_) => SafaehL10nEditOverlay(
-              backend: _backend,
-              store: _store,
-              navigatorKey: _navKey,
-              child: Scaffold(
-                body: Center(child: Text(widget.t('l10n_editor_sub'))),
-              ),
+        onGenerateRoute: (_) => MaterialPageRoute<void>(
+          builder: (_) => SafaehL10nEditOverlay(
+            backend: _backend,
+            store: _store,
+            navigatorKey: _navKey,
+            child: Material(
+              child: Center(child: Text(widget.t('l10n_editor_sub'))),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
+    return widget.fill ? editor : SizedBox(height: 280, child: editor);
   }
 }
 
@@ -746,6 +747,7 @@ class TextInputChoicesDemo extends StatelessWidget {
   }) async {
     final value = await showSafaehTextInput(
       context: context,
+      useRootNavigator: SafaehNavigatorScope.of(context),
       title: title,
       doneLabel: t('done'),
       cancelLabel: t('cancel'),
@@ -824,8 +826,7 @@ class _SheetShellDemoState extends State<SheetShellDemo> {
 
     void act() {
       if (widget.popOnAction) {
-        final nav = Navigator.of(context, rootNavigator: true);
-        if (nav.canPop()) nav.pop();
+        safaehPop(context);
       }
     }
 
@@ -2002,6 +2003,7 @@ class _MorphingAppBarDemoState extends State<MorphingAppBarDemo> {
   }
 
   void _onPageChanged() {
+    if (_pageController.positions.length != 1) return;
     final page = _pageController.page;
     if (page != null && page != _page) setState(() => _page = page);
   }
@@ -2239,6 +2241,16 @@ class AnchoredPopoutDemo extends StatelessWidget {
 
   final String Function(String key) t;
 
+  Rect? _anchorRect(BuildContext context) {
+    final box = context.findRenderObject() as RenderBox?;
+    final overlay = Navigator.of(
+      context,
+      rootNavigator: SafaehNavigatorScope.of(context),
+    ).overlay?.context.findRenderObject();
+    if (box == null || !box.hasSize || overlay is! RenderBox) return null;
+    return box.localToGlobal(Offset.zero, ancestor: overlay) & box.size;
+  }
+
   Widget _card(BuildContext context) {
     return Card(
       child: Padding(
@@ -2270,15 +2282,11 @@ class AnchoredPopoutDemo extends StatelessWidget {
             alignment: AlignmentDirectional.centerEnd,
             child: FilledButton(
               onPressed: () {
-                final box = context.findRenderObject() as RenderBox?;
-                final rect = box == null
-                    ? null
-                    : box.localToGlobal(Offset.zero) & box.size;
                 showSafaehAnchored<void>(
                   context: context,
                   motion: SafaehAnchoredMotion.fadeScale,
                   link: link,
-                  sourceRect: rect,
+                  sourceRect: _anchorRect(context),
                   child: _card(context),
                 );
               },
@@ -2289,8 +2297,7 @@ class AnchoredPopoutDemo extends StatelessWidget {
         const SizedBox(height: 12),
         FilledButton.tonal(
           onPressed: () {
-            final box = context.findRenderObject() as RenderBox?;
-            final origin = box?.localToGlobal(Offset.zero) ?? Offset.zero;
+            final origin = _anchorRect(context)?.topLeft ?? Offset.zero;
             showSafaehAnchored<void>(
               context: context,
               motion: SafaehAnchoredMotion.genie,
@@ -2304,14 +2311,12 @@ class AnchoredPopoutDemo extends StatelessWidget {
         const SizedBox(height: 12),
         OutlinedButton(
           onPressed: () {
-            final box = context.findRenderObject() as RenderBox?;
-            final rect = box == null
-                ? null
-                : box.localToGlobal(Offset.zero) & box.size;
             showSafaehAnchored<void>(
               context: context,
               motion: SafaehAnchoredMotion.drop,
-              sourceRect: rect,
+              sourceRect: _anchorRect(context),
+              sourceRectBuilder: () =>
+                  context.mounted ? _anchorRect(context) : null,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
                 child: SafaehMonthCalendar(
@@ -2327,7 +2332,10 @@ class AnchoredPopoutDemo extends StatelessWidget {
                       .nextMonthTooltip,
                   onPreviousMonth: () {},
                   onNextMonth: () {},
-                  onDayTap: (_) => Navigator.of(context).maybePop(),
+                  onDayTap: (_) => Navigator.of(
+                    context,
+                    rootNavigator: SafaehNavigatorScope.of(context),
+                  ).maybePop(),
                 ),
               ),
             );
@@ -2411,12 +2419,18 @@ class CatalogDemoPage extends StatelessWidget {
 
 Widget _catalogPageBody(String id, String Function(String key) t) {
   switch (id) {
+    case 'text_input':
+      return TextInputChoicesDemo(t: t);
+    case 'morphing_app_bar':
+      return MorphingAppBarDemo(t: t);
     case 'sheet_shell':
       return SheetShellDemo(t: t);
     case 'sheet_morph':
       return SheetMorphDemo(t: t);
     case 'option_tiles':
       return OptionTilesDemo(t: t);
+    case 'dropdown':
+      return SingleChildScrollView(child: DropdownVariantsDemo(t: t));
     case 'anchored_popout':
       return AnchoredPopoutDemo(t: t);
     case 'swatch':
@@ -2478,40 +2492,84 @@ Widget _catalogPageBody(String id, String Function(String key) t) {
   }
 }
 
-Future<void> _pushDemo(
-  BuildContext context,
-  String title,
-  Widget child, {
-  bool padBody = true,
-}) {
-  return Navigator.of(context).push<void>(
-    MaterialPageRoute<void>(
-      builder: (_) =>
-          CatalogDemoPage(title: title, padBody: padBody, child: child),
-    ),
+const _modalDemoIds = {
+  'sheet',
+  'picker',
+  'tile_picker',
+  'multi_picker',
+  'confirm',
+  'sheet_shell',
+  'dialog',
+  'camera',
+  'qr_overlay',
+  'qr_message',
+};
+
+/// Resolves the same route for a gallery click and a browser bookmark.
+Route<void>? buildCatalogRoute(
+  RouteSettings settings,
+  String Function(String key) t,
+) {
+  final name = settings.name;
+  if (name == null || !name.startsWith('/demo/')) return null;
+  final id = name.substring('/demo/'.length);
+  final item = catalogItems.where((item) => item.id == id).firstOrNull;
+  if (item == null) return null;
+  return MaterialPageRoute<void>(
+    settings: settings,
+    builder: (_) {
+      if (id == 'aligned_chrome') return AlignedChromeDemo(t: t);
+      return CatalogDemoPage(
+        title: t(item.titleKey),
+        padBody: !const {
+          'sidenav',
+          'sidenav_drawer',
+          'sidenav_overlay',
+          'page_index',
+          'page_index_overlay',
+          'floating_nav',
+          'floating_surface',
+          'morphing_app_bar',
+        }.contains(id),
+        child: _modalDemoIds.contains(id)
+            ? Builder(
+                builder: (context) => FilledButton(
+                  onPressed: () =>
+                      openCatalogItem(context, id, t, named: false),
+                  child: Text(t('open_demo')),
+                ),
+              )
+            : _catalogPageBody(id, t),
+      );
+    },
   );
 }
 
-/// Opens the same standalone demo the old list catalog used: live sheets for
-/// overlay chrome, and a pushed [CatalogDemoPage] for embeddable widgets.
+/// Opens a named page or a live modal with a shareable catalog URL.
 Future<void> openCatalogItem(
   BuildContext context,
   String id,
-  String Function(String key) t,
-) async {
+  String Function(String key) t, {
+  bool named = true,
+}) async {
+  final useRootNavigator = SafaehNavigatorScope.of(context);
+  final settings = named ? RouteSettings(name: '/demo/$id') : null;
+  final route = SafaehRouteOptions(
+    useRootNavigator: useRootNavigator,
+    routeSettings: settings,
+  );
   switch (id) {
     case 'sheet':
       await showSafaeh<void>(
         context: context,
+        route: route,
         title: t('rename'),
-        child: Padding(
-          padding: kSheetContentPadding,
-          child: TextField(decoration: InputDecoration(labelText: t('name'))),
-        ),
+        child: TextField(decoration: InputDecoration(labelText: t('name'))),
       );
     case 'picker':
       await showSafaehPicker<int>(
         context: context,
+        route: route,
         title: t('settle'),
         selected: 1,
         footer: t('picker_footer'),
@@ -2533,6 +2591,7 @@ Future<void> openCatalogItem(
     case 'tile_picker':
       await showSafaehTilePicker<String>(
         context: context,
+        route: route,
         title: t('choose_account'),
         selected: 'cash',
         header: Text(t('header_hint')),
@@ -2559,6 +2618,7 @@ Future<void> openCatalogItem(
     case 'multi_picker':
       await showSafaehMultiTilePicker<String>(
         context: context,
+        route: route,
         title: t('choose_account'),
         confirmLabel: t('apply'),
         selected: const ['cash'],
@@ -2587,23 +2647,24 @@ Future<void> openCatalogItem(
     case 'confirm':
       await showSafaehConfirm(
         context: context,
+        route: route,
         title: t('delete_item'),
         content: t('cannot_undo'),
         confirmLabel: t('delete'),
         cancelLabel: t('cancel'),
         isDestructive: true,
       );
-    case 'text_input':
-      await _pushDemo(context, t('text_input'), TextInputChoicesDemo(t: t));
     case 'sheet_shell':
       await showSafaeh<void>(
         context: context,
+        route: route,
         title: t('export_report'),
         child: SheetShellDemo(t: t, interactive: true, popOnAction: true),
       );
     case 'dialog':
       await showSafaehDialog<void>(
         context: context,
+        route: route,
         builder: (ctx) {
           final tokens = SafaehTheme.of(ctx);
           return Card(
@@ -2617,13 +2678,11 @@ Future<void> openCatalogItem(
           );
         },
       );
-    case 'aligned_chrome':
-      await Navigator.of(context).push<void>(
-        MaterialPageRoute<void>(builder: (_) => AlignedChromeDemo(t: t)),
-      );
     case 'camera':
       await showSafaehCameraSheet<void>(
         context: context,
+        useRootNavigator: useRootNavigator,
+        routeSettings: settings,
         handleExpandLabel: t('expand'),
         handleCollapseLabel: t('collapse'),
         handleDismissLabel: t('close'),
@@ -2632,6 +2691,8 @@ Future<void> openCatalogItem(
     case 'qr_overlay':
       await showSafaehCameraSheet<void>(
         context: context,
+        useRootNavigator: useRootNavigator,
+        routeSettings: settings,
         handleExpandLabel: t('expand'),
         handleCollapseLabel: t('collapse'),
         handleDismissLabel: t('close'),
@@ -2640,27 +2701,16 @@ Future<void> openCatalogItem(
     case 'qr_message':
       await showSafaehCameraSheet<void>(
         context: context,
+        useRootNavigator: useRootNavigator,
+        routeSettings: settings,
         handleExpandLabel: t('expand'),
         handleCollapseLabel: t('collapse'),
         handleDismissLabel: t('close'),
         builder: (context, sheet) => QrMessageChrome(sheet: sheet, t: t),
       );
     default:
-      await _pushDemo(
-        context,
-        t(id),
-        _catalogPageBody(id, t),
-        padBody: switch (id) {
-          'sidenav' ||
-          'sidenav_drawer' ||
-          'sidenav_overlay' ||
-          'page_index' ||
-          'page_index_overlay' ||
-          'floating_nav' ||
-          'floating_surface' => false,
-          _ => true,
-        },
-      );
+      final page = buildCatalogRoute(RouteSettings(name: '/demo/$id'), t);
+      if (page != null) await Navigator.of(context).push<void>(page);
   }
 }
 

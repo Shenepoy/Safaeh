@@ -49,22 +49,22 @@ class _OnboardingDesignDemoState extends State<OnboardingDesignDemo> {
         ),
         if (_showAuth) ...[
           const SizedBox(height: 8),
-          DropdownButton<SafaehAuthMode>(
-            value: _authMode,
-            isExpanded: true,
-            items:
-                const [
-                  SafaehAuthMode.signIn,
-                  SafaehAuthMode.signUp,
-                  SafaehAuthMode.profile,
-                  SafaehAuthMode.resetPassword,
-                  SafaehAuthMode.pending,
-                ].map((mode) {
-                  return DropdownMenuItem(value: mode, child: Text(mode.name));
-                }).toList(),
-            onChanged: (mode) {
-              if (mode != null) setState(() => _authMode = mode);
-            },
+          SafaehAnchoredDropdownChip<SafaehAuthMode>(
+            icon: Icons.person_outline,
+            label: _authMode.name,
+            selected: _authMode,
+            expand: true,
+            options: [
+              for (final mode in const [
+                SafaehAuthMode.signIn,
+                SafaehAuthMode.signUp,
+                SafaehAuthMode.profile,
+                SafaehAuthMode.resetPassword,
+                SafaehAuthMode.pending,
+              ])
+                SafaehDropdownOption(value: mode, label: mode.name),
+            ],
+            onSelected: (mode) => setState(() => _authMode = mode),
           ),
         ],
         const SizedBox(height: 8),

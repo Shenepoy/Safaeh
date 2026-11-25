@@ -43,8 +43,7 @@ class SafaehBranchNavItem {
   final bool animateSelection;
 }
 
-/// A navigation rail whose rows branch with the current context, ported from
-/// Hisab's shell sidenav.
+/// A navigation rail whose rows branch with the current context.
 ///
 /// - The rail is one widget for the whole app: changing [items] reconciles the
 ///   rows by [SafaehBranchNavItem.id]. Rows that stay keep their place; new

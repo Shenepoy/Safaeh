@@ -59,9 +59,10 @@ class SafaehGenieShader {
 
 /// Opens [child] from an anchor with [motion].
 ///
-/// Pass [link] so the card follows a live target. [sourceRect] places the
-/// drop card and cuts the genie scrim hole. Supply [sourceRectBuilder] for a
-/// trigger that can move with rotation. The host owns the card.
+/// Pass [link] so fade-scale and genie cards follow a live target. [sourceRect]
+/// places the drop card and cuts the genie scrim hole. Supply [sourceRectBuilder]
+/// to update drop or genie geometry when the viewport resizes. The host owns
+/// the card.
 /// Uses [SafaehNavigatorScope], defaulting to the root navigator. Anchor rects
 /// must use that navigator overlay's coordinate space.
 Future<T?> showSafaehAnchored<T>({
@@ -78,7 +79,11 @@ Future<T?> showSafaehAnchored<T>({
   bool barrierDismissible = true,
 }) {
   assert(child != null || childBuilder != null);
-  if (motion == SafaehAnchoredMotion.genie) SafaehGenieShader.preload();
+  assert(maxCardWidth > 0);
+  final reducedMotion = MediaQuery.disableAnimationsOf(context);
+  if (motion == SafaehAnchoredMotion.genie && !reducedMotion) {
+    SafaehGenieShader.preload();
+  }
   final captured = sourceRect;
   final barrierLabel = MaterialLocalizations.of(context)
       .modalBarrierDismissLabel;
@@ -88,6 +93,7 @@ Future<T?> showSafaehAnchored<T>({
   ).push<T>(
     _AnchoredRoute<T>(
       motion: motion,
+      reducedMotion: reducedMotion,
       link: link,
       sourceRect: captured,
       sourceRectBuilder: sourceRectBuilder,
@@ -105,6 +111,7 @@ Future<T?> showSafaehAnchored<T>({
 class _AnchoredRoute<T> extends PopupRoute<T> {
   _AnchoredRoute({
     required this.motion,
+    required this.reducedMotion,
     required this.link,
     required this.sourceRect,
     required this.sourceRectBuilder,
@@ -118,6 +125,7 @@ class _AnchoredRoute<T> extends PopupRoute<T> {
   });
 
   final SafaehAnchoredMotion motion;
+  final bool reducedMotion;
   final LayerLink? link;
   final Rect? sourceRect;
   final Rect? Function()? sourceRectBuilder;
@@ -131,18 +139,22 @@ class _AnchoredRoute<T> extends PopupRoute<T> {
   final Widget Function(BuildContext context, double progress)? childBuilder;
 
   @override
-  Duration get transitionDuration => switch (motion) {
-    SafaehAnchoredMotion.fadeScale => const Duration(milliseconds: 320),
-    SafaehAnchoredMotion.genie => const Duration(milliseconds: 460),
-    SafaehAnchoredMotion.drop => const Duration(milliseconds: 220),
-  };
+  Duration get transitionDuration => reducedMotion
+      ? Duration.zero
+      : switch (motion) {
+          SafaehAnchoredMotion.fadeScale => const Duration(milliseconds: 320),
+          SafaehAnchoredMotion.genie => const Duration(milliseconds: 460),
+          SafaehAnchoredMotion.drop => const Duration(milliseconds: 220),
+        };
 
   @override
-  Duration get reverseTransitionDuration => switch (motion) {
-    SafaehAnchoredMotion.fadeScale => const Duration(milliseconds: 220),
-    SafaehAnchoredMotion.genie => const Duration(milliseconds: 460),
-    SafaehAnchoredMotion.drop => const Duration(milliseconds: 180),
-  };
+  Duration get reverseTransitionDuration => reducedMotion
+      ? Duration.zero
+      : switch (motion) {
+          SafaehAnchoredMotion.fadeScale => const Duration(milliseconds: 220),
+          SafaehAnchoredMotion.genie => const Duration(milliseconds: 460),
+          SafaehAnchoredMotion.drop => const Duration(milliseconds: 180),
+        };
 
   @override
   Color? get barrierColor => Colors.transparent;
@@ -195,6 +207,8 @@ class _AnchoredRoute<T> extends PopupRoute<T> {
           SafaehAnchoredMotion.drop => _DropPopout(
             animation: animation,
             anchor: sourceRect,
+            sourceRectBuilder: sourceRectBuilder,
+            maxCardWidth: maxCardWidth,
             onDismiss: dismissible ? () => Navigator.of(context).pop() : null,
             child: built,
           ),
@@ -486,28 +500,55 @@ class _GeniePlacementDelegate extends SingleChildLayoutDelegate {
   bool shouldRelayout(_GeniePlacementDelegate oldDelegate) => true;
 }
 
-class _DropPopout extends StatelessWidget {
+class _DropPopout extends StatefulWidget {
   const _DropPopout({
     required this.animation,
     required this.anchor,
+    required this.sourceRectBuilder,
+    required this.maxCardWidth,
     required this.onDismiss,
     required this.child,
   });
 
   final Animation<double> animation;
   final Rect? anchor;
+  final Rect? Function()? sourceRectBuilder;
+  final double maxCardWidth;
   final VoidCallback? onDismiss;
   final Widget child;
 
   @override
+  State<_DropPopout> createState() => _DropPopoutState();
+}
+
+class _DropPopoutState extends State<_DropPopout> {
+  Rect? _liveAnchor;
+  late final _curved = CurvedAnimation(
+    parent: widget.animation,
+    curve: Curves.easeOutCubic,
+    reverseCurve: Curves.easeInCubic,
+  );
+
+  @override
+  void dispose() {
+    _curved.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final readAnchor = widget.sourceRectBuilder;
+    if (readAnchor != null) {
+      // A resize can move the trigger after this widget builds.
+      MediaQuery.sizeOf(context);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final anchor = readAnchor();
+        if (anchor != _liveAnchor) setState(() => _liveAnchor = anchor);
+      });
+    }
     final theme = Theme.of(context);
     final tokens = SafaehTheme.of(context);
-    final curved = CurvedAnimation(
-      parent: animation,
-      curve: Curves.easeOutCubic,
-      reverseCurve: Curves.easeInCubic,
-    );
     final card = Material(
       color: theme.colorScheme.surfaceContainerLow,
       elevation: 6,
@@ -517,7 +558,7 @@ class _DropPopout extends StatelessWidget {
         borderRadius: BorderRadius.circular(tokens.radius),
         side: BorderSide(color: theme.colorScheme.outline),
       ),
-      child: child,
+      child: widget.child,
     );
     return Stack(
       fit: StackFit.expand,
@@ -525,21 +566,24 @@ class _DropPopout extends StatelessWidget {
         Positioned.fill(
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: onDismiss,
+            onTap: widget.onDismiss,
           ),
         ),
         CustomSingleChildLayout(
-          delegate: _BelowAnchorDelegate(anchor: anchor),
+          delegate: _BelowAnchorDelegate(
+            anchor: _liveAnchor ?? widget.anchor,
+            maxCardWidth: widget.maxCardWidth,
+          ),
           child: FadeTransition(
-            opacity: curved,
+            opacity: _curved,
             child: SlideTransition(
               position: Tween<Offset>(
                 begin: const Offset(0, -0.06),
                 end: Offset.zero,
-              ).animate(curved),
+              ).animate(_curved),
               child: ScaleTransition(
                 alignment: Alignment.topCenter,
-                scale: Tween<double>(begin: 0.94, end: 1).animate(curved),
+                scale: Tween<double>(begin: 0.94, end: 1).animate(_curved),
                 child: card,
               ),
             ),
@@ -551,20 +595,24 @@ class _DropPopout extends StatelessWidget {
 }
 
 class _BelowAnchorDelegate extends SingleChildLayoutDelegate {
-  const _BelowAnchorDelegate({this.anchor});
+  const _BelowAnchorDelegate({this.anchor, required this.maxCardWidth});
 
   final Rect? anchor;
+  final double maxCardWidth;
 
   static const _gap = 8.0;
   static const _margin = 16.0;
 
   @override
   bool shouldRelayout(_BelowAnchorDelegate oldDelegate) =>
-      oldDelegate.anchor != anchor;
+      oldDelegate.anchor != anchor || oldDelegate.maxCardWidth != maxCardWidth;
 
   @override
   BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
-    final maxWidth = (constraints.maxWidth - _margin * 2).clamp(0.0, 400.0);
+    final maxWidth = (constraints.maxWidth - _margin * 2).clamp(
+      0.0,
+      maxCardWidth,
+    );
     final maxHeight = constraints.maxHeight * 0.72;
     return BoxConstraints(
       minWidth: maxWidth,

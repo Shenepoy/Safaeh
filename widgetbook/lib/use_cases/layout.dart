@@ -3,6 +3,41 @@ import 'package:safaeh/safaeh.dart';
 
 import 'common.dart';
 
+Widget tabFormsStory(BuildContext context) => DefaultTabController(
+  length: 2,
+  child: StoryPage(
+    child: Column(
+      children: [
+        TabBar(
+          tabs: [
+            Tab(text: storyText(context, 'home')),
+            Tab(text: storyText(context, 'settings')),
+          ],
+        ),
+        const SizedBox(height: 16),
+        SafaehTabView(
+          children: [
+            TextField(
+              key: const ValueKey('tab_name'),
+              decoration: InputDecoration(
+                labelText: storyText(context, 'name'),
+              ),
+            ),
+            TextField(
+              key: const ValueKey('tab_notes'),
+              minLines: 3,
+              maxLines: 5,
+              decoration: InputDecoration(
+                labelText: storyText(context, 'shell_body'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  ),
+);
+
 class BottomNavStory extends StatefulWidget {
   const BottomNavStory({super.key, this.topFab = false});
   final bool topFab;

@@ -3,6 +3,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:safaeh/safaeh.dart';
 
 void main() {
+  testWidgets('a lazy section search stops when its viewport detaches', (
+    tester,
+  ) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ListView.builder(
+            controller: controller,
+            itemCount: 100,
+            itemBuilder: (_, index) =>
+                SizedBox(height: 50, child: Text('Row $index')),
+          ),
+        ),
+      ),
+    );
+
+    final scroll = scrollToPageSection(GlobalKey(), controller: controller);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await scroll;
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('SafaehPageIndex lists entries and reports selection', (
     tester,
   ) async {

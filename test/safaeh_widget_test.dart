@@ -83,7 +83,7 @@ void main() {
               body: Row(
                 children: [
                   SafaehSidenav(
-                    title: 'Hisab',
+                    title: 'Demo',
                     collapsed: collapsed,
                     onToggleCompact: () =>
                         setState(() => collapsed = !collapsed),
@@ -137,7 +137,7 @@ void main() {
               body: Row(
                 children: [
                   SafaehSidenav(
-                    title: 'Hisab',
+                    title: 'Demo',
                     collapsed: collapsed,
                     onToggleCompact: () =>
                         setState(() => collapsed = !collapsed),

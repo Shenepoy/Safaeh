@@ -40,7 +40,7 @@ SafaehBranchSidenav _nav({
   bool collapsed = false,
   VoidCallback? onToggle,
 }) => SafaehBranchSidenav(
-  title: inList ? 'Personal Test' : 'Hisab',
+  title: inList ? 'Personal Test' : 'Demo',
   selectedId: selected,
   collapsed: collapsed,
   onToggleCompact: onToggle,
@@ -89,6 +89,7 @@ void main() {
     final rail = find.byKey(const ValueKey('safaeh_branch_nav_rail'));
     final before = tester.element(rail);
     final groupsTop = tester.getTopLeft(find.byKey(_groups));
+    final profileTop = tester.getTopLeft(find.byKey(_profile));
 
     await tester.pumpWidget(_host(_nav(inList: true)));
     await tester.pump(const Duration(milliseconds: 100));
@@ -104,6 +105,7 @@ void main() {
     expect(identical(tester.element(rail), before), isTrue);
     // The row that stayed did not move.
     expect(tester.getTopLeft(find.byKey(_groups)), groupsTop);
+    expect(tester.getTopLeft(find.byKey(_profile)), profileTop);
     expect(find.text('Expenses'), findsOneWidget);
 
     await tester.pumpWidget(_host(_nav()));
@@ -111,6 +113,7 @@ void main() {
     expect(find.text('Expenses'), findsOneWidget); // still leaving
     await tester.pumpAndSettle();
     expect(find.text('Expenses'), findsNothing);
+    expect(tester.getTopLeft(find.byKey(_profile)), profileTop);
     expect(tester.takeException(), isNull);
   });
 
@@ -118,10 +121,10 @@ void main() {
     await tester.pumpWidget(_host(_nav()));
     await tester.pumpWidget(_host(_nav(inList: true)));
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text('Hisab'), findsOneWidget);
+    expect(find.text('Demo'), findsOneWidget);
     expect(find.text('Personal Test'), findsOneWidget);
     await tester.pumpAndSettle();
-    expect(find.text('Hisab'), findsNothing);
+    expect(find.text('Demo'), findsNothing);
   });
 
   testWidgets('collapsing morphs the width and keeps pinned rows', (
@@ -145,7 +148,7 @@ void main() {
     await tester.pumpWidget(
       _host(
         SafaehBranchSidenav(
-          title: 'معانا',
+          title: 'مخطط الرحلات',
           items: [
             SafaehBranchNavItem(
               id: _groups,

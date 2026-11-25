@@ -359,7 +359,7 @@ void main() {
                     collapsed: collapsed,
                     onToggleCompact: () =>
                         setState(() => collapsed = !collapsed),
-                    title: 'Hisab',
+                    title: 'Demo',
                     selectedIndex: 0,
                     onDestinationSelected: (_) {},
                     destinations: const [
@@ -421,7 +421,7 @@ void main() {
                       collapsed: collapsed,
                       onToggleCompact: () =>
                           setState(() => collapsed = !collapsed),
-                      title: 'Hisab',
+                      title: 'Demo',
                       selectedIndex: 0,
                       onDestinationSelected: (_) {},
                       destinations: const [
@@ -481,7 +481,7 @@ void main() {
         home: SafaehSidenav(
           collapsed: true,
           onToggleCompact: _noop,
-          title: 'Hisab',
+          title: 'Demo',
           selectedIndex: 0,
           onDestinationSelected: (_) {},
           destinations: const [

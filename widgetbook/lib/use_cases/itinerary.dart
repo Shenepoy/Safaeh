@@ -220,88 +220,116 @@ class _BranchSidenavDemo extends StatefulWidget {
   State<_BranchSidenavDemo> createState() => _BranchSidenavDemoState();
 }
 
-class _BranchSidenavDemoState extends State<_BranchSidenavDemo> {
-  bool _inList = false;
-  bool _openPage = false;
-  bool _collapsed = false;
-  Key _selected = const ValueKey('lists');
+enum _BranchPage { trips, plan, stop, map, settings, account }
 
-  void _go(Key id, {bool? inList, bool? openPage}) => setState(() {
-    _selected = id;
-    if (inList != null) _inList = inList;
-    if (openPage != null) _openPage = openPage;
-  });
+class _BranchSidenavDemoState extends State<_BranchSidenavDemo> {
+  final _history = <_BranchPage>[_BranchPage.trips];
+  bool _collapsed = false;
+
+  _BranchPage get _page => _history.last;
+
+  void _visit(_BranchPage page) {
+    if (page == _page) return;
+    setState(() {
+      if (page == _BranchPage.trips || page == _BranchPage.settings) {
+        _history.removeRange(1, _history.length);
+      }
+      if (page != _BranchPage.trips) _history.add(page);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     SafaehBranchNavItem item(
-      String id,
+      _BranchPage page,
       String label,
       IconData icon, {
       int depth = 0,
-      VoidCallback? onTap,
+      bool animateSelection = true,
     }) => SafaehBranchNavItem(
-      id: ValueKey(id),
+      id: ValueKey(page),
       label: label,
       icon: icon,
       depth: depth,
-      onTap: onTap ?? () => _go(ValueKey(id)),
+      animateSelection: animateSelection,
+      onTap: () => _visit(page),
     );
+
+    final inTrip = switch (_page) {
+      _BranchPage.plan || _BranchPage.stop || _BranchPage.map => true,
+      _ => false,
+    };
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SafaehBranchSidenav(
-          title: _inList ? 'Rome in 4 days' : 'Maanaa',
+          title: inTrip ? 'Rome in 4 days' : 'Travel planner',
           collapsed: _collapsed,
           onToggleCompact: () => setState(() => _collapsed = !_collapsed),
           expandTooltip: 'Show labels',
           collapseTooltip: 'Hide labels',
-          selectedId: _selected,
+          selectedId: ValueKey(_page),
           items: [
             item(
-              'lists',
+              _BranchPage.trips,
               'Trips',
               Icons.luggage_outlined,
-              onTap: () =>
-                  _go(const ValueKey('lists'), inList: false, openPage: false),
+              animateSelection: false,
             ),
-            if (!_inList)
+            if (inTrip) ...[
               item(
-                'rome',
-                'Open "Rome in 4 days"',
-                Icons.folder_open_outlined,
-                onTap: () => _go(const ValueKey('plan'), inList: true),
-              ),
-            if (_inList) ...[
-              item(
-                'plan',
+                _BranchPage.plan,
                 'Plan',
                 Icons.view_list_outlined,
                 depth: 1,
-                onTap: () => _go(const ValueKey('plan'), openPage: false),
               ),
-              if (_openPage)
-                item('stop', 'Colosseum', Icons.account_balance, depth: 2),
-              item(
-                'assistant',
-                'Assistant',
-                Icons.chat_bubble_outline,
-                depth: 1,
-              ),
-              item('spend', 'Spend', Icons.payments_outlined, depth: 1),
+              if (_page == _BranchPage.stop)
+                item(
+                  _BranchPage.stop,
+                  'Colosseum',
+                  Icons.account_balance,
+                  depth: 2,
+                ),
+              item(_BranchPage.map, 'Map', Icons.map_outlined, depth: 1),
             ],
           ],
-          pinnedItems: [item('profile', 'Profile', Icons.person_outline)],
+          pinnedItems: [
+            item(_BranchPage.settings, 'Settings', Icons.settings_outlined),
+            SafaehBranchNavItem(
+              id: const ValueKey(_BranchPage.account),
+              label: 'Alex Rivera',
+              subtitle: 'alex@example.com',
+              leading: const SafaehSidenavAvatar(
+                label: 'Alex Rivera',
+                size: 24,
+              ),
+              onTap: () => _visit(_BranchPage.account),
+            ),
+          ],
         ),
         Expanded(
           child: Center(
-            child: _inList && !_openPage
-                ? FilledButton(
-                    onPressed: () =>
-                        _go(const ValueKey('stop'), openPage: true),
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              children: [
+                if (_history.length > 1)
+                  TextButton(
+                    onPressed: () => setState(() => _history.removeLast()),
+                    child: const Text('Back'),
+                  ),
+                if (_page == _BranchPage.trips)
+                  FilledButton(
+                    onPressed: () => _visit(_BranchPage.plan),
+                    child: const Text('Open Rome in 4 days'),
+                  ),
+                if (_page == _BranchPage.plan)
+                  FilledButton(
+                    onPressed: () => _visit(_BranchPage.stop),
                     child: const Text('Open the Colosseum stop'),
-                  )
-                : const SizedBox(),
+                  ),
+              ],
+            ),
           ),
         ),
       ],

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:material_ui/material_ui.dart';
 
 import 'content_band.dart';
@@ -68,15 +70,15 @@ class SafaehContentAlignedAppBar extends StatelessWidget
 
   final Widget? leading;
 
-  /// Horizontal space reserved for [leading] when computing title insets.
+  /// Minimum horizontal space reserved for [leading] when laying out the title.
   /// Defaults to [kToolbarHeight] when [leading] is non-null.
   final double? leadingWidth;
 
   final Widget title;
   final List<Widget>? actions;
 
-  /// When true (default), the title is centered in the content band with
-  /// symmetric insets. When false, the title is start-aligned (LTR/RTL).
+  /// When true (default), the title is centered in the content band when it
+  /// fits between the controls. When false, it is start-aligned (LTR/RTL).
   final bool centerTitle;
 
   @override
@@ -93,31 +95,6 @@ class SafaehContentAlignedAppBar extends StatelessWidget
         ) ??
         (theme.textTheme.titleLarge ?? theme.textTheme.bodyLarge!);
 
-    final leadingReservedWidth = leading != null
-        ? (leadingWidth ?? kToolbarHeight)
-        : 0.0;
-    final actionsReservedWidth =
-        (actions?.length ?? 0) * kToolbarHeight.toDouble();
-    const titleButtonGap = 8.0;
-
-    final double titleStartInset;
-    final double titleEndInset;
-    if (centerTitle) {
-      final symmetricInset =
-          (leadingReservedWidth > actionsReservedWidth
-              ? leadingReservedWidth
-              : actionsReservedWidth) +
-          titleButtonGap;
-      final inset = symmetricInset.clamp(0.0, bandWidth / 2).toDouble();
-      titleStartInset = inset;
-      titleEndInset = inset;
-    } else {
-      titleStartInset = leadingReservedWidth + titleButtonGap;
-      titleEndInset = actionsReservedWidth + titleButtonGap;
-    }
-
-    const edgePadding = 12.0;
-
     return Material(
       color: appBarTheme.backgroundColor ?? theme.colorScheme.surface,
       elevation: appBarTheme.elevation ?? 0,
@@ -126,55 +103,38 @@ class SafaehContentAlignedAppBar extends StatelessWidget
         bottom: false,
         child: SizedBox(
           height: kToolbarHeight,
-          child: Stack(
-            clipBehavior: Clip.none,
+          child: CustomMultiChildLayout(
+            delegate: _ContentAppBarLayout(
+              leftOffset: leftOffset,
+              bandWidth: bandWidth,
+              leadingWidth: leadingWidth ?? kToolbarHeight,
+              centerTitle: centerTitle,
+              direction: Directionality.of(context),
+            ),
             children: [
-              Positioned.fill(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (leading != null)
-                      Padding(
-                        padding: const EdgeInsetsDirectional.only(
-                          start: edgePadding,
-                        ),
-                        child: leading,
-                      )
-                    else
-                      const SizedBox.shrink(),
-                    const Spacer(),
-                    if (actions != null && actions!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsetsDirectional.only(
-                          end: edgePadding,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: actions!,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              Positioned(
-                left: leftOffset,
-                top: 0,
-                bottom: 0,
-                width: bandWidth,
-                child: Padding(
-                  padding: EdgeInsetsDirectional.only(
-                    start: titleStartInset,
-                    end: titleEndInset,
+              if (leading != null)
+                LayoutId(id: _AppBarSlot.leading, child: leading!),
+              if (actions != null && actions!.isNotEmpty)
+                LayoutId(
+                  id: _AppBarSlot.actions,
+                  child: SingleChildScrollView(
+                    primary: false,
+                    scrollDirection: Axis.horizontal,
+                    reverse: true,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: actions!,
+                    ),
                   ),
+                ),
+              LayoutId(
+                id: _AppBarSlot.title,
+                child: ClipRect(
                   child: DefaultTextStyle(
                     style: titleStyle,
-                    child: centerTitle
-                        ? Center(child: title)
-                        : Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: title,
-                          ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    child: title,
                   ),
                 ),
               ),
@@ -184,6 +144,90 @@ class SafaehContentAlignedAppBar extends StatelessWidget
       ),
     );
   }
+}
+
+enum _AppBarSlot { leading, actions, title }
+
+class _ContentAppBarLayout extends MultiChildLayoutDelegate {
+  _ContentAppBarLayout({
+    required this.leftOffset,
+    required this.bandWidth,
+    required this.leadingWidth,
+    required this.centerTitle,
+    required this.direction,
+  });
+
+  final double leftOffset;
+  final double bandWidth;
+  final double leadingWidth;
+  final bool centerTitle;
+  final TextDirection direction;
+
+  @override
+  void performLayout(Size size) {
+    const gap = 8.0;
+    final edge = math.min(12.0, size.width / 2);
+    final rtl = direction == TextDirection.rtl;
+    var start = 0.0;
+    var end = 0.0;
+
+    double layoutControl(_AppBarSlot slot, double maxWidth, bool atLeft) {
+      final child = layoutChild(
+        slot,
+        BoxConstraints(maxWidth: maxWidth, maxHeight: size.height),
+      );
+      final inset = child.width == 0 ? 0.0 : edge;
+      positionChild(
+        slot,
+        Offset(
+          atLeft ? inset : size.width - inset - child.width,
+          (size.height - child.height) / 2,
+        ),
+      );
+      return inset + child.width;
+    }
+
+    final innerWidth = size.width - 2 * edge;
+    if (hasChild(_AppBarSlot.leading)) {
+      start = layoutControl(_AppBarSlot.leading, innerWidth, !rtl);
+    }
+    if (hasChild(_AppBarSlot.actions)) {
+      end = layoutControl(
+        _AppBarSlot.actions,
+        math.min(innerWidth, size.width - edge - start),
+        rtl,
+      );
+    }
+    if (hasChild(_AppBarSlot.leading)) start = math.max(start, leadingWidth);
+
+    final bandLeft = leftOffset.clamp(0.0, size.width);
+    final bandRight = (leftOffset + bandWidth).clamp(bandLeft, size.width);
+    final left = math.max(bandLeft, rtl ? end : start) + gap;
+    final right = math.min(bandRight, size.width - (rtl ? start : end)) - gap;
+    final title = layoutChild(
+      _AppBarSlot.title,
+      BoxConstraints(
+        maxWidth: math.max(0.0, right - left),
+        maxHeight: size.height,
+      ),
+    );
+    final lastX = math.max(left, right - title.width);
+    final x = centerTitle
+        ? ((bandLeft + bandRight - title.width) / 2).clamp(left, lastX)
+        : (rtl ? lastX : left);
+    positionChild(
+      _AppBarSlot.title,
+      Offset(x, (size.height - title.height) / 2),
+    );
+  }
+
+  @override
+  bool shouldRelayout(covariant _ContentAppBarLayout oldDelegate) =>
+      oldDelegate.leftOffset != leftOffset ||
+      oldDelegate.bandWidth != bandWidth ||
+      oldDelegate.leadingWidth != leadingWidth ||
+      oldDelegate.centerTitle != centerTitle ||
+      oldDelegate.direction != direction;
 }
 
 /// Positions the scaffold FAB beside a content band on wide layouts.

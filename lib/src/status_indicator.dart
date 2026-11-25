@@ -212,7 +212,7 @@ class SafaehSyncChip extends StatefulWidget {
   )?
   colorsBuilder;
 
-  /// Container colors, as Hisab's sync chip uses: primary container when
+  /// Container colors: primary container when
   /// saved, tertiary container while syncing, error container when offline or
   /// failed. Hosts that want other colors pass [colorsBuilder].
   static SafaehSyncChipColors defaultColors(
@@ -456,7 +456,7 @@ class _SafaehConnectivityBarState extends State<SafaehConnectivityBar> {
       _timer = Timer(widget.recoveredDuration, () {
         if (mounted) setState(() => _recovered = false);
       });
-    } else if (_bad(widget.state)) {
+    } else if (_bad(widget.state) || widget.recoveredLabel == null) {
       _timer?.cancel();
       _recovered = false;
     }

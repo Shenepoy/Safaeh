@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:safaeh/safaeh.dart';
@@ -1202,10 +1203,10 @@ void main() {
     expect(box.size.height, lessThanOrEqualTo(80));
   });
 
-  testWidgets('useRootNavigator false pops the nested navigator', (
+  testWidgets('sheet Close and dialog scrim keep the nested shell mounted', (
     tester,
   ) async {
-    await setPhone(tester);
+    await setTablet(tester);
     final innerKey = GlobalKey<NavigatorState>();
     await tester.pumpWidget(
       MaterialApp(
@@ -1234,6 +1235,14 @@ void main() {
                                 child: const Text('open'),
                               ),
                             ),
+                            TextButton(
+                              onPressed: () => showSafaehDialog<void>(
+                                context: context,
+                                useRootNavigator: false,
+                                builder: (_) => const Text('nested dialog'),
+                              ),
+                              child: const Text('open dialog'),
+                            ),
                           ],
                         ),
                       );
@@ -1254,12 +1263,83 @@ void main() {
     expect(find.text('root-shell'), findsOneWidget);
     expect(innerKey.currentState!.canPop(), isTrue);
 
-    innerKey.currentState!.pop();
+    await tester.tap(find.byIcon(Icons.close));
     await tester.pumpAndSettle();
     expect(find.text('sheet-body'), findsNothing);
     expect(find.text('inner-home'), findsOneWidget);
     expect(find.text('root-shell'), findsOneWidget);
     expect(innerKey.currentState!.canPop(), isFalse);
+
+    await tester.tap(find.text('open dialog'));
+    await tester.pumpAndSettle();
+    expect(find.text('nested dialog'), findsOneWidget);
+    await tester.tapAt(const Offset(32, 120));
+    await tester.pumpAndSettle();
+    expect(find.text('nested dialog'), findsNothing);
+    expect(find.text('root-shell'), findsOneWidget);
+    expect(innerKey.currentState!.canPop(), isFalse);
+  });
+
+  testWidgets('a custom tile picker row supports keyboard activation', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
+    int? selected;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SafaehTilePickerBody<int>(
+            options: const [SafaehTileOption(value: 1, label: 'Custom option')],
+            selected: 1,
+            tileBuilder: (_, _, _) =>
+                const SizedBox(height: 48, child: Icon(Icons.star)),
+            onSelected: (value) => selected = value,
+          ),
+        ),
+      ),
+    );
+    expect(find.bySemanticsLabel('Custom option'), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(selected, 1);
+  });
+
+  testWidgets('an adaptive sheet retains an unkeyed text input draft', (
+    tester,
+  ) async {
+    await setPhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showSafaeh<void>(
+                context: context,
+                title: 'Rename',
+                child: const TextField(),
+              ),
+              child: const Text('Open editor'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open editor'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Draft');
+    final editor = tester.state(find.byType(EditableText));
+
+    await setTablet(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('Draft'), findsOneWidget);
+    expect(tester.state(find.byType(EditableText)), same(editor));
+
+    await setPhone(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('Draft'), findsOneWidget);
+    expect(tester.state(find.byType(EditableText)), same(editor));
   });
 
   testWidgets('fadeScale override still shows a tablet dialog', (tester) async {

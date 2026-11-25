@@ -105,6 +105,174 @@ void main() {
     }
   });
 
+  testWidgets('catalog search finds a component and opens its named route', (
+    tester,
+  ) async {
+    await pumpExampleApp(tester);
+    final search = find.byKey(const ValueKey('catalog_search'));
+    await tester.enterText(search, 'MORPHING APP BAR');
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('catalog_sheet')), findsNothing);
+    await tester.tap(
+      find.byKey(const ValueKey('catalog_morphing_app_bar_title')),
+    );
+    await tester.pumpAndSettle();
+
+    final page = tester.element(find.byType(CatalogDemoPage));
+    expect(ModalRoute.of(page)?.settings.name, '/demo/morphing_app_bar');
+    expect(find.byType(MorphingAppBarDemo), findsOneWidget);
+  });
+
+  testWidgets('website chrome is hidden while a gallery modal is open', (
+    tester,
+  ) async {
+    await pumpExampleApp(tester, size: const Size(1000, 900));
+    final language = find.byKey(const ValueKey('language_toggle'));
+    expect(language, findsOneWidget);
+    await _openTitle(tester, 'sheet');
+    expect(language, findsNothing);
+    expect(find.byType(SafaehDebugMenuFab), findsNothing);
+
+    final field = tester.element(find.widgetWithText(TextField, 'Name'));
+    final route = ModalRoute.of(field)!;
+    expect(route.settings.name, '/demo/sheet');
+    route.navigator!.pop();
+    await tester.pumpAndSettle();
+    expect(language, findsOneWidget);
+    expect(find.byType(SafaehDebugMenuFab), findsOneWidget);
+  });
+
+  testWidgets('a bookmarked sheet demo can be opened and dismissed', (
+    tester,
+  ) async {
+    tester.platformDispatcher.defaultRouteNameTestValue = '/demo/sheet';
+    addTearDown(tester.platformDispatcher.clearDefaultRouteNameTestValue);
+    await pumpExampleApp(tester);
+
+    final open = find.widgetWithText(FilledButton, 'Open demo');
+    expect(open, findsOneWidget);
+    await tester.tap(open);
+    await tester.pumpAndSettle();
+    final panel = find.byKey(const ValueKey('safaeh_panel')).hitTestable();
+    expect(panel, findsOneWidget);
+    Navigator.of(tester.element(panel)).pop();
+    await tester.pumpAndSettle();
+    expect(open, findsOneWidget);
+  });
+
+  for (final (id, trigger, surface) in [
+    (
+      'anchored_popout',
+      find.text(translateCatalog('popout_drop', 'en')),
+      find.byType(SafaehMonthCalendar),
+    ),
+    (
+      'debug_menu',
+      find.byKey(const ValueKey('debug_menu_demo_open')),
+      find.byType(SafaehDebugMenuBody),
+    ),
+    (
+      'l10n_editor',
+      find.text(translateCatalog('l10n_editor_sub', 'en')),
+      find.byKey(const ValueKey('safaeh_panel')),
+    ),
+    (
+      'feedback',
+      find.byKey(const ValueKey('feedback_info_button')),
+      find.byType(SafaehFeedbackSurface),
+    ),
+  ]) {
+    testWidgets('$id opens inside the simulated phone', (tester) async {
+      await pumpExampleApp(tester, size: const Size(1100, 1024));
+      await _reveal(tester, id);
+      final phone = find.byKey(ValueKey('catalog_${id}_phone'));
+      await tester.ensureVisible(phone);
+      await tester.pumpAndSettle();
+      await tester.tap(phone);
+      await tester.pumpAndSettle();
+
+      final frame = find.byKey(const ValueKey('catalog_phone_frame'));
+      final control = find.descendant(of: frame, matching: trigger);
+      if (id == 'l10n_editor') {
+        await tester.longPress(control);
+      } else {
+        await tester.tap(control);
+      }
+      await tester.pumpAndSettle();
+      expect(find.descendant(of: frame, matching: surface), findsOneWidget);
+      if (id == 'anchored_popout') {
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+        expect(frame, findsOneWidget);
+        expect(find.descendant(of: frame, matching: surface), findsNothing);
+      }
+    });
+  }
+
+  test('the catalog keeps related demos together and lists each demo once', () {
+    final sections = {for (final (key, items) in catalogSections()) key: items};
+    expect(sections.keys, [
+      'group_sheets',
+      'group_controls',
+      'group_navigation',
+      'group_layout',
+      'group_feedback',
+      'group_display',
+      'group_onboarding',
+      'group_camera',
+      'group_tools',
+    ]);
+    expect(
+      sections.values.expand((items) => items.map((item) => item.id)),
+      unorderedEquals(catalogItems.map((item) => item.id)),
+    );
+    expect(
+      sections['group_navigation']!.map((item) => item.id),
+      contains('morphing_app_bar'),
+    );
+    expect(sections['group_controls']!.first.id, 'dropdown');
+    expect(
+      sections['group_display']!.map((item) => item.id),
+      contains('floating_surface'),
+    );
+  });
+
+  testWidgets('the dropdown demo shows all three variants together', (
+    tester,
+  ) async {
+    await pumpExampleApp(tester);
+    await _openTitle(tester, 'dropdown');
+
+    final page = find.byType(CatalogDemoPage);
+    expect(
+      find.descendant(of: page, matching: find.text('Single choice')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: page, matching: find.text('Scrollable')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: page, matching: find.text('Toggles')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: page,
+        matching: find.byType(SafaehAnchoredDropdownChip<int>),
+      ),
+      findsNWidgets(2),
+    );
+    expect(
+      find.descendant(
+        of: page,
+        matching: find.byType(SafaehAnchoredToggleDropdownChip<String>),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('morphing app bar demo follows the page view', (tester) async {
     await pumpExampleApp(tester);
 
@@ -154,7 +322,7 @@ void main() {
     },
   );
 
-  testWidgets('language menu lists five Fukaha locales and applies one', (
+  testWidgets('language menu lists five locales and applies one', (
     tester,
   ) async {
     await pumpExampleApp(tester);
@@ -690,11 +858,11 @@ void main() {
     final sheet = tester.getTopLeft(
       find.byKey(const ValueKey('catalog_sheet')),
     );
-    final picker = tester.getTopLeft(
-      find.byKey(const ValueKey('catalog_picker')),
+    final dialog = tester.getTopLeft(
+      find.byKey(const ValueKey('catalog_dialog')),
     );
-    expect(picker.dy, closeTo(sheet.dy, 2));
-    expect(picker.dx, greaterThan(sheet.dx));
+    expect(dialog.dy, closeTo(sheet.dy, 2));
+    expect(dialog.dx, greaterThan(sheet.dx));
   });
 
   testWidgets('RTL wide band fills columns from the start edge', (
@@ -705,11 +873,26 @@ void main() {
     final sheet = tester.getTopLeft(
       find.byKey(const ValueKey('catalog_sheet')),
     );
-    final picker = tester.getTopLeft(
-      find.byKey(const ValueKey('catalog_picker')),
+    final dialog = tester.getTopLeft(
+      find.byKey(const ValueKey('catalog_dialog')),
     );
-    expect(picker.dy, closeTo(sheet.dy, 2));
-    expect(picker.dx, lessThan(sheet.dx));
+    expect(dialog.dy, closeTo(sheet.dy, 2));
+    expect(dialog.dx, lessThan(sheet.dx));
+  });
+
+  testWidgets('wide cards do not move later demos ahead of earlier ones', (
+    tester,
+  ) async {
+    await pumpExampleApp(tester, size: const Size(1180, 1650));
+    await _reveal(tester, 'sidenav');
+
+    Offset position(String id) =>
+        tester.getTopLeft(find.byKey(ValueKey('catalog_$id')));
+
+    expect(
+      position('floating_nav').dy,
+      greaterThan(position('sidenav_drawer').dy),
+    );
   });
 
   testWidgets('phone frame docks sheets and fills full-screen chrome', (

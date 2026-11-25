@@ -71,7 +71,7 @@
 - chrome يحترم <span dir="ltr"><code>MediaQuery.disableAnimationsOf</code></span>
 - بلا <span dir="ltr"><code>easy_localization</code></span> أو Riverpod أو <span dir="ltr"><code>go_router</code></span> أو <span dir="ltr"><code>mobile_scanner</code></span> داخل الحزمة
 
-**صفائح** هي طبقة الـ chrome هذه. مستخدمة في حساب.
+**صفائح** هي طبقة الـ chrome هذه.
 
 على <span dir="ltr">pub.dev</span>: <span dir="ltr"><a href="https://pub.dev/packages/safaeh"><code>safaeh</code></a></span> · المستودع: <span dir="ltr"><a href="https://github.com/Shenepoy/Safaeh">Shenepoy/Safaeh</a></span>.
 
@@ -158,7 +158,7 @@
 
 ```yaml
 dependencies:
-  safaeh: ^1.0.0
+  safaeh: ^1.6.0
 ```
 
 <div dir="rtl" lang="ar">
@@ -182,7 +182,7 @@ dependencies:
   safaeh:
     git:
       url: https://github.com/Shenepoy/Safaeh.git
-      ref: v1.0.0
+      ref: v1.6.0
 ```
 
 ```dart
@@ -375,11 +375,17 @@ SafaehContentAlignedFabLocation.resolve(
 
 استخدم <span dir="ltr"><code>SafaehMorphingAppBar</code></span> عندما يبقى
 شريط تطبيق واحد مثبتاً أثناء انتقال <span dir="ltr"><code>PageView</code></span>
-بين الوجهات. مرّر موضع الصفحة الحالي وعناوين مترجمة من التطبيق المضيف:
+بين الوجهات. أعد بناء الشريط عند تغيّر وحدة التحكم، واقرأ موضع الصفحة فقط
+عندما يكون لها موضع تمرير واحد متصل. استخدم الوجهة المحددة قيمةً احتياطية.
 
 ```dart
+final fallback = selectedIndex.toDouble();
+final page = pageController.positions.length == 1
+    ? (pageController.page ?? fallback)
+    : fallback;
+
 SafaehMorphingAppBar(
-  page: pageController.page ?? 0,
+  page: page,
   titles: [Text(l10n.home), Text(l10n.statistics), Text(l10n.settings)],
   leading: const SizedBox(width: kToolbarHeight),
   actionsBuilder: (context, page) => Stack(
@@ -406,7 +412,7 @@ SafaehMorphingAppBar(
     ],
   ),
   bottom: SafaehMorphingAppBarBottom(
-    factor: (2 - (pageController.page ?? 0)).clamp(0.0, 1.0).toDouble(),
+    factor: (2 - page).clamp(0.0, 1.0).toDouble(),
     height: 48,
     child: const Center(child: Text('Range controls')),
   ),
@@ -414,7 +420,7 @@ SafaehMorphingAppBar(
 ```
 
 الحزمة تملك التحويل البصري فقط؛ أما النصوص والترجمة والتوجيه فتظل في
-التطبيق المضيف. يشرح <span dir="ltr"><a href="doc/host-integration.md">دليل التكامل</a></span>
+التطبيق المضيف. يشرح <span dir="ltr"><a href="doc/host-integration.md#app-bars">دليل التكامل</a></span>
 الحساب الكامل للأفعال والـ bottom chrome، ويوجد مثال تفاعلي في كتالوج
 <span dir="ltr"><code>example/</code></span>.
 
@@ -516,7 +522,7 @@ await showSafaehCameraSheet<void>(
 
 الكتالوج المستضاف هو بناء ويب <span dir="ltr"><code>example/</code></span>. التكامل المستمر ينشره بعد نجاح الاختبارات على <span dir="ltr"><code>main</code></span>.
 
-كتالوج بلا Riverpod في <span dir="ltr"><a href="example/"><code>example/</code></a></span> — نفس تقسيم <span dir="ltr"><a href="https://github.com/Zyzto/Edadat">Edadat</a></span>: <span dir="ltr"><code>catalog.dart</code></span> (نصوص en / ar / ja / zh / es)، <span dir="ltr"><code>app.dart</code></span>، ومعرض عمودي في <span dir="ltr"><code>SafaehContentBand</code></span> لكل API عام. عناوين الأقسام تفتح العرض المستقل، والشاشات العريضة توزّع البطاقات على أعمدة في الصفحة نفسها. تبديل لغة وسمة، بلا <span dir="ltr"><code>mobile_scanner</code></span>.
+يعرض [معرض الأمثلة](https://shenepoy.github.io/Safaeh/) أنماط الدمج الشائعة بخمس لغات. يمكنك البحث أو التصفية حسب القسم، وفتح عرض مستقل بالضغط على عنوان البطاقة، أو معاينته داخل هاتف محاكى بالضغط على أيقونة الهاتف. لكل عرض مستقل رابط قابل للمشاركة. مصدر المعرض في <span dir="ltr"><a href="example/"><code>example/</code></a></span>.
 
 المثال بأسلوب package (web فقط في المستودع)؛ حلّل بـ:
 
@@ -528,7 +534,7 @@ cd example && flutter pub get && dart analyze --fatal-infos && flutter test
 
 للتشغيل على جهاز، ولّد platforms الأخرى أولاً (<span dir="ltr"><code>flutter create . --platforms=android,ios</code></span> داخل <span dir="ltr"><code>example/</code></span>). التفاصيل: <span dir="ltr"><a href="example/README.md">example/README.md</a></span>.
 
-يوجد كتالوج تطوير مستقل باستخدام <span dir="ltr"><code>Widgetbook</code></span> في مجلد <span dir="ltr"><code>widgetbook/</code></span> داخل نسخة المستودع، مع إعدادات للمكوّنات والسمة واللغة وحجم العرض ومعاينات مستقلة للنوافذ. تعليمات التشغيل في <span dir="ltr"><code>widgetbook/README.md</code></span> وجدول التغطية في <span dir="ltr"><code>widgetbook/COVERAGE.md</code></span>. هذا المجلد مستبعد من أرشيف <span dir="ltr"><code>pub.dev</code></span> ولا يضيف اعتمادات إلى تطبيقات مستخدمي الحزمة.
+يوفّر [Widgetbook](https://shenepoy.github.io/Safaeh/widgetbook/) مرجعاً للمكوّنات، ومصدره في مجلد <span dir="ltr"><code>widgetbook/</code></span> داخل نسخة المستودع، مع إعدادات للمكوّنات والسمة واللغة وحجم العرض ومعاينات مستقلة للنوافذ. تعليمات التشغيل في <span dir="ltr"><code>widgetbook/README.md</code></span> وجدول التغطية في <span dir="ltr"><code>widgetbook/COVERAGE.md</code></span>. هذا المجلد مستبعد من أرشيف <span dir="ltr"><code>pub.dev</code></span> ولا يضيف اعتمادات إلى تطبيقات مستخدمي الحزمة.
 
 ```bash
 cd widgetbook && flutter pub get --enforce-lockfile && flutter run -d chrome
@@ -548,7 +554,7 @@ dart analyze --fatal-infos && flutter test
 
 ## Branding
 
-كلمة الشعار بخط <span dir="ltr"><strong><a href="https://www.1001fonts.com/baz-font.html">Baz</a></strong></span> (Baz Light) — نفس الـ typeface العربي في <span dir="ltr"><a href="https://github.com/Zyzto/Edadat">Edadat</a></span> و<span dir="ltr"><a href="https://github.com/Zyzto/Siglat">Siglat</a></span>. ملف الـ SVG يضم <strong>صــفائح</strong> كـ outlines (تطويل بعد <em>ص</em>) حتى يظهر على GitHub دون تحميل الخط. Baz ليس خطاً مسجَّلاً للحزمة، وملف الـ OTF غير مُرفق.
+كلمة الشعار بخط <span dir="ltr"><strong><a href="https://www.1001fonts.com/baz-font.html">Baz</a></strong></span> (Baz Light). ملف الـ SVG يضم <strong>صــفائح</strong> كـ outlines (تطويل بعد <em>ص</em>) حتى يظهر على GitHub دون تحميل الخط. Baz ليس خطاً مسجَّلاً للحزمة، وملف الـ OTF غير مُرفق.
 
 </div>
 

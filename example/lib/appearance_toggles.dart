@@ -8,7 +8,7 @@ import 'package:safaeh/safaeh.dart';
 import 'catalog.dart';
 import 'theme_ripple.dart';
 
-/// Fukaha language menu: 92px, flag + short code, centered on the globe.
+/// Language menu: 92px, flag + short code, centered on the globe.
 const double _kLanguageMenuWidth = 92;
 const double _kToggleSize = 44;
 const double _kMenuGap = 4;

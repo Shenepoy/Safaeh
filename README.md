@@ -67,7 +67,7 @@ overlays. Then you need:
 - no `easy_localization`, Riverpod, `go_router`, or `mobile_scanner` inside the
   package
 
-**Safaeh** is that chrome layer. Used in Hisab.
+**Safaeh** is that chrome layer.
 
 On pub.dev: [`safaeh`](https://pub.dev/packages/safaeh) · Repo: [Shenepoy/Safaeh](https://github.com/Shenepoy/Safaeh).
 
@@ -117,7 +117,8 @@ and pinned footer slots. `SafaehSheetSurface`, `SafaehSheetHeading`,
 `SafaehSheetDataLoader`, and `SafaehSheetActionButton` share the reusable
 presentation while the host keeps its data, translations, actions, and logs.
 Set defaults through `SafaehThemeData.sheetTemplate` and override individual
-slots or styles where needed. [Integration and customization examples](doc/sheet-templates.md).
+slots or styles where needed.
+[Sheet layout, dismissal, and customization guide](doc/sheet-templates.md).
 
 ## Features at a glance
 
@@ -125,14 +126,14 @@ slots or styles where needed. [Integration and customization examples](doc/sheet
 |------|----------------|
 | **Onboarding** | Six public presets through `SafaehOnboardingDesign`; `SafaehOnboarding`, design catalog metadata, host-owned steps, trackers, action bars, list items, and generic `SafaehAuthFlow` |
 | **Sheets** | `showSafaeh` morphs phone sheet ↔ tablet dialog; `SafaehSheet.enableDrag` toggles phone drag-to-dismiss; `showSafaehPicker` / `SafaehOption` (cards, `enabled`); `showSafaehTilePicker` / `SafaehTileOption` (list rows, search); `showSafaehMultiTilePicker` (multi-select); `showSafaehActionSheet`; `showSafaehInfo`; `showSafaehConfirm`, `showSafaehTimedConfirm`, `showSafaehTextInput`, `SafaehStatusBody`, `SafaehContentPanel`, `buildSafaehSheetShell`, `SafaehOptionList`, `SafaehOptionTile` |
-| **Dropdown** | `SafaehAnchoredDropdownChip` / `SafaehDropdownOption` for anchored menus that match the trigger width, with host label and selection-color hooks |
+| **Dropdown** | `SafaehAnchoredDropdownChip` for single choice, `.scrollable` for a bounded list, and `SafaehAnchoredToggleDropdownChip` for checkbox choices. [Dropdown integration guide](doc/host-integration.md#dropdowns) |
 | **Dialog** | `showSafaehDialog` centered panel (`railWidthOf` is ignored for alignment) |
 | **Theme** | `SafaehTheme` / `SafaehThemeData` for breakpoint, motion, radius, rail widths, camera compact height, `contentMaxWidth`, desktop band tokens, `sheetBodyInset`, `floatingAppearance`; `copyWith` |
 | **Chrome** | `SafaehEmptyState`, `SafaehInlineBanner`, `SafaehMetaChip`, `SafaehGlyphAvatar`, `SafaehKpiCard`, `SafaehBorderedListChrome`, `SafaehSectionHeader`, `SafaehLtrText`, `SafaehUserText`, `SafaehAsyncBody`, `SafaehErrorBody`, `SafaehAccentSurfaces`, `applySafaehMaterialChrome` |
 | **Itinerary & map** | `SafaehSnapSheet` (non-modal snap sheet, side panel on wide), `SafaehTimeline` (ordered stops, legs, reorder), `SafaehSectionChips`, `SafaehStatusIndicator`, `SafaehConnectivityBar`, `SafaehStatusColors` (semantic color override) |
 | **Debug** | `showSafaehDebugMenu`, `SafaehDebugMenuFab`, host-registered `SafaehDebugSection`s, `SafaehL10nEditOverlay` behind `SafaehL10nBackend` |
 | **Motion** | `safaehResolvedMotion` zeros durations when animations are disabled |
-| **Nav** | `SafaehSidenav` temporary drawer (`asDrawer: true`), clipping rail, or overlay rail (`overlay: true`); `SafaehFloatingNavBar` (same `SafaehSidenavDestination`); keyboard-aware bottom-nav metrics and FAB placement |
+| **Nav** | `SafaehSidenav` for a rail, drawer, or overlay, `SafaehBranchSidenav` for contextual destinations, and `SafaehFloatingNavBar` for phones. [Sidenav integration guide](doc/host-integration.md#sidenav) |
 | **Page index** | `SafaehPageIndex`, overlay, `scrollToPageSection`, `safaehActivePageSectionId` (ids + keys only — no `.tr()` on scroll) |
 | **App bar** | `SafaehMorphingAppBar`, `SafaehMorphingAppBarAction`, `SafaehMorphingAppBarBottom` for page-aware title, action, and bottom chrome morphing |
 | **Content** | `safaehBandMetrics`, `safaehRailAwareBandMetrics`, `SafaehContentBand` (`railAware`), `SafaehContentAlignedPage`, `SafaehEndAsideLayout`, `SafaehContentAlignedAppBar.forContentArea`, `SafaehContentAlignedFabLocation.of` |
@@ -152,7 +153,7 @@ public theme types together; legacy SDK Material types are not interchangeable.
 
 ```yaml
 dependencies:
-  safaeh: ^1.0.0
+  safaeh: ^1.6.0
 ```
 
 Or:
@@ -168,7 +169,7 @@ dependencies:
   safaeh:
     git:
       url: https://github.com/Shenepoy/Safaeh.git
-      ref: v1.0.0
+      ref: v1.6.0
 ```
 
 ```dart
@@ -390,58 +391,12 @@ content insets for custom layouts.
 narrow (`SafaehThemeData.isWide`). Hosts with a sibling shell rail keep their
 own `leftOffset` / `bandWidth` math and use `SafaehEndAsideLayout`.
 
-### 9. Morphing app bar
+### 9. App bars
 
-Drive one shell app bar from the live `PageController.page`. Safaeh
-crossfades adjacent host-provided titles, keeps a stable action slot, and
-lets the host fade actions or bottom chrome at the same page position:
-
-```dart
-SafaehMorphingAppBar(
-  page: pageController.page ?? 0,
-  titles: const [
-    Text('Home'),
-    Text('Statistics'),
-    Text('Settings'),
-  ],
-  // Reserve the leading slot when actions should not move the title.
-  leading: const SizedBox(width: kToolbarHeight),
-  actionsBuilder: (context, page) => Stack(
-    alignment: AlignmentDirectional.center,
-    children: [
-      SafaehMorphingAppBarAction(
-        page: page,
-        targetPage: 0,
-        child: IconButton(
-          onPressed: openHome,
-          icon: const Icon(Icons.home_outlined),
-        ),
-      ),
-      SafaehMorphingAppBarAction(
-        page: page,
-        targetPage: 2,
-        child: IconButton(
-          onPressed: openSettings,
-          icon: const Icon(Icons.settings_outlined),
-        ),
-      ),
-    ],
-  ),
-  bottom: SafaehMorphingAppBarBottom(
-    factor: (2 - (pageController.page ?? 0)).clamp(0.0, 1.0).toDouble(),
-    height: 48,
-    child: const Center(child: Text('Range controls')),
-  ),
-);
-```
-
-`titles` and all action text stay in the host, so localization and routing do
-not enter Safaeh. `page` is clamped to the title range before the action
-builder runs. `SafaehMorphingAppBarAction` uses linear page distance for its
-opacity and ignores taps below its interactive threshold. The bottom helper
-clips and resizes its child while reporting the matching preferred height.
-See [host integration](doc/host-integration.md#pinned-morphing-app-bar) and
-the `Morphing app bar` catalog entry in `example/`.
+Keep `SafaehMorphingAppBar` mounted in a shared shell while its pager moves
+between destinations. Use `SafaehContentAlignedAppBar` to align a standalone
+page title to the same content band as the page body.
+[App bar integration guide](doc/host-integration.md#app-bars).
 
 ### 10. Shared feedback
 
@@ -665,16 +620,12 @@ Keep `mobile_scanner` in the app.
 
 ## Example
 
-**[Live demo — shenepoy.github.io/Safaeh](https://shenepoy.github.io/Safaeh/)**
-
-The hosted catalog is the `example/` web build. CI deploys it after tests pass
-on `main`.
-
-A Riverpod-free catalog lives in [`example/`](example/) — same split as
-[Edadat](https://github.com/Zyzto/Edadat): `catalog.dart` (en / ar / ja / zh / es),
-`app.dart` (theme + home), and a vertical `SafaehContentBand` gallery of every
-public API. Section titles open the standalone demo; wide bands use extra
-columns on the same page. Language and theme toggles, no `mobile_scanner`.
+The [example gallery](https://shenepoy.github.io/Safaeh/) shows common
+integration patterns in five languages. Search or filter by section, select a
+card title to open its standalone demo, or use the phone icon to preview it
+inside a simulated phone. Standalone demos have shareable URLs. The source
+lives in [`example/`](example/). CI deploys the web build after tests pass on
+`main`.
 
 The example is package-style (web only in-tree); analyze with:
 
@@ -686,9 +637,9 @@ cd example && flutter pub get && dart analyze --fatal-infos && flutter test
 
 To run on a device, generate the other platforms (`flutter create . --platforms=android,ios` inside `example/`). Details: [example/README.md](example/README.md).
 
-A separate development Widgetbook lives in `widgetbook/` in the repository
-checkout. It includes component knobs, light/dark themes, RTL locales, viewport
-presets, and isolated modal previews. See `widgetbook/README.md` for setup and
+[Widgetbook](https://shenepoy.github.io/Safaeh/widgetbook/) provides the
+component reference with component knobs, light/dark themes, RTL locales,
+viewport presets, and isolated modal previews. See `widgetbook/README.md` for setup and
 `widgetbook/COVERAGE.md` for the inventory. It is excluded from pub.dev archives
 and adds no dependencies to consumer applications.
 
@@ -706,7 +657,7 @@ dart analyze --fatal-infos && flutter test
 
 ## Branding
 
-The logo wordmark uses **[Baz](https://www.1001fonts.com/baz-font.html)** (Baz Light) — the same Arabic typeface as [Edadat](https://github.com/Zyzto/Edadat) and [Siglat](https://github.com/Zyzto/Siglat). The SVG outlines <span dir="rtl">صــفائح</span> (tatweel after <span dir="rtl">ص</span>) so GitHub renders without loading the font. Baz is not registered as a package font and the OTF is not shipped.
+The logo wordmark uses **[Baz](https://www.1001fonts.com/baz-font.html)** (Baz Light). The SVG outlines <span dir="rtl">صــفائح</span> (tatweel after <span dir="rtl">ص</span>) so GitHub renders without loading the font. Baz is not registered as a package font and the OTF is not shipped.
 
 ---
 

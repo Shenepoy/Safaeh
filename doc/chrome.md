@@ -1,8 +1,7 @@
 # Shared UI chrome
 
-Safaeh now ships the list, status, and theme chrome that used to live in
-Hisab. The package still owns no copy, routing, or state. Hosts pass
-already-localized strings and wrap async types themselves.
+Safaeh provides shared list, status, and theme chrome. Hosts supply localized
+strings, routing, and state, and adapt their async types to the widgets.
 
 ## When to pick which widget
 
@@ -43,9 +42,9 @@ when a context is passed (default 16).
 `applySafaehMaterialChrome` applies card, input, chip, snackbar, app-bar,
 and divider chrome. The host still owns:
 
-- fonts (`GoogleFonts`, Cairo, system faces)
-- seed / FlexColorScheme colors
-- host `ThemeExtension`s such as Hisab's `AppThemeExtension`
+- font families and text styles
+- seed colors and color schemes
+- app-specific `ThemeExtension`s
 
 Call the factory, then `copyWith(extensions:)` for anything app-specific.
 `scaleSafaehTextTheme` is the shared text-scale helper.

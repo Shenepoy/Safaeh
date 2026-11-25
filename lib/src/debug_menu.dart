@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 
 import 'adaptive_sheet.dart';
+import 'theme.dart';
 
 /// One expandable section in [showSafaehDebugMenu].
 class SafaehDebugSection {
@@ -279,6 +280,7 @@ Future<T?> showSafaehDebugMenu<T>(
 }) {
   return showSafaeh<T>(
     context: context,
+    useRootNavigator: SafaehNavigatorScope.of(context),
     title: title,
     child: SafaehDebugMenuBody(
       identity: identity,

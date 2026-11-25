@@ -3,6 +3,58 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:safaeh/safaeh.dart';
 
 void main() {
+  testWidgets('drop popout follows its resized anchor and requested width', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final anchor = GlobalKey();
+    const card = ValueKey('drop-card');
+
+    Rect? sourceRect() {
+      final box = anchor.currentContext?.findRenderObject() as RenderBox?;
+      return box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+    }
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => Stack(
+              children: [
+                Positioned(
+                  top: MediaQuery.sizeOf(context).width < 600 ? 80 : 240,
+                  left: 24,
+                  child: TextButton(
+                    key: anchor,
+                    onPressed: () => showSafaehAnchored<void>(
+                      context: context,
+                      sourceRect: sourceRect(),
+                      sourceRectBuilder: sourceRect,
+                      maxCardWidth: 180,
+                      child: const SizedBox(key: card, height: 56),
+                    ),
+                    child: const Text('Show popout'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byKey(anchor));
+    await tester.pumpAndSettle();
+    final panel = find.byKey(card);
+    expect(tester.getSize(panel).width, 180);
+    final before = tester.getTopLeft(panel).dy;
+
+    tester.view.physicalSize = const Size(800, 800);
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(panel).dy, closeTo(before + 160, 0.01));
+  });
+
   testWidgets('text input validator keeps the sheet open', (tester) async {
     String? value = 'unset';
     await tester.pumpWidget(

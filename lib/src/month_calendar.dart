@@ -183,46 +183,60 @@ class _DayCell extends StatelessWidget {
         !day.isAfter(_dateOnly(end!));
     final edge = isStart || isEnd;
     final today = _sameDay(day, DateTime.now());
+    final labels = MaterialLocalizations.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: inRange && !edge
-              ? scheme.primary.withValues(alpha: 0.16)
-              : null,
-          borderRadius: BorderRadiusDirectional.horizontal(
-            start: isStart ? const Radius.circular(999) : Radius.zero,
-            end: isEnd ? const Radius.circular(999) : Radius.zero,
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      selected: edge || inRange,
+      label: labels.formatFullDate(day),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: inRange && !edge
+                ? scheme.primary.withValues(alpha: 0.16)
+                : null,
+            borderRadius: BorderRadiusDirectional.horizontal(
+              start: isStart ? const Radius.circular(999) : Radius.zero,
+              end: isEnd ? const Radius.circular(999) : Radius.zero,
+            ),
           ),
-        ),
-        child: InkWell(
-          onTap: enabled ? () => onTap(day) : null,
-          customBorder: const CircleBorder(),
-          child: Center(
-            child: AnimatedContainer(
-              duration: SafaehTheme.of(context).motion == Duration.zero
-                  ? Duration.zero
-                  : const Duration(milliseconds: 150),
-              width: 36,
-              height: 36,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: edge ? scheme.primary : null,
-                shape: BoxShape.circle,
-                border: today && !edge
-                    ? Border.all(color: scheme.outline)
-                    : null,
-              ),
-              child: Text(
-                '${day.day}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: !enabled
-                      ? scheme.onSurface.withValues(alpha: 0.38)
-                      : edge
-                      ? scheme.onPrimary
-                      : scheme.onSurface,
-                  fontWeight: edge || today ? FontWeight.w700 : FontWeight.w500,
+          child: InkWell(
+            onTap: enabled ? () => onTap(day) : null,
+            customBorder: const CircleBorder(),
+            child: Center(
+              child: AnimatedContainer(
+                duration: SafaehTheme.of(context).motion == Duration.zero
+                    ? Duration.zero
+                    : safaehResolvedMotion(
+                        context,
+                        const Duration(milliseconds: 150),
+                      ),
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: edge ? scheme.primary : null,
+                  shape: BoxShape.circle,
+                  border: today && !edge
+                      ? Border.all(color: scheme.outline)
+                      : null,
+                ),
+                child: ExcludeSemantics(
+                  child: Text(
+                    labels.formatDecimal(day.day),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: !enabled
+                          ? scheme.onSurface.withValues(alpha: 0.38)
+                          : edge
+                          ? scheme.onPrimary
+                          : scheme.onSurface,
+                      fontWeight: edge || today
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                    ),
+                  ),
                 ),
               ),
             ),

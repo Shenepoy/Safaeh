@@ -127,6 +127,43 @@ void main() {
     expect(titleCenter.dx, closeTo(300, 1));
   });
 
+  for (final direction in TextDirection.values) {
+    testWidgets('app bar title clears measured controls in $direction', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      const leadingKey = Key('wide-leading');
+      const titleKey = Key('long-title');
+      const actionKey = Key('wide-action');
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Directionality(
+            textDirection: direction,
+            child: const Scaffold(
+              appBar: SafaehContentAlignedAppBar(
+                leftOffset: 0,
+                bandWidth: 360,
+                leading: SizedBox(key: leadingKey, width: 80, height: 44),
+                title: Text('A long title for the current page', key: titleKey),
+                actions: [SizedBox(key: actionKey, width: 160, height: 44)],
+              ),
+              body: SizedBox.shrink(),
+            ),
+          ),
+        ),
+      );
+
+      final title = tester.getRect(find.byKey(titleKey));
+      expect(title.width, greaterThan(0));
+      expect(title.overlaps(tester.getRect(find.byKey(leadingKey))), isFalse);
+      expect(title.overlaps(tester.getRect(find.byKey(actionKey))), isFalse);
+    });
+  }
+
   testWidgets('SafaehContentAlignedFabLocation equals on same metrics', (
     tester,
   ) async {

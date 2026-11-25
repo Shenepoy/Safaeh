@@ -1,8 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:safaeh/safaeh.dart';
 
-/// Edadat-style device chrome (`edadat/example/lib/app.dart` `_PhoneFrame`):
-/// 390×844 bezel, 8px outline, 28px status strip. Content MediaQuery is
+import 'pages.dart' show CatalogFeedbackInset;
+
+/// A 390×844 bezel, 8px outline, and 28px status strip. Content MediaQuery is
 /// 390×816 with no extra padding so in-app SafeArea does not double-inset.
 class CatalogPhoneFrame extends StatelessWidget {
   const CatalogPhoneFrame({super.key, required this.child});
@@ -89,9 +90,8 @@ class CatalogPhoneFrame extends StatelessWidget {
   }
 }
 
-/// Centered bezel over the catalog. Scrim tap, chrome close, and system
-/// back all return to the gallery. Sheet-like items also get a reach
-/// toggle in the chrome row above the bezel.
+/// Centered bezel over the catalog. Back dismisses an open demo route before
+/// closing the bezel. Sheet-like items also get a reach toggle above the bezel.
 Future<void> showCatalogPhonePreview({
   required BuildContext context,
   required Widget Function(SafaehPhoneSheetPlacement placement) builder,
@@ -139,82 +139,129 @@ class _CatalogPhonePreviewDialog extends StatefulWidget {
 
 class _CatalogPhonePreviewDialogState
     extends State<_CatalogPhonePreviewDialog> {
-  var _placement = SafaehPhoneSheetPlacement.bottom;
+  final _placement = ValueNotifier(SafaehPhoneSheetPlacement.bottom);
+  final _feedbackInset = ValueNotifier<double>(0);
+  final _phoneNavigator = GlobalKey<NavigatorState>();
+
+  @override
+  void dispose() {
+    _placement.dispose();
+    _feedbackInset.dispose();
+    super.dispose();
+  }
 
   void _pop(BuildContext context) {
-    final nav = Navigator.of(context, rootNavigator: true);
+    final nav = Navigator.of(context);
     if (nav.canPop()) nav.pop();
   }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final expanded = _placement == SafaehPhoneSheetPlacement.center;
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Positioned.fill(
-          child: GestureDetector(
-            key: const ValueKey('catalog_phone_scrim'),
-            behavior: HitTestBehavior.opaque,
-            onTap: () => _pop(context),
-            child: const ColoredBox(color: Colors.transparent),
-          ),
-        ),
-        Center(
-          child: FittedBox(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+    return ValueListenableBuilder(
+      valueListenable: _placement,
+      builder: (context, placement, phone) {
+        final expanded = placement == SafaehPhoneSheetPlacement.center;
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            Positioned.fill(
               child: GestureDetector(
-                onTap: () {},
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      key: const ValueKey('catalog_phone_chrome'),
-                      width: CatalogPhoneFrame.size.width,
-                      child: Row(
-                        children: [
-                          _CatalogPhoneChromeButton(
-                            buttonKey: const ValueKey('catalog_phone_close'),
-                            label: widget.closeLabel,
-                            icon: Icons.close,
-                            iconColor: scheme.onSurface,
-                            onPressed: () => _pop(context),
+                key: const ValueKey('catalog_phone_scrim'),
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _pop(context),
+                child: const ColoredBox(color: Colors.transparent),
+              ),
+            ),
+            Center(
+              child: FittedBox(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                  child: GestureDetector(
+                    onTap: () {},
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          key: const ValueKey('catalog_phone_chrome'),
+                          width: CatalogPhoneFrame.size.width,
+                          child: Row(
+                            children: [
+                              _CatalogPhoneChromeButton(
+                                buttonKey: const ValueKey(
+                                  'catalog_phone_close',
+                                ),
+                                label: widget.closeLabel,
+                                icon: Icons.close,
+                                iconColor: scheme.onSurface,
+                                onPressed: () => _pop(context),
+                              ),
+                              const Spacer(),
+                              if (widget.showReachToggle)
+                                _CatalogPhoneChromeButton(
+                                  buttonKey: const ValueKey(
+                                    'catalog_phone_reach',
+                                  ),
+                                  label: expanded
+                                      ? widget.t('sheet_placement_bottom')
+                                      : widget.t('sheet_placement_center'),
+                                  icon: expanded
+                                      ? Icons.vertical_align_center
+                                      : Icons.vertical_align_bottom,
+                                  iconColor: expanded
+                                      ? scheme.primary
+                                      : scheme.onSurfaceVariant,
+                                  onPressed: () {
+                                    _placement.value = expanded
+                                        ? SafaehPhoneSheetPlacement.bottom
+                                        : SafaehPhoneSheetPlacement.center;
+                                  },
+                                ),
+                            ],
                           ),
-                          const Spacer(),
-                          if (widget.showReachToggle)
-                            _CatalogPhoneChromeButton(
-                              buttonKey: const ValueKey('catalog_phone_reach'),
-                              label: expanded
-                                  ? widget.t('sheet_placement_bottom')
-                                  : widget.t('sheet_placement_center'),
-                              icon: expanded
-                                  ? Icons.vertical_align_center
-                                  : Icons.vertical_align_bottom,
-                              iconColor: expanded
-                                  ? scheme.primary
-                                  : scheme.onSurfaceVariant,
-                              onPressed: () {
-                                setState(() {
-                                  _placement = expanded
-                                      ? SafaehPhoneSheetPlacement.bottom
-                                      : SafaehPhoneSheetPlacement.center;
-                                });
-                              },
-                            ),
-                        ],
+                        ),
+                        const SizedBox(height: 8),
+                        phone!,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+      child: CatalogPhoneFrame(
+        child: SafaehNavigatorScope(
+          useRootNavigator: false,
+          child: SafaehFeedbackHost(
+            relayout: _feedbackInset,
+            bottomInsetBuilder: (_) => _feedbackInset.value,
+            itemWidth: CatalogPhoneFrame.size.width - 48,
+            child: ScaffoldMessenger(
+              child: NavigatorPopHandler<Object?>(
+                onPopWithResult: (_) =>
+                    _phoneNavigator.currentState?.maybePop(),
+                child: Navigator(
+                  key: _phoneNavigator,
+                  onGenerateRoute: (_) => MaterialPageRoute<void>(
+                    builder: (_) => CatalogFeedbackInset(
+                      notifier: _feedbackInset,
+                      child: Scaffold(
+                        body: ValueListenableBuilder(
+                          valueListenable: _placement,
+                          builder: (_, placement, _) =>
+                              widget.builder(placement),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    CatalogPhoneFrame(child: widget.builder(_placement)),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -249,14 +296,10 @@ class _CatalogPhoneChromeButton extends StatelessWidget {
           key: buttonKey,
           customBorder: const CircleBorder(),
           onTap: onPressed,
-          child: Semantics(
-            button: true,
-            label: label,
-            child: SizedBox(
-              width: 44,
-              height: 44,
-              child: Icon(icon, size: 22, color: iconColor),
-            ),
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Icon(icon, size: 22, color: iconColor),
           ),
         ),
       ),

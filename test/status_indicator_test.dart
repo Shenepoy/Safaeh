@@ -238,11 +238,14 @@ void main() {
   testWidgets('connectivity bar shows a recovered message then collapses', (
     tester,
   ) async {
-    Widget bar(SafaehSyncState state) => _host(
+    Widget bar(
+      SafaehSyncState state, {
+      String? recoveredLabel = 'Back online',
+    }) => _host(
       SafaehConnectivityBar(
         state: state,
         label: 'Offline',
-        recoveredLabel: 'Back online',
+        recoveredLabel: recoveredLabel,
       ),
       disableAnimations: true,
     );
@@ -253,6 +256,13 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
     expect(find.text('Back online'), findsNothing);
     expect(find.text('Offline'), findsNothing);
+
+    await tester.pumpWidget(bar(SafaehSyncState.offline));
+    await tester.pumpWidget(bar(SafaehSyncState.saved));
+    expect(find.text('Back online'), findsOneWidget);
+    await tester.pumpWidget(bar(SafaehSyncState.saved, recoveredLabel: null));
+    expect(find.text('Back online'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('collapsing with animations on never overflows', (tester) async {

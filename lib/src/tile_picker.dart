@@ -47,8 +47,8 @@ typedef SafaehTileSearchMatch<T> = bool Function(
 
 /// List-row picker body: optional in-body title, [header], [SafaehOptionList].
 ///
-/// Hosts that already wrap [showSafaeh] (or Hisab `showResponsiveSheet`) can
-/// mount this widget as the child. [showSafaehTilePicker] does that for you.
+/// Hosts with their own wrapper around [showSafaeh] can pass this widget as
+/// the child. [showSafaehTilePicker] provides the route and body together.
 class SafaehTilePickerBody<T> extends StatefulWidget {
   const SafaehTilePickerBody({
     super.key,
@@ -141,10 +141,21 @@ class _SafaehTilePickerBodyState<T> extends State<SafaehTilePickerBody<T>> {
         : widget.selected != null && opt.value == widget.selected;
     final built = widget.tileBuilder?.call(context, opt, selected);
     if (built != null) {
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: opt.enabled ? () => _onOptionTap(opt) : null,
-        child: IgnorePointer(child: built),
+      final activate = opt.enabled ? () => _onOptionTap(opt) : null;
+      return Semantics(
+        button: true,
+        enabled: opt.enabled,
+        selected: selected,
+        label: opt.label,
+        onTap: activate,
+        excludeSemantics: true,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: activate,
+            child: ExcludeFocus(child: IgnorePointer(child: built)),
+          ),
+        ),
       );
     }
     return SafaehOptionTile(

@@ -35,6 +35,26 @@ void main() {
   final root = wb.WidgetbookRoot(children: catalogDirectories);
   final stories = root.leaves.whereType<wb.WidgetbookUseCase>().toList();
 
+  test('the catalog starts with interaction and app structure', () {
+    expect(catalogDirectories.take(4).map((folder) => folder.name), [
+      'Sheets',
+      'Controls',
+      'Navigation',
+      'Layout',
+    ]);
+    expect(
+      stories
+          .map((story) => story.path)
+          .where((path) => path.startsWith('controls/'))
+          .take(3),
+      [
+        'controls/dropdown/default',
+        'controls/dropdown/scrollable',
+        'controls/dropdown/toggles',
+      ],
+    );
+  });
+
   for (final story in stories) {
     testWidgets('renders ${story.path}', (tester) async {
       await openStory(tester, story.path);
@@ -66,6 +86,23 @@ void main() {
       same(before),
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('tab forms keep the draft when switching previews', (
+    tester,
+  ) async {
+    await openStory(tester, 'layout/tab-forms/default');
+    final name = find.byKey(const ValueKey('tab_name'));
+    await tester.enterText(name, 'Draft name');
+
+    Finder tab(String label) =>
+        find.descendant(of: find.byType(m.TabBar), matching: find.text(label));
+    await tester.tap(tab('Settings'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('tab_notes')), findsOneWidget);
+    await tester.tap(tab('Home'));
+    await tester.pumpAndSettle();
+    expect(find.text('Draft name'), findsOneWidget);
   });
 
   testWidgets(

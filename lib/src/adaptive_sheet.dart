@@ -62,6 +62,7 @@ class SafaehRouteOptions {
     this.slideUp,
     this.phonePlacement,
     this.useRootNavigator,
+    this.routeSettings,
     this.dismissLabel,
     this.closeTooltip,
     this.floatingAppearance,
@@ -79,6 +80,9 @@ class SafaehRouteOptions {
   final SafaehTransition? slideUp;
   final SafaehPhoneSheetPlacement? phonePlacement;
   final bool? useRootNavigator;
+
+  /// Optional route name and arguments for navigation observers and history.
+  final RouteSettings? routeSettings;
 
   /// Phone drag-handle label. Defaults to Material “Dismiss”.
   final String? dismissLabel;
@@ -231,10 +235,13 @@ Future<T?> showSafaeh<T>({
     from: context,
     to: Navigator.of(context, rootNavigator: resolvedRoot).context,
   );
+  // The phone and dialog presentations have different layout ancestors.
+  final routeBody = KeyedSubtree(key: GlobalKey(), child: child);
 
   return showGeneralDialog<T>(
     context: context,
     useRootNavigator: resolvedRoot,
+    routeSettings: route?.routeSettings,
     barrierDismissible: resolvedBarrier,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     barrierColor:
@@ -273,7 +280,7 @@ Future<T?> showSafaeh<T>({
           showHeaderDivider: showHeaderDivider,
           pinTopOnSizeChange: pinTopOnSizeChange,
           floatingAppearance: resolvedFloatingAppearance,
-          child: child,
+          child: routeBody,
         ),
       );
     },
@@ -599,6 +606,12 @@ class _AdaptiveSheetHost extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
+    void dismiss() {
+      if (ModalRoute.of(context)?.isCurrent == true) {
+        Navigator.of(context).pop(dismissValue);
+      }
+    }
+
     final viewInsets = MediaQuery.viewInsetsOf(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
@@ -683,7 +696,7 @@ class _AdaptiveSheetHost extends StatelessWidget {
                     tooltip:
                         closeTooltip ??
                         MaterialLocalizations.of(context).closeButtonTooltip,
-                    onPressed: () => safaehPop(context, dismissValue),
+                    onPressed: dismiss,
                     icon: Icon(Icons.close, size: 22, color: cs.onSurface),
                   ),
                 ],
@@ -699,9 +712,7 @@ class _AdaptiveSheetHost extends StatelessWidget {
                       MaterialLocalizations.of(context)
                           .modalBarrierDismissLabel)
                 : null,
-            onTap: barrierDismissible
-                ? () => safaehPop(context, dismissValue)
-                : null,
+            onTap: barrierDismissible ? dismiss : null,
             child: Padding(
               key: const ValueKey('safaeh_drag_handle'),
               padding: const EdgeInsets.only(top: 12, bottom: 8),
@@ -885,7 +896,7 @@ class _AdaptiveSheetHost extends StatelessWidget {
     );
 
     // Call the transition once. Wrapping another AnimatedBuilder here nested
-    // with Hisab's fade/slide builders and doubled work on every tick.
+    // with host fade/slide builders and doubled work on every tick.
     final entering = isWide
         ? (fadeScale ?? safaehFadeScale)(
             animation: openAnimation,
@@ -908,7 +919,7 @@ class _AdaptiveSheetHost extends StatelessWidget {
               Positioned.fill(
                 child: GestureDetector(
                   behavior: HitTestBehavior.translucent,
-                  onTap: () => safaehPop(context, dismissValue),
+                  onTap: dismiss,
                   child: const SizedBox.expand(),
                 ),
               ),
@@ -934,7 +945,7 @@ class _AdaptiveSheetHost extends StatelessWidget {
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
           if (didPop) return;
-          if (barrierDismissible) safaehPop(context, dismissValue);
+          if (barrierDismissible) dismiss();
         },
         child: host,
       ),

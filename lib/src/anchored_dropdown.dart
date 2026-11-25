@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'theme.dart';
 
-/// One row in a [SafaehAnchoredDropdownChip] menu.
+/// One row in an anchored choice or toggle menu.
 class SafaehDropdownOption<T> {
   const SafaehDropdownOption({
     required this.value,
@@ -23,14 +23,105 @@ class SafaehDropdownOption<T> {
 /// [selectedFill], [selectedBorder], and [selectedForeground] to keep the
 /// selected row aligned with their own color tokens. [labelBuilder] is useful
 /// for hosts that need bidi-aware or otherwise specialized text widgets.
-class SafaehAnchoredDropdownChip<T> extends StatefulWidget {
+class SafaehAnchoredDropdownChip<T> extends _AnchoredDropdownChip<T> {
   const SafaehAnchoredDropdownChip({
+    super.key,
+    required super.icon,
+    required super.label,
+    required super.options,
+    required this.selected,
+    required this.onSelected,
+    super.active,
+    super.expand,
+    super.menuWidth,
+    super.selectedFill,
+    super.selectedBorder,
+    super.selectedForeground,
+    super.labelBuilder,
+    super.iconOnly,
+  });
+
+  /// Keeps a longer list of choices in a compact, scrollable anchored menu.
+  /// The height is also limited by the space available on screen.
+  const SafaehAnchoredDropdownChip.scrollable({
+    super.key,
+    required super.icon,
+    required super.label,
+    required super.options,
+    required this.selected,
+    required this.onSelected,
+    double maxHeight = 240,
+    super.active,
+    super.expand,
+    super.menuWidth,
+    super.selectedFill,
+    super.selectedBorder,
+    super.selectedForeground,
+    super.labelBuilder,
+    super.iconOnly,
+  }) : super(menuMaxHeight: maxHeight);
+
+  final T selected;
+  final ValueChanged<T> onSelected;
+
+  @override
+  bool _isSelected(T value) => value == selected;
+
+  @override
+  void _activate(T value) => onSelected(value);
+
+  @override
+  State<SafaehAnchoredDropdownChip<T>> createState() =>
+      _AnchoredDropdownChipState<T, SafaehAnchoredDropdownChip<T>>();
+}
+
+/// An anchored menu for independent checkbox choices.
+///
+/// The host owns [selectedValues] and updates them in [onToggled]. The menu
+/// stays open after each change so several rows can be toggled in one visit.
+class SafaehAnchoredToggleDropdownChip<T> extends _AnchoredDropdownChip<T> {
+  const SafaehAnchoredToggleDropdownChip({
+    super.key,
+    required super.icon,
+    required super.label,
+    required super.options,
+    required this.selectedValues,
+    required this.onToggled,
+    double maxHeight = 240,
+    super.active,
+    super.expand,
+    super.menuWidth,
+    super.selectedFill,
+    super.selectedBorder,
+    super.selectedForeground,
+    super.labelBuilder,
+    super.iconOnly,
+  }) : super(menuMaxHeight: maxHeight);
+
+  final Set<T> selectedValues;
+  final void Function(T value, bool checked) onToggled;
+
+  @override
+  bool get _toggleRows => true;
+
+  @override
+  bool _isSelected(T value) => selectedValues.contains(value);
+
+  @override
+  void _activate(T value) => onToggled(value, !_isSelected(value));
+
+  @override
+  State<SafaehAnchoredToggleDropdownChip<T>> createState() =>
+      _AnchoredDropdownChipState<T, SafaehAnchoredToggleDropdownChip<T>>();
+}
+
+abstract class _AnchoredDropdownChip<T> extends StatefulWidget {
+  const _AnchoredDropdownChip({
     super.key,
     required this.icon,
     required this.label,
     required this.options,
-    required this.selected,
-    required this.onSelected,
+    this.menuMaxHeight,
     this.active = false,
     this.expand = false,
     this.menuWidth,
@@ -39,13 +130,15 @@ class SafaehAnchoredDropdownChip<T> extends StatefulWidget {
     this.selectedForeground,
     this.labelBuilder,
     this.iconOnly = false,
-  }) : assert(menuWidth == null || menuWidth > 0);
+  }) : assert(menuWidth == null || menuWidth > 0),
+       assert(
+         menuMaxHeight == null ||
+             (menuMaxHeight > 0 && menuMaxHeight < double.infinity),
+       );
 
   final IconData icon;
   final String label;
   final List<SafaehDropdownOption<T>> options;
-  final T selected;
-  final ValueChanged<T> onSelected;
 
   /// When true, the trigger uses the emphasized selected-filter look.
   final bool active;
@@ -55,6 +148,9 @@ class SafaehAnchoredDropdownChip<T> extends StatefulWidget {
 
   /// Overrides the automatic trigger-width menu sizing when supplied.
   final double? menuWidth;
+
+  /// Additional height limit for the scrollable variant, in logical pixels.
+  final double? menuMaxHeight;
 
   /// Optional host color for the selected menu row.
   final Color? selectedFill;
@@ -72,13 +168,13 @@ class SafaehAnchoredDropdownChip<T> extends StatefulWidget {
   /// Menu rows still show their labels.
   final bool iconOnly;
 
-  @override
-  State<SafaehAnchoredDropdownChip<T>> createState() =>
-      _SafaehAnchoredDropdownChipState<T>();
+  bool get _toggleRows => false;
+  bool _isSelected(T value);
+  void _activate(T value);
 }
 
-class _SafaehAnchoredDropdownChipState<T>
-    extends State<SafaehAnchoredDropdownChip<T>> {
+class _AnchoredDropdownChipState<T, W extends _AnchoredDropdownChip<T>>
+    extends State<W> {
   final _anchorKey = GlobalKey();
   double? _anchorWidth;
 
@@ -89,7 +185,7 @@ class _SafaehAnchoredDropdownChipState<T>
   }
 
   @override
-  void didUpdateWidget(covariant SafaehAnchoredDropdownChip<T> oldWidget) {
+  void didUpdateWidget(covariant W oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.menuWidth == null) _scheduleAnchorMeasurement();
   }
@@ -113,13 +209,69 @@ class _SafaehAnchoredDropdownChipState<T>
     return widget.labelBuilder?.call(data, style) ?? Text(data, style: style);
   }
 
+  Widget _menuItem(SafaehDropdownOption<T> option, ThemeData theme) {
+    final cs = theme.colorScheme;
+    final selected = widget._isSelected(option.value);
+    final selectedForeground =
+        widget.selectedForeground ??
+        (widget.selectedFill == null ? cs.onPrimaryContainer : cs.onSurface);
+    final style = ButtonStyle(
+      backgroundColor: WidgetStatePropertyAll(
+        selected
+            ? (widget.selectedFill ?? cs.primaryContainer)
+            : cs.surfaceContainerLow,
+      ),
+      side: WidgetStatePropertyAll(
+        BorderSide(
+          color: selected
+              ? (widget.selectedBorder ?? cs.primary)
+              : cs.outlineVariant.withValues(alpha: 0.45),
+        ),
+      ),
+      shape: WidgetStatePropertyAll(
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      padding: const WidgetStatePropertyAll(
+        EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+    );
+    final label = _label(
+      option.label,
+      theme.textTheme.bodyMedium?.copyWith(
+        fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+        color: selected ? selectedForeground : cs.onSurface,
+      ),
+    );
+    final icon = option.icon == null
+        ? null
+        : Icon(
+            option.icon,
+            size: 20,
+            color: selected ? cs.primary : cs.onSurfaceVariant,
+          );
+
+    if (widget._toggleRows) {
+      return CheckboxMenuButton(
+        value: selected,
+        onChanged: (_) => widget._activate(option.value),
+        closeOnActivate: false,
+        trailingIcon: icon,
+        style: style,
+        child: label,
+      );
+    }
+    return MenuItemButton(
+      leadingIcon: icon,
+      style: style,
+      onPressed: () => widget._activate(option.value),
+      child: label,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final selectedForeground =
-        widget.selectedForeground ??
-        (widget.selectedFill == null ? cs.onPrimaryContainer : cs.onSurface);
 
     return MenuAnchor(
       // Let a tap reach another chip so it can open in the same gesture.
@@ -146,9 +298,10 @@ class _SafaehAnchoredDropdownChipState<T>
         }),
         maximumSize: WidgetStateProperty.resolveWith<Size?>((_) {
           final width = widget.menuWidth ?? _anchorWidth ?? 0;
+          final viewportLimit = MediaQuery.sizeOf(context).height * 0.45;
           return Size(
             math.max(280.0, width),
-            MediaQuery.sizeOf(context).height * 0.45,
+            math.min(widget.menuMaxHeight ?? viewportLimit, viewportLimit),
           );
         }),
       ),
@@ -251,49 +404,7 @@ class _SafaehAnchoredDropdownChipState<T>
       menuChildren: [
         for (var i = 0; i < widget.options.length; i++) ...[
           if (i > 0) const SizedBox(height: 6),
-          MenuItemButton(
-            leadingIcon: widget.options[i].icon == null
-                ? null
-                : Icon(
-                    widget.options[i].icon,
-                    size: 20,
-                    color: widget.options[i].value == widget.selected
-                        ? cs.primary
-                        : cs.onSurfaceVariant,
-                  ),
-            style: ButtonStyle(
-              backgroundColor: WidgetStatePropertyAll(
-                widget.options[i].value == widget.selected
-                    ? (widget.selectedFill ?? cs.primaryContainer)
-                    : cs.surfaceContainerLow,
-              ),
-              side: WidgetStatePropertyAll(
-                BorderSide(
-                  color: widget.options[i].value == widget.selected
-                      ? (widget.selectedBorder ?? cs.primary)
-                      : cs.outlineVariant.withValues(alpha: 0.45),
-                ),
-              ),
-              shape: WidgetStatePropertyAll(
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              padding: const WidgetStatePropertyAll(
-                EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              ),
-            ),
-            onPressed: () => widget.onSelected(widget.options[i].value),
-            child: _label(
-              widget.options[i].label,
-              theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: widget.options[i].value == widget.selected
-                    ? FontWeight.w700
-                    : FontWeight.w600,
-                color: widget.options[i].value == widget.selected
-                    ? selectedForeground
-                    : cs.onSurface,
-              ),
-            ),
-          ),
+          _menuItem(widget.options[i], theme),
         ],
       ],
     );

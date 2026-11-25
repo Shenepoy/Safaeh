@@ -8,7 +8,7 @@ claim that every combination of settings or every interaction is tested.
 | Public module(s) | Story or behavioral coverage |
 | --- | --- |
 | `option_tile` | Controls → Option tile: default, long mixed text, labeled/disabled rows |
-| `anchored_dropdown`, `anchored_popout` | Controls → Dropdown, Anchored popout; local navigator regression |
+| `anchored_dropdown`, `anchored_popout` | Controls → Dropdown (default, scrollable, toggles), Anchored popout; local navigator regression |
 | `month_calendar`, `swatch_picker`, `cycle_button` | Controls → Calendar (fixed November 2026), Swatch picker, Cycle button |
 | `meta_chip`, `content_panel`, `kpi_card` | Display → Meta chip, Content panel, KPI card; editable content/states |
 | `glyph_avatar`, `bordered_list_chrome`, `section_header` | Display → Glyph avatar, Bordered list, Section header |
@@ -27,7 +27,7 @@ claim that every combination of settings or every interaction is tested.
 | `sidenav`, `floating_nav` | Navigation → Sidenav rail/drawer/overlay, Floating nav |
 | `branch_sidenav` | Navigation → Branch sidenav: open a list, then a page inside it; collapse; root branch sidenav tests |
 | `page_index`, `morphing_app_bar` | Navigation → Page index rail/overlay, App bar morphing |
-| `content_band`, `content_aside`, `content_aligned` | Layout → Content band, End aside, Aligned chrome, Aligned page |
+| `content_band`, `content_aside`, `content_aligned` | Layout → Content band, End aside, Aligned chrome, Aligned page, Tab forms |
 | `bottom_nav` | Layout → Keyboard and navigation; simulated keyboard inset; root bottom-nav tests |
 | `display_cutout_layout`, `cutout_aware_fab_location` | Layout → Cutout avoidance; enable Environment → Simulated cutout; root cutout-layout tests |
 | `device_cutout_scope` | Root display-cutout tests; native discovery intentionally not invoked by the web simulation |

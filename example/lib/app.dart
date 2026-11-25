@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:safaeh/safaeh.dart';
 
@@ -27,6 +29,14 @@ class SafaehExampleApp extends StatefulWidget {
 class _SafaehExampleAppState extends State<SafaehExampleApp> {
   final _navigatorKey = GlobalKey<NavigatorState>();
   final _feedbackInset = ValueNotifier<double>(0);
+  final _modalOpen = ValueNotifier(false);
+  late final _routeObserver = _CatalogRouteObserver((open) {
+    final binding = WidgetsBinding.instance;
+    binding.addPostFrameCallback((_) {
+      if (mounted) _modalOpen.value = open;
+    });
+    binding.ensureVisualUpdate();
+  });
   late String _locale;
   late ThemeMode _themeMode;
   late SafaehFloatingSurfaceStyle _floatingStyle;
@@ -44,6 +54,7 @@ class _SafaehExampleAppState extends State<SafaehExampleApp> {
   @override
   void dispose() {
     _feedbackInset.dispose();
+    _modalOpen.dispose();
     super.dispose();
   }
 
@@ -75,38 +86,51 @@ class _SafaehExampleAppState extends State<SafaehExampleApp> {
         darkTheme: catalogTheme(Brightness.dark),
         themeMode: _themeMode,
         navigatorKey: _navigatorKey,
+        navigatorObservers: [_routeObserver],
+        onGenerateRoute: (settings) => buildCatalogRoute(
+          settings,
+          (key) => translateCatalog(key, _locale),
+        ),
         builder: (context, child) {
-          return SafaehDebugMenuHost(
-            tooltip: translateCatalog('debug_menu', _locale),
-            onOpen: _openDebugMenu,
-            child: SafaehFeedbackHost(
-              relayout: _feedbackInset,
-              bottomInsetBuilder: (_) => _feedbackInset.value,
-              itemWidthBuilder: (context) =>
-                  (MediaQuery.sizeOf(context).width - 32)
-                      .clamp(0.0, 560.0)
-                      .toDouble(),
-              child: CatalogFeedbackInset(
-                notifier: _feedbackInset,
-                child: ThemeRippleHost(
-                  overlay: CatalogAppearanceToggles(
-                    localeCode: _locale,
-                    themeMode: _themeMode,
-                    floatingStyle: _floatingStyle,
-                    onSelectLocale: (code) => setState(() => _locale = code),
-                    onToggleTheme: () => setState(() {
-                      _themeMode = _themeMode == ThemeMode.dark
-                          ? ThemeMode.light
-                          : ThemeMode.dark;
-                    }),
-                    onCycleFloatingStyle: () => setState(() {
-                      final styles = SafaehFloatingSurfaceStyle.values;
-                      _floatingStyle =
-                          styles[(styles.indexOf(_floatingStyle) + 1) %
-                              styles.length];
-                    }),
+          return ValueListenableBuilder(
+            valueListenable: _modalOpen,
+            child: child,
+            builder: (context, modalOpen, child) => SafaehDebugMenuHost(
+              visible: !modalOpen,
+              tooltip: translateCatalog('debug_menu', _locale),
+              onOpen: _openDebugMenu,
+              child: SafaehFeedbackHost(
+                relayout: _feedbackInset,
+                bottomInsetBuilder: (_) => _feedbackInset.value,
+                itemWidthBuilder: (context) =>
+                    (MediaQuery.sizeOf(context).width - 32)
+                        .clamp(0.0, 560.0)
+                        .toDouble(),
+                child: CatalogFeedbackInset(
+                  notifier: _feedbackInset,
+                  child: ThemeRippleHost(
+                    overlay: modalOpen
+                        ? null
+                        : CatalogAppearanceToggles(
+                            localeCode: _locale,
+                            themeMode: _themeMode,
+                            floatingStyle: _floatingStyle,
+                            onSelectLocale: (code) =>
+                                setState(() => _locale = code),
+                            onToggleTheme: () => setState(() {
+                              _themeMode = _themeMode == ThemeMode.dark
+                                  ? ThemeMode.light
+                                  : ThemeMode.dark;
+                            }),
+                            onCycleFloatingStyle: () => setState(() {
+                              final styles = SafaehFloatingSurfaceStyle.values;
+                              _floatingStyle =
+                                  styles[(styles.indexOf(_floatingStyle) + 1) %
+                                      styles.length];
+                            }),
+                          ),
+                    child: child ?? const SizedBox.shrink(),
                   ),
-                  child: child ?? const SizedBox.shrink(),
                 ),
               ),
             ),
@@ -115,6 +139,27 @@ class _SafaehExampleAppState extends State<SafaehExampleApp> {
         home: CatalogHome(localeCode: _locale),
       ),
     );
+  }
+}
+
+class _CatalogRouteObserver extends NavigatorObserver {
+  _CatalogRouteObserver(this.onModalChanged);
+
+  final ValueChanged<bool> onModalChanged;
+
+  @override
+  void didChangeTop(Route<dynamic> topRoute, Route<dynamic>? previousTopRoute) {
+    if (topRoute is PopupRoute) {
+      onModalChanged(true);
+    } else if (previousTopRoute is PopupRoute && !previousTopRoute.isActive) {
+      unawaited(
+        previousTopRoute.completed.then((_) {
+          if (topRoute.isCurrent) onModalChanged(false);
+        }),
+      );
+    } else {
+      onModalChanged(false);
+    }
   }
 }
 

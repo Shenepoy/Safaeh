@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 
+import 'theme.dart';
+
 /// A one-tap cycle action with a full-turn animation on every activation.
 ///
 /// The host chooses the next value and supplies a localized [tooltip].
@@ -39,7 +41,7 @@ class _SafaehCycleButtonState extends State<SafaehCycleButton> {
           },
     icon: TweenAnimationBuilder<double>(
       tween: Tween(end: _turns),
-      duration: widget.duration,
+      duration: safaehResolvedMotion(context, widget.duration),
       curve: Curves.easeOutCubic,
       builder: (context, turns, child) =>
           Transform.rotate(angle: turns * 2 * math.pi, child: child),

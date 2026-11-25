@@ -1,9 +1,12 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:safaeh/safaeh.dart';
 
 import 'catalog.dart';
+import 'catalog_links.dart';
+import 'dropdown_demo.dart';
 import 'onboarding_demo.dart';
 import 'pages.dart';
 import 'phone_frame.dart';
@@ -27,21 +30,34 @@ const catalogGroups = <(String, List<String>)>[
     'group_sheets',
     [
       'sheet',
+      'dialog',
+      'confirm',
+      'text_input',
       'picker',
       'tile_picker',
       'multi_picker',
-      'confirm',
-      'text_input',
       'sheet_shell',
-      'sheet_morph',
       'sheet_padding',
-      'dialog',
+      'sheet_morph',
     ],
   ),
-  ('group_controls', ['option_tiles', 'anchored_popout', 'swatch']),
+  ('group_controls', ['dropdown', 'option_tiles', 'anchored_popout', 'swatch']),
+  (
+    'group_navigation',
+    [
+      'sidenav',
+      'sidenav_drawer',
+      'sidenav_overlay',
+      'floating_nav',
+      'morphing_app_bar',
+      'page_index',
+      'page_index_overlay',
+    ],
+  ),
+  ('group_layout', ['content_band', 'aligned_chrome', 'end_aside']),
   (
     'group_feedback',
-    ['feedback', 'status_body', 'empty_state', 'inline_banner', 'async_error'],
+    ['feedback', 'inline_banner', 'status_body', 'empty_state', 'async_error'],
   ),
   (
     'group_display',
@@ -54,26 +70,11 @@ const catalogGroups = <(String, List<String>)>[
       'user_text',
       'accent_surfaces',
       'material_chrome',
-    ],
-  ),
-  (
-    'group_navigation',
-    [
-      'sidenav',
-      'sidenav_drawer',
-      'sidenav_overlay',
-      'floating_nav',
       'floating_surface',
-      'page_index',
-      'page_index_overlay',
     ],
   ),
-  (
-    'group_layout',
-    ['content_band', 'end_aside', 'aligned_chrome', 'morphing_app_bar'],
-  ),
-  ('group_camera', ['camera', 'qr_overlay', 'qr_message']),
   ('group_onboarding', ['onboarding_designs']),
+  ('group_camera', ['camera', 'qr_overlay', 'qr_message']),
   ('group_tools', ['debug_menu', 'l10n_editor']),
 ];
 
@@ -119,11 +120,62 @@ class CatalogGallery extends StatefulWidget {
 
 class CatalogGalleryState extends State<CatalogGallery> {
   final controller = ScrollController();
+  final _search = TextEditingController();
+  String _group = '';
 
   @override
   void dispose() {
     controller.dispose();
+    _search.dispose();
     super.dispose();
+  }
+
+  Widget _filters(
+    List<(String, List<CatalogItem>)> sections,
+    String Function(String key) t,
+  ) {
+    final allSections = t('catalog_all_sections');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            key: const ValueKey('catalog_search'),
+            controller: _search,
+            decoration: InputDecoration(
+              labelText: t('catalog_search'),
+              prefixIcon: const Icon(Icons.search),
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SafaehAnchoredDropdownChip<String>.scrollable(
+                key: const ValueKey('catalog_section_filter'),
+                icon: Icons.filter_list,
+                label: _group.isEmpty ? allSections : t(_group),
+                selected: _group,
+                options: [
+                  SafaehDropdownOption(value: '', label: allSections),
+                  for (final (key, _) in sections)
+                    SafaehDropdownOption(value: key, label: t(key)),
+                ],
+                onSelected: (value) => setState(() => _group = value),
+              ),
+              if (kIsWeb)
+                TextButton(
+                  onPressed: openWidgetbook,
+                  child: const Text('Widgetbook'),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -136,16 +188,26 @@ class CatalogGalleryState extends State<CatalogGallery> {
         final unit = (inner - (columns - 1) * kCatalogColumnGap) / columns;
         double spanWidth(int span) =>
             span * unit + (span - 1) * kCatalogColumnGap;
-        final entries = <Widget>[];
         final sections = catalogSections();
-        for (var s = 0; s < sections.length; s++) {
-          final (titleKey, items) = sections[s];
+        final entries = <Widget>[_filters(sections, t)];
+        final query = _search.text.trim().toLowerCase();
+        bool matches(String key) => t(key).toLowerCase().contains(query);
+        for (final (titleKey, sectionItems) in sections) {
+          if (_group.isNotEmpty && _group != titleKey) continue;
+          final items = matches(titleKey)
+              ? sectionItems
+              : sectionItems.where((item) {
+                  final subtitleKey = item.subtitleKey;
+                  return matches(item.titleKey) ||
+                      (subtitleKey != null && matches(subtitleKey));
+                }).toList();
+          if (items.isEmpty) continue;
           entries.add(
             _GroupHeader(
               key: ValueKey('catalog_group_$titleKey'),
               title: t(titleKey),
               count: items.length,
-              first: s == 0,
+              first: entries.length == 1,
             ),
           );
           for (final row in _packRows(items, columns)) {
@@ -167,6 +229,11 @@ class CatalogGalleryState extends State<CatalogGallery> {
               ),
             );
           }
+        }
+        if (entries.length == 1) {
+          entries.add(
+            SafaehEmptyState(icon: Icons.search_off, title: t('no_matches')),
+          );
         }
         return CustomScrollView(
           key: const ValueKey('catalog_gallery'),
@@ -193,7 +260,7 @@ class CatalogGalleryState extends State<CatalogGallery> {
       titleKey: ValueKey('catalog_${item.id}_title'),
       phoneKey: ValueKey('catalog_${item.id}_phone'),
       subtitle: item.subtitleKey == null ? null : t(item.subtitleKey!),
-      phoneLabel: t('preview_phone'),
+      phoneLabel: t('preview_phone').replaceAll('{title}', t(item.titleKey)),
       onOpen: () => openCatalogItem(context, item.id, t),
       onPhonePreview: () => showCatalogPhonePreview(
         context: context,
@@ -207,8 +274,7 @@ class CatalogGalleryState extends State<CatalogGallery> {
   }
 }
 
-/// Fills rows start-first. A hole left by a wide item is backfilled with the
-/// next narrow item in the section; otherwise the row's last item stretches.
+/// Packs cards in catalog order and stretches the last item to fill each row.
 List<List<(CatalogItem, int)>> _packRows(List<CatalogItem> items, int columns) {
   int spanOf(CatalogItem item) =>
       catalogWideItems.contains(item.id) ? math.min(2, columns) : 1;
@@ -217,11 +283,10 @@ List<List<(CatalogItem, int)>> _packRows(List<CatalogItem> items, int columns) {
   while (pending.isNotEmpty) {
     final row = <(CatalogItem, int)>[];
     var used = 0;
-    while (used < columns) {
+    while (pending.isNotEmpty && used < columns) {
       final free = columns - used;
-      final index = pending.indexWhere((item) => spanOf(item) <= free);
-      if (index < 0) break;
-      final item = pending.removeAt(index);
+      if (spanOf(pending.first) > free) break;
+      final item = pending.removeAt(0);
       row.add((item, spanOf(item)));
       used += spanOf(item);
     }
@@ -346,6 +411,7 @@ class GallerySection extends StatelessWidget {
                     button: true,
                     label: title,
                     excludeSemantics: true,
+                    onTap: onOpen,
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
@@ -482,6 +548,8 @@ Widget galleryPreview(String id, String Function(String key) t) {
       return SheetMorphDemo(t: t);
     case 'option_tiles':
       return OptionTilesDemo(t: t);
+    case 'dropdown':
+      return DropdownVariantsDemo(t: t);
     case 'anchored_popout':
       return AnchoredPopoutDemo(t: t);
     case 'swatch':
@@ -592,8 +660,14 @@ Widget catalogPhonePreview(
 }) {
   final raised = placement == SafaehPhoneSheetPlacement.center;
 
-  Widget modal(Widget sheet) {
-    return CatalogPhoneModalStage(child: sheet);
+  Widget modal(Widget sheet, {bool actionsClosePreview = false}) {
+    // These inline bodies are already open. Their terminal actions dismiss
+    // the preview dialog, which owns the inline body.
+    return CatalogPhoneModalStage(
+      child: actionsClosePreview
+          ? SafaehNavigatorScope(useRootNavigator: true, child: sheet)
+          : sheet,
+    );
   }
 
   switch (id) {
@@ -626,6 +700,7 @@ Widget catalogPhonePreview(
           showTitle: false,
           child: MultiTilePickerDemo(t: t),
         ),
+        actionsClosePreview: true,
       );
     case 'status_body':
       return Padding(
@@ -645,6 +720,7 @@ Widget catalogPhonePreview(
           showTitle: false,
           child: ConfirmDemo(t: t),
         ),
+        actionsClosePreview: true,
       );
     case 'text_input':
       return modal(
@@ -654,6 +730,7 @@ Widget catalogPhonePreview(
           showTitle: false,
           child: TextInputDemo(t: t),
         ),
+        actionsClosePreview: true,
       );
     case 'sheet_shell':
       return modal(
@@ -666,10 +743,17 @@ Widget catalogPhonePreview(
       );
     case 'dialog':
       return DialogDemo(t: t, fill: true);
+    case 'l10n_editor':
+      return L10nEditorDemo(t: t, fill: true);
     case 'option_tiles':
       return Padding(
         padding: const EdgeInsets.all(16),
         child: OptionTilesDemo(t: t),
+      );
+    case 'dropdown':
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: DropdownVariantsDemo(t: t),
       );
     case 'anchored_popout':
       return Padding(
