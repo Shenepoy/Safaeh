@@ -200,6 +200,33 @@ void main() {
     expect(tester.getCenter(skip).dy, greaterThan(500));
   });
 
+  testWidgets('textActionColor recolors skip and back', (tester) async {
+    const ink = Color(0xFF272727);
+    await tester.pumpWidget(
+      _host(
+        SizedBox(
+          width: 480,
+          height: 760,
+          child: SafaehOnboarding(
+            design: SafaehOnboardingDesign.paper,
+            initialStep: 1,
+            showSkip: true,
+            textActionColor: ink,
+            steps: _steps(),
+            actions: SafaehOnboardingHostActions(onSkip: () {}),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final states = <WidgetState>{};
+    for (final button in tester.widgetList<TextButton>(
+      find.byType(TextButton),
+    )) {
+      expect(button.style?.foregroundColor?.resolve(states), ink);
+    }
+  });
+
   testWidgets('top skip keeps its full hit target above the page', (
     tester,
   ) async {

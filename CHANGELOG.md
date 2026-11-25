@@ -10,6 +10,16 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-25
+
+### Added
+
+- `SafaehOnboarding.textActionColor` (and the same on
+  `SafaehOnboardingActionBar`) sets the color of the Back and Skip text
+  actions. They default to white, as before, for hosts that paint a dark
+  backdrop. A host that keeps a light design (paper, zen) passes a dark color
+  such as `ColorScheme.onSurface`, so Skip no longer disappears into the page.
+
 ## [1.3.1] - 2026-11-25
 
 ### Fixed

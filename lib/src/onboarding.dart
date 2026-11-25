@@ -206,6 +206,7 @@ class SafaehOnboarding extends StatefulWidget {
     this.showTracker = true,
     this.trackerStyle = SafaehOnboardingTrackerStyle.design,
     this.showActions = true,
+    this.textActionColor,
   });
 
   final List<SafaehOnboardingStep> steps;
@@ -226,6 +227,11 @@ class SafaehOnboarding extends StatefulWidget {
   final bool showTracker;
   final SafaehOnboardingTrackerStyle trackerStyle;
   final bool showActions;
+
+  /// Color of the text actions (Back, Skip) drawn on the backdrop. Defaults
+  /// to white, for hosts that paint a dark backdrop. Pass a dark color such as
+  /// [ColorScheme.onSurface] when the backdrop stays light (paper, zen).
+  final Color? textActionColor;
 
   @override
   State<SafaehOnboarding> createState() => _SafaehOnboardingState();
@@ -393,6 +399,7 @@ class _SafaehOnboardingState extends State<SafaehOnboarding> {
                     skipLabel: widget.labels.skip,
                     skipPlacement: widget.skipPlacement,
                     busy: busy,
+                    textActionColor: widget.textActionColor,
                   ),
                 Expanded(
                   child: PageView.builder(
@@ -436,6 +443,7 @@ class _SafaehOnboardingState extends State<SafaehOnboarding> {
                     onSkip: skipAtBottom ? actions.onSkip : null,
                     skipLabel: widget.labels.skip,
                     skipPlacement: widget.skipPlacement,
+                    textActionColor: widget.textActionColor,
                   ),
               ],
             ),
@@ -541,7 +549,11 @@ class SafaehOnboardingActionBar extends StatelessWidget {
     this.onSkip,
     this.skipLabel = 'Skip',
     this.skipPlacement = SafaehOnboardingSkipPlacement.bottomEnd,
+    this.textActionColor,
   });
+
+  /// Color of Back and Skip. Defaults to white.
+  final Color? textActionColor;
 
   final bool isFirst;
   final bool isLast;
@@ -602,7 +614,7 @@ class SafaehOnboardingActionBar extends StatelessWidget {
         ? TextButton.icon(
             onPressed: busy ? null : onBack,
             style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
+              foregroundColor: textActionColor ?? Colors.white,
               backgroundColor: Colors.transparent,
               side: BorderSide.none,
               minimumSize: const Size(0, 48),
@@ -620,7 +632,7 @@ class SafaehOnboardingActionBar extends StatelessWidget {
         : TextButton(
             onPressed: busy ? null : onSkip,
             style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
+              foregroundColor: textActionColor ?? Colors.white,
               textStyle: const TextStyle(fontWeight: FontWeight.w600),
             ),
             child: Text(skipLabel),
@@ -936,8 +948,10 @@ class _OnboardingTopBar extends StatelessWidget {
     required this.skipLabel,
     required this.skipPlacement,
     required this.busy,
+    this.textActionColor,
   });
 
+  final Color? textActionColor;
   final SafaehOnboardingDesign design;
   final Widget? languageControl;
   final Widget? themeControl;
@@ -960,7 +974,7 @@ class _OnboardingTopBar extends StatelessWidget {
         : TextButton(
             onPressed: busy ? null : onSkip,
             style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
+              foregroundColor: textActionColor ?? Colors.white,
               textStyle: const TextStyle(fontWeight: FontWeight.w600),
             ),
             child: Text(skipLabel),
