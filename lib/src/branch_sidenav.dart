@@ -149,14 +149,40 @@ class SafaehBranchSidenav extends StatelessWidget {
       }
     }
 
+    // The line joining the path: from each row on it down to the next one,
+    // under the parent's icon, through any rows in between. Each row gets
+    // the depth of the line entering it from above and leaving it below.
+    final lineAbove = <int, int>{};
+    final lineBelow = <int, int>{};
+    if (ancestors.isNotEmpty) {
+      final path = [...ancestors.toList()..sort(), activeIndex];
+      for (var k = 0; k + 1 < path.length; k++) {
+        final depth = items[path[k]].depth;
+        lineBelow[path[k]] = depth;
+        for (var i = path[k] + 1; i < path[k + 1]; i++) {
+          lineAbove[i] = depth;
+          lineBelow[i] = depth;
+        }
+        lineAbove[path[k + 1]] = depth;
+      }
+    }
+
     Widget tile(
       SafaehBranchNavItem item, {
       bool expanded = false,
       bool ancestor = false,
+      int? above,
+      int? below,
     }) => _BranchTile(
       item: item,
       selected: item.id == selectedId,
       ancestor: ancestor,
+      lineAboveIndent: above == null
+          ? null
+          : (compact ? 0 : indentStep * above),
+      lineBelowIndent: below == null
+          ? null
+          : (compact ? 0 : indentStep * below),
       expanded: expanded,
       compact: compact,
       compactWidth: compactW,
@@ -247,6 +273,8 @@ class SafaehBranchSidenav extends StatelessWidget {
                       items[i],
                       expanded: i == expandedParent,
                       ancestor: ancestors.contains(i),
+                      above: lineAbove[i],
+                      below: lineBelow[i],
                     ),
                   ),
               ],
@@ -281,6 +309,8 @@ class _BranchTile extends StatelessWidget {
     required this.item,
     required this.selected,
     this.ancestor = false,
+    this.lineAboveIndent,
+    this.lineBelowIndent,
     required this.expanded,
     required this.compact,
     required this.compactWidth,
@@ -294,6 +324,11 @@ class _BranchTile extends StatelessWidget {
 
   /// The selected row branches from this one.
   final bool ancestor;
+
+  /// The path line entering from the row above / leaving to the row below,
+  /// drawn under the icon of a row at this indent. Null draws none.
+  final double? lineAboveIndent;
+  final double? lineBelowIndent;
   final bool expanded;
   final bool compact;
   final double compactWidth;
@@ -330,7 +365,38 @@ class _BranchTile extends StatelessWidget {
               0.0,
               indent,
             );
-            return Padding(
+            // The line sits under the icon column of the row it comes from:
+            // outer padding 8, inner padding 8, then a 40 wide icon box.
+            const lineWidth = 6.0;
+            Widget? line(double? indent, {required bool top}) {
+              if (indent == null) return null;
+              final x =
+                  8 +
+                  (constraints.maxWidth - compactWidth).clamp(0.0, indent) +
+                  8 +
+                  20 -
+                  lineWidth / 2;
+              return PositionedDirectional(
+                start: x,
+                width: lineWidth,
+                top: 0,
+                bottom: 0,
+                // From the row's middle to its top or bottom edge, through
+                // the gap between rows, so the shapes join.
+                child: Align(
+                  alignment: top ? Alignment.topCenter : Alignment.bottomCenter,
+                  child: FractionallySizedBox(
+                    heightFactor: 0.5,
+                    widthFactor: 1,
+                    child: ColoredBox(color: cs.secondaryContainer),
+                  ),
+                ),
+              );
+            }
+
+            final above = line(lineAboveIndent, top: true);
+            final below = line(lineBelowIndent, top: false);
+            final tile = Padding(
               padding: EdgeInsetsDirectional.fromSTEB(
                 8 + effectiveIndent,
                 2,
@@ -423,6 +489,8 @@ class _BranchTile extends StatelessWidget {
                 ),
               ),
             );
+            if (above == null && below == null) return tile;
+            return Stack(children: [?above, ?below, tile]);
           },
         ),
       ),

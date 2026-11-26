@@ -203,6 +203,22 @@ void main() {
     expect(fill(_expense), cs.onSurface); // the selection itself
     expect(fill(_map), Colors.transparent); // a sibling, not on the path
 
+    // A line joins the path: down from Groups and Expenses (one half each)
+    // and up into Chai. The sibling Map has none.
+    Finder lines(Key id) => find.descendant(
+      of: find.ancestor(of: find.byKey(id), matching: find.byType(Stack)).first,
+      matching: find.byWidgetPredicate(
+        (w) => w is ColoredBox && w.color == cs.secondaryContainer,
+      ),
+    );
+    expect(lines(_groups), findsOneWidget);
+    expect(lines(_expenses), findsNWidgets(2));
+    expect(lines(_expense), findsOneWidget);
+    expect(
+      find.ancestor(of: find.byKey(_map), matching: find.byType(Stack)),
+      findsNothing,
+    );
+
     // Off by default: only the selected row is filled.
     await tester.pumpWidget(_host(nav(on: false)));
     await tester.pumpAndSettle();
