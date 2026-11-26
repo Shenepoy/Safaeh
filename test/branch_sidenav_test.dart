@@ -94,13 +94,13 @@ void main() {
     await tester.pumpWidget(_host(_nav(inList: true)));
     await tester.pump(const Duration(milliseconds: 100));
     // Mid-insert: the new rows are there but not yet full height.
-    final sizes = tester.widgetList<SizeTransition>(
-      find.ancestor(
-        of: find.byKey(_expenses),
-        matching: find.byType(SizeTransition),
-      ),
+    final sizes = tester.widgetList<Align>(
+      find.ancestor(of: find.byKey(_expenses), matching: find.byType(Align)),
     );
-    expect(sizes.first.sizeFactor.value, inExclusiveRange(0.0, 1.0));
+    expect(
+      sizes.map((a) => a.heightFactor).whereType<double>().first,
+      inExclusiveRange(0.0, 1.0),
+    );
     await tester.pumpAndSettle();
     expect(identical(tester.element(rail), before), isTrue);
     // The row that stayed did not move.

@@ -160,6 +160,8 @@ class SafaehBranchSidenav extends StatelessWidget {
     final lineBelow = <int, int>{};
     final bridgeAbove = <int, int>{};
     final bridgeBelow = <int, int>{};
+    final aboveKind = <int, _Piece>{};
+    final belowKind = <int, _Piece>{};
     // When each row's piece of the line draws, as a share of the whole
     // draw: top to bottom, so it flows from the parent into the selection.
     final lineSlot = <int, (double, double)>{};
@@ -173,11 +175,15 @@ class SafaehBranchSidenav extends StatelessWidget {
       for (var k = 0; k + 1 < path.length; k++) {
         final depth = items[path[k]].depth;
         lineBelow[path[k]] = depth;
+        belowKind[path[k]] = _Piece.source;
         for (var i = path[k] + 1; i < path[k + 1]; i++) {
           lineAbove[i] = depth;
           lineBelow[i] = depth;
+          aboveKind[i] = _Piece.through;
+          belowKind[i] = _Piece.through;
         }
         lineAbove[path[k + 1]] = depth;
+        aboveKind[path[k + 1]] = _Piece.target;
         // Next to each other: one shape, bridged across the width both
         // pills share, instead of a thin line.
         if (path[k + 1] == path[k] + 1) {
@@ -186,6 +192,8 @@ class SafaehBranchSidenav extends StatelessWidget {
               : items[path[k + 1]].depth;
           bridgeBelow[path[k]] = shared;
           bridgeAbove[path[k + 1]] = shared;
+          belowKind[path[k]] = _Piece.bridge;
+          aboveKind[path[k + 1]] = _Piece.bridge;
         }
       }
     }
@@ -198,6 +206,8 @@ class SafaehBranchSidenav extends StatelessWidget {
       int? below,
       int? bridgeUp,
       int? bridgeDown,
+      _Piece? kindUp,
+      _Piece? kindDown,
       (double, double)? slot,
     }) => _BranchTile(
       item: item,
@@ -215,6 +225,8 @@ class SafaehBranchSidenav extends StatelessWidget {
       bridgeBelowIndent: bridgeDown == null
           ? null
           : (compact ? 0 : indentStep * bridgeDown),
+      lineAboveKind: kindUp,
+      lineBelowKind: kindDown,
       pathLines: highlightAncestors,
       lineSlot: slot ?? (0, 1),
       expanded: expanded,
@@ -321,6 +333,8 @@ class SafaehBranchSidenav extends StatelessWidget {
                         below: lineBelow[i],
                         bridgeUp: bridgeAbove[i],
                         bridgeDown: bridgeBelow[i],
+                        kindUp: aboveKind[i],
+                        kindDown: belowKind[i],
                         slot: lineSlot[i],
                       ),
                     ),
@@ -361,6 +375,8 @@ class _BranchTile extends StatelessWidget {
     this.lineBelowIndent,
     this.bridgeAboveIndent,
     this.bridgeBelowIndent,
+    this.lineAboveKind,
+    this.lineBelowKind,
     this.pathLines = false,
     this.lineSlot = (0, 1),
     required this.expanded,
@@ -387,6 +403,10 @@ class _BranchTile extends StatelessWidget {
   /// gap and the rounded corners between the two pills.
   final double? bridgeAboveIndent;
   final double? bridgeBelowIndent;
+
+  /// What this row's piece of the path is, coming in and going on.
+  final _Piece? lineAboveKind;
+  final _Piece? lineBelowKind;
 
   /// Whether this rail draws path lines at all (keeps the line's state, so
   /// it can retract when the path moves away).
@@ -528,27 +548,40 @@ class _BranchTile extends StatelessWidget {
             if (!pathLines) return tile;
             double eff(double indent) =>
                 (constraints.maxWidth - compactWidth).clamp(0.0, indent);
-            const lineWidth = 6.0;
+            final own = 8 + effectiveIndent;
+            final end = constraints.maxWidth - 8;
             // A bridge spans the pills' shared width (outer padding 8 each
-            // side); a line sits under the icon of the row it comes from
-            // (padding 8, inner padding 8, then a 40 wide icon box).
-            (double, double)? span(double? line, double? bridge) {
-              if (bridge != null) {
-                return (8 + eff(bridge), constraints.maxWidth - 8);
+            // side). The spine runs down the leading edge of the row it
+            // comes from, 16 wide.
+            _PieceShape? shape(_Piece? kind, double? line, double? bridge) {
+              if (kind == null) return null;
+              if (kind == _Piece.bridge && bridge != null) {
+                return _PieceShape(kind, 8 + eff(bridge), end, own);
               }
               if (line == null) return null;
-              final x = 8 + eff(line) + 8 + 20;
-              return (x - lineWidth / 2, x + lineWidth / 2);
+              final start = 8 + eff(line);
+              return _PieceShape(kind, start, start + 16, own);
             }
 
             return Stack(
+              // The spine's rounded joins reach a few pixels into the rows
+              // above and below.
+              clipBehavior: Clip.none,
               children: [
                 Positioned.fill(
                   child: _PathLine(
                     aboveIndent: lineAboveIndent,
                     belowIndent: lineBelowIndent,
-                    aboveSpan: span(lineAboveIndent, bridgeAboveIndent),
-                    belowSpan: span(lineBelowIndent, bridgeBelowIndent),
+                    aboveShape: shape(
+                      lineAboveKind,
+                      lineAboveIndent,
+                      bridgeAboveIndent,
+                    ),
+                    belowShape: shape(
+                      lineBelowKind,
+                      lineBelowIndent,
+                      bridgeBelowIndent,
+                    ),
                     slot: lineSlot,
                     duration: duration,
                     color: cs.secondaryContainer,
@@ -576,8 +609,8 @@ class _PathLine extends StatefulWidget {
   const _PathLine({
     required this.aboveIndent,
     required this.belowIndent,
-    required this.aboveSpan,
-    required this.belowSpan,
+    required this.aboveShape,
+    required this.belowShape,
     required this.slot,
     required this.duration,
     required this.color,
@@ -586,9 +619,8 @@ class _PathLine extends StatefulWidget {
   final double? aboveIndent;
   final double? belowIndent;
 
-  /// Start-relative horizontal extent of each piece.
-  final (double, double)? aboveSpan;
-  final (double, double)? belowSpan;
+  final _PieceShape? aboveShape;
+  final _PieceShape? belowShape;
   final (double, double) slot;
   final Duration duration;
   final Color color;
@@ -606,8 +638,8 @@ class _PathLineState extends State<_PathLine> with TickerProviderStateMixin {
   Timer? _belowTimer;
 
   // What is drawn: kept while a piece that went away retracts.
-  late (double, double)? _aboveSpan = widget.aboveSpan;
-  late (double, double)? _belowSpan = widget.belowSpan;
+  late _PieceShape? _aboveShape = widget.aboveShape;
+  late _PieceShape? _belowShape = widget.belowShape;
   late (double, double) _slot = widget.slot;
 
   Duration get _total => widget.duration * 1.5;
@@ -675,8 +707,8 @@ class _PathLineState extends State<_PathLine> with TickerProviderStateMixin {
     super.didUpdateWidget(old);
     // Positions follow the rail's width morph; a retracting piece keeps its
     // last place.
-    if (widget.aboveIndent != null) _aboveSpan = widget.aboveSpan;
-    if (widget.belowIndent != null) _belowSpan = widget.belowSpan;
+    if (widget.aboveIndent != null) _aboveShape = widget.aboveShape;
+    if (widget.belowIndent != null) _belowShape = widget.belowShape;
     if (widget.aboveIndent != null || widget.belowIndent != null) {
       _slot = widget.slot;
     }
@@ -708,8 +740,8 @@ class _PathLineState extends State<_PathLine> with TickerProviderStateMixin {
     painter: _PathLinePainter(
       above: CurvedAnimation(parent: _above, curve: Curves.easeOut),
       below: CurvedAnimation(parent: _below, curve: Curves.easeIn),
-      aboveSpan: _aboveSpan,
-      belowSpan: _belowSpan,
+      aboveShape: _aboveShape,
+      belowShape: _belowShape,
       color: widget.color,
       rtl: Directionality.of(context) == TextDirection.rtl,
     ),
@@ -770,44 +802,155 @@ class _PathClockScope extends InheritedWidget {
   bool updateShouldNotify(_PathClockScope old) => false;
 }
 
+/// What a row's piece of the path is.
+enum _Piece {
+  /// Between two path rows right next to each other: fills the gap and the
+  /// corners across their shared width.
+  bridge,
+
+  /// Leaves a path row for one further down.
+  source,
+
+  /// Passes a row that isn't on the path.
+  through,
+
+  /// Arrives at a path row from one further up.
+  target,
+}
+
+@immutable
+class _PieceShape {
+  const _PieceShape(this.kind, this.from, this.to, this.own);
+
+  final _Piece kind;
+
+  /// Start-relative horizontal extent: the bridge's width or the spine's.
+  final double from;
+  final double to;
+
+  /// Where this row's own pill starts.
+  final double own;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _PieceShape &&
+      other.kind == kind &&
+      other.from == from &&
+      other.to == to &&
+      other.own == own;
+
+  @override
+  int get hashCode => Object.hash(kind, from, to, own);
+}
+
 class _PathLinePainter extends CustomPainter {
   _PathLinePainter({
     required this.above,
     required this.below,
-    required this.aboveSpan,
-    required this.belowSpan,
+    required this.aboveShape,
+    required this.belowShape,
     required this.color,
     required this.rtl,
   }) : super(repaint: Listenable.merge([above, below]));
 
+  /// The row's padding around its pill, the pill's corner radius and the
+  /// spine's rounded joins.
+  static const inset = 2.0;
+  static const radius = 16.0;
+  static const join = 8.0;
+
   final Animation<double> above;
   final Animation<double> below;
-  final (double, double)? aboveSpan;
-  final (double, double)? belowSpan;
+  final _PieceShape? aboveShape;
+  final _PieceShape? belowShape;
   final Color color;
   final bool rtl;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final mid = size.height / 2;
+    final h = size.height;
+    final mid = h / 2;
     final paint = Paint()..color = color;
-    void bar((double, double)? span, double top, double bottom) {
-      if (span == null || bottom <= top) return;
-      final (from, to) = span;
-      final left = rtl ? size.width - to : from;
-      final right = rtl ? size.width - from : to;
-      canvas.drawRect(Rect.fromLTRB(left, top, right, bottom), paint);
+    if (rtl) {
+      canvas
+        ..save()
+        ..translate(size.width, 0)
+        ..scale(-1, 1);
     }
 
     // Both pieces grow downwards: in from the top edge, out from the middle.
-    bar(aboveSpan, 0, mid * above.value);
-    bar(belowSpan, mid, mid + mid * below.value);
+    final a = aboveShape;
+    final t = above.value;
+    if (a != null && t > 0) {
+      if (a.kind == _Piece.target) {
+        // An indented child (the expanded rail): the spine runs down its
+        // whole leading side, filling both of its corners. Otherwise it
+        // joins at the child's top.
+        final indented = a.own > a.from + 0.5;
+        final reach = (indented ? h - inset : mid) * t;
+        final bottom = indented
+            ? Radius.circular(radius.clamp(0, reach))
+            : Radius.zero;
+        canvas.drawRRect(
+          RRect.fromLTRBAndCorners(a.from, 0, a.to, reach, bottomLeft: bottom),
+          paint,
+        );
+        if (indented && reach > inset) {
+          canvas.drawRect(
+            Rect.fromLTRB(a.to - 1, inset, a.own + radius, reach),
+            paint,
+          );
+        }
+        if (reach > inset) {
+          // The rounded inner corner between spine and pill top.
+          final x = a.to > a.own ? a.to : a.own;
+          canvas.drawPath(
+            Path()
+              ..moveTo(x, inset - join)
+              ..arcToPoint(
+                Offset(x + join, inset),
+                radius: const Radius.circular(join),
+                clockwise: false,
+              )
+              ..lineTo(x, inset)
+              ..close(),
+            paint,
+          );
+        }
+      } else {
+        canvas.drawRect(Rect.fromLTRB(a.from, 0, a.to, mid * t), paint);
+      }
+    }
+
+    final b = belowShape;
+    final u = below.value;
+    if (b != null && u > 0) {
+      final reach = mid + (h - mid) * u;
+      canvas.drawRect(Rect.fromLTRB(b.from, mid, b.to, reach), paint);
+      if (b.kind == _Piece.source && reach >= h - inset) {
+        // The rounded inner corner between the parent's pill and the spine.
+        final y = h - inset;
+        canvas.drawPath(
+          Path()
+            ..moveTo(b.to + join, y)
+            ..arcToPoint(
+              Offset(b.to, y + join),
+              radius: const Radius.circular(join),
+              clockwise: false,
+            )
+            ..lineTo(b.to, y)
+            ..close(),
+          paint,
+        );
+      }
+    }
+    if (rtl) canvas.restore();
   }
 
   @override
   bool shouldRepaint(_PathLinePainter old) =>
-      old.aboveSpan != aboveSpan ||
-      old.belowSpan != belowSpan ||
+      old.aboveShape != aboveShape ||
+      old.belowShape != belowShape ||
       old.color != color ||
       old.rtl != rtl ||
       old.above != above ||
@@ -867,10 +1010,20 @@ class _BranchRowsState extends State<_BranchRows> {
 
   Widget _transition(Animation<double> animation, Widget child) {
     final progress = animation.drive(CurveTween(curve: Curves.easeInOutCubic));
-    return SizeTransition(
-      sizeFactor: progress,
-      alignment: Alignment.topCenter,
+    // A SizeTransition that stops clipping once the row is fully in, so the
+    // path's rounded joins can reach into the next row. The structure stays
+    // the same either way, so the row keeps its state.
+    return AnimatedBuilder(
+      animation: progress,
       child: FadeTransition(opacity: progress, child: child),
+      builder: (context, faded) => ClipRect(
+        clipBehavior: animation.isCompleted ? Clip.none : Clip.hardEdge,
+        child: Align(
+          alignment: Alignment.topCenter,
+          heightFactor: progress.value.clamp(0.0, 1.0),
+          child: faded,
+        ),
+      ),
     );
   }
 

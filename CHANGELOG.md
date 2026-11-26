@@ -14,8 +14,9 @@ See [VERSIONING.md](VERSIONING.md).
 
 - Add `highlightAncestors` to `SafaehBranchSidenav`: the rows the selected row
   branches from get a secondary tone fill, joined to the selection by a line
-  in the same tone (rows right next to each other merge into one shape,
-  filling the gap and corners between them). The line draws down from the parent into the selection
+  in the same tone: rows right next to each other merge into one shape, and a
+  child further down is joined by a spine along the leading edge with rounded
+  joins (on the expanded rail it wraps the child's whole leading side). The line draws down from the parent into the selection
   and retracts when the selection moves; reduced motion makes it instant.
 
 ## [1.6.0] - 2026-11-25
