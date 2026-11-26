@@ -10,6 +10,11 @@ See [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+### Added
+
+- Add `highlightAncestors` to `SafaehBranchSidenav`: the rows the selected row
+  branches from get a secondary tone fill.
+
 ## [1.6.0] - 2026-11-25
 
 ### Added

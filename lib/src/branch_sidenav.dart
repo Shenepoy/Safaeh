@@ -51,6 +51,9 @@ class SafaehBranchNavItem {
 /// - [title] crossfades when it changes (the app name, then the open list).
 /// - Rows indent by [SafaehBranchNavItem.depth]. When the selected row is two
 ///   levels deep, its parent turns bold and shows an expand arrow.
+/// - With [highlightAncestors], every row the selected one branches from
+///   (its parent, that row's parent, ...) gets a secondary tone fill, so the
+///   path to the selection reads at a glance.
 /// - [pinnedItems] stay at the bottom (settings, account) and never move.
 /// - Collapsing morphs the width; labels fade out and icons stay centered.
 /// - [asDrawer] lays the same content out for a temporary drawer.
@@ -72,6 +75,7 @@ class SafaehBranchSidenav extends StatelessWidget {
     this.indentStep = 16,
     this.footer,
     this.haptics = true,
+    this.highlightAncestors = false,
     this.railKey = const ValueKey('safaeh_branch_nav_rail'),
     this.expandKey = const ValueKey('safaeh_branch_nav_expand'),
     this.collapseKey = const ValueKey('safaeh_branch_nav_collapse'),
@@ -103,6 +107,10 @@ class SafaehBranchSidenav extends StatelessWidget {
 
   /// A light haptic on every row tap.
   final bool haptics;
+
+  /// Fills the rows the selected row branches from with
+  /// [ColorScheme.secondaryContainer] (ink [ColorScheme.onSecondaryContainer]).
+  final bool highlightAncestors;
   final Key railKey;
   final Key expandKey;
   final Key collapseKey;
@@ -129,20 +137,36 @@ class SafaehBranchSidenav extends StatelessWidget {
       }
     }
 
-    Widget tile(SafaehBranchNavItem item, {bool expanded = false}) =>
-        _BranchTile(
-          item: item,
-          selected: item.id == selectedId,
-          expanded: expanded,
-          compact: compact,
-          compactWidth: compactW,
-          indent: compact ? 0 : indentStep * item.depth,
-          duration: motion,
-          onTap: () {
-            if (haptics) HapticFeedback.lightImpact();
-            item.onTap();
-          },
-        );
+    // The rows the selection branches from: walk up one depth at a time.
+    final ancestors = <int>{};
+    if (highlightAncestors && activeIndex >= 0) {
+      var want = items[activeIndex].depth - 1;
+      for (var i = activeIndex - 1; i >= 0 && want >= 0; i--) {
+        if (items[i].depth == want) {
+          ancestors.add(i);
+          want--;
+        }
+      }
+    }
+
+    Widget tile(
+      SafaehBranchNavItem item, {
+      bool expanded = false,
+      bool ancestor = false,
+    }) => _BranchTile(
+      item: item,
+      selected: item.id == selectedId,
+      ancestor: ancestor,
+      expanded: expanded,
+      compact: compact,
+      compactWidth: compactW,
+      indent: compact ? 0 : indentStep * item.depth,
+      duration: motion,
+      onTap: () {
+        if (haptics) HapticFeedback.lightImpact();
+        item.onTap();
+      },
+    );
 
     final titleText = AnimatedSwitcher(
       duration: motion,
@@ -219,7 +243,11 @@ class SafaehBranchSidenav extends StatelessWidget {
                 for (var i = 0; i < items.length; i++)
                   (
                     id: items[i].id,
-                    child: tile(items[i], expanded: i == expandedParent),
+                    child: tile(
+                      items[i],
+                      expanded: i == expandedParent,
+                      ancestor: ancestors.contains(i),
+                    ),
                   ),
               ],
             ),
@@ -252,6 +280,7 @@ class _BranchTile extends StatelessWidget {
   const _BranchTile({
     required this.item,
     required this.selected,
+    this.ancestor = false,
     required this.expanded,
     required this.compact,
     required this.compactWidth,
@@ -262,6 +291,9 @@ class _BranchTile extends StatelessWidget {
 
   final SafaehBranchNavItem item;
   final bool selected;
+
+  /// The selected row branches from this one.
+  final bool ancestor;
   final bool expanded;
   final bool compact;
   final double compactWidth;
@@ -273,7 +305,16 @@ class _BranchTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final foreground = selected ? cs.surfaceContainerLow : cs.onSurface;
+    final foreground = selected
+        ? cs.surfaceContainerLow
+        : ancestor
+        ? cs.onSecondaryContainer
+        : cs.onSurface;
+    final background = selected
+        ? cs.onSurface
+        : ancestor
+        ? cs.secondaryContainer
+        : Colors.transparent;
     final mark =
         item.leading ??
         Icon(selected ? (item.selectedIcon ?? item.icon) : item.icon);
@@ -300,7 +341,7 @@ class _BranchTile extends StatelessWidget {
                 animationDuration: item.animateSelection
                     ? duration
                     : Duration.zero,
-                color: selected ? cs.onSurface : Colors.transparent,
+                color: background,
                 borderRadius: BorderRadius.circular(16),
                 child: InkWell(
                   key: item.id,

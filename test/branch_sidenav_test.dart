@@ -170,4 +170,43 @@ void main() {
     expect(a - b, 16);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('highlightAncestors fills the rows the selection branches from', (
+    tester,
+  ) async {
+    Color? fill(Key id) {
+      final m = tester.widget<Material>(
+        find
+            .ancestor(of: find.byKey(id), matching: find.byType(Material))
+            .first,
+      );
+      return m.color;
+    }
+
+    SafaehBranchSidenav nav({required bool on}) => SafaehBranchSidenav(
+      title: 'Personal Test',
+      selectedId: _expense,
+      highlightAncestors: on,
+      items: [
+        _item(_groups, 'Groups'),
+        _item(_expenses, 'Expenses', depth: 1),
+        _item(_expense, 'Chai', depth: 2),
+        _item(_map, 'Map', depth: 1),
+      ],
+    );
+
+    await tester.pumpWidget(_host(nav(on: true)));
+    await tester.pumpAndSettle();
+    final cs = Theme.of(tester.element(find.byKey(_groups))).colorScheme;
+    expect(fill(_groups), cs.secondaryContainer);
+    expect(fill(_expenses), cs.secondaryContainer);
+    expect(fill(_expense), cs.onSurface); // the selection itself
+    expect(fill(_map), Colors.transparent); // a sibling, not on the path
+
+    // Off by default: only the selected row is filled.
+    await tester.pumpWidget(_host(nav(on: false)));
+    await tester.pumpAndSettle();
+    expect(fill(_groups), Colors.transparent);
+    expect(fill(_expenses), Colors.transparent);
+  });
 }
