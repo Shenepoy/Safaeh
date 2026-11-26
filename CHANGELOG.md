@@ -19,6 +19,12 @@ See [VERSIONING.md](VERSIONING.md).
   joins (on the expanded rail it wraps the child's whole leading side). The line draws down from the parent into the selection
   and retracts when the selection moves; reduced motion makes it instant.
 
+### Changed
+
+- `SafaehTimeline` rows no longer use `IntrinsicHeight`: the line to the
+  next item is drawn behind the row, so each item is laid out once instead of
+  twice. Looks the same.
+
 ## [1.6.0] - 2026-11-25
 
 ### Added

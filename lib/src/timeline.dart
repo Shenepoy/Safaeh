@@ -98,41 +98,44 @@ class SafaehTimeline<T> extends StatelessWidget {
                   ),
             )
           : null;
+      // The line to the next stop is drawn behind the row, from under the
+      // marker to the row's bottom. (An IntrinsicHeight row would measure
+      // every card twice on each layout.)
       return Semantics(
         container: true,
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                width: markerSize + 8,
-                child: Column(
-                  children: [
-                    markerWidget,
-                    Expanded(
-                      child: isLast
-                          ? const SizedBox.shrink()
-                          : Container(width: 2, color: line),
-                    ),
-                  ],
-                ),
+        child: Stack(
+          children: [
+            if (!isLast)
+              PositionedDirectional(
+                start: (markerSize + 8) / 2 - 1,
+                top: markerSize,
+                bottom: 0,
+                child: SizedBox(width: 2, child: ColoredBox(color: line)),
               ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(child: itemBuilder(context, item, index)),
-                        ?handle,
-                      ],
-                    ),
-                    leg ?? SizedBox(height: isLast ? 0 : tokens.radius / 2),
-                  ],
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: markerSize + 8,
+                  child: Center(child: markerWidget),
                 ),
-              ),
-            ],
-          ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: itemBuilder(context, item, index)),
+                          ?handle,
+                        ],
+                      ),
+                      leg ?? SizedBox(height: isLast ? 0 : tokens.radius / 2),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       );
     }
