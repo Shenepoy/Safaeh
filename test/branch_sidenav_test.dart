@@ -203,21 +203,37 @@ void main() {
     expect(fill(_expense), cs.onSurface); // the selection itself
     expect(fill(_map), Colors.transparent); // a sibling, not on the path
 
-    // A line joins the path: down from Groups and Expenses (one half each)
-    // and up into Chai. The sibling Map has none.
-    Finder lines(Key id) => find.descendant(
-      of: find.ancestor(of: find.byKey(id), matching: find.byType(Stack)).first,
-      matching: find.byWidgetPredicate(
-        (w) => w is ColoredBox && w.color == cs.secondaryContainer,
+    // A line joins the path: out of Groups, through Expenses and into Chai.
+    Finder line(bool inLine, bool outLine) =>
+        find.byKey(ValueKey('safaeh_branch_line_${inLine}_$outLine'));
+    expect(line(false, true), findsOneWidget); // Groups
+    expect(line(true, true), findsOneWidget); // Expenses
+    expect(line(true, false), findsOneWidget); // Chai
+    expect(line(false, false), findsOneWidget); // Map, not on the path
+
+    // Moving the selection to Map retracts the old line and draws a new one
+    // from Groups; mid-animation and at rest nothing throws.
+    await tester.pumpWidget(
+      _host(
+        SafaehBranchSidenav(
+          title: 'Personal Test',
+          selectedId: _map,
+          highlightAncestors: true,
+          items: [
+            _item(_groups, 'Groups'),
+            _item(_expenses, 'Expenses', depth: 1),
+            _item(_expense, 'Chai', depth: 2),
+            _item(_map, 'Map', depth: 1),
+          ],
+        ),
       ),
     );
-    expect(lines(_groups), findsOneWidget);
-    expect(lines(_expenses), findsNWidgets(2));
-    expect(lines(_expense), findsOneWidget);
-    expect(
-      find.ancestor(of: find.byKey(_map), matching: find.byType(Stack)),
-      findsNothing,
-    );
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(tester.takeException(), isNull);
+    await tester.pumpAndSettle();
+    expect(fill(_groups), cs.secondaryContainer);
+    expect(fill(_expenses), Colors.transparent);
+    expect(line(true, false), findsOneWidget); // Map now ends the path
 
     // Off by default: only the selected row is filled.
     await tester.pumpWidget(_host(nav(on: false)));

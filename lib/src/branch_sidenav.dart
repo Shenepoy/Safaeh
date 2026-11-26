@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -154,8 +158,16 @@ class SafaehBranchSidenav extends StatelessWidget {
     // the depth of the line entering it from above and leaving it below.
     final lineAbove = <int, int>{};
     final lineBelow = <int, int>{};
+    // When each row's piece of the line draws, as a share of the whole
+    // draw: top to bottom, so it flows from the parent into the selection.
+    final lineSlot = <int, (double, double)>{};
     if (ancestors.isNotEmpty) {
       final path = [...ancestors.toList()..sort(), activeIndex];
+      final first = path.first;
+      final rows = activeIndex - first + 1;
+      for (var i = first; i <= activeIndex; i++) {
+        lineSlot[i] = ((i - first) / rows, (i - first + 1) / rows);
+      }
       for (var k = 0; k + 1 < path.length; k++) {
         final depth = items[path[k]].depth;
         lineBelow[path[k]] = depth;
@@ -173,6 +185,7 @@ class SafaehBranchSidenav extends StatelessWidget {
       bool ancestor = false,
       int? above,
       int? below,
+      (double, double)? slot,
     }) => _BranchTile(
       item: item,
       selected: item.id == selectedId,
@@ -183,6 +196,8 @@ class SafaehBranchSidenav extends StatelessWidget {
       lineBelowIndent: below == null
           ? null
           : (compact ? 0 : indentStep * below),
+      pathLines: highlightAncestors,
+      lineSlot: slot ?? (0, 1),
       expanded: expanded,
       compact: compact,
       compactWidth: compactW,
@@ -263,21 +278,33 @@ class SafaehBranchSidenav extends StatelessWidget {
           SafeArea(bottom: false, child: header),
           const SizedBox(height: 8),
           Expanded(
-            child: _BranchRows(
-              duration: motion,
-              entries: [
-                for (var i = 0; i < items.length; i++)
-                  (
-                    id: items[i].id,
-                    child: tile(
-                      items[i],
-                      expanded: i == expandedParent,
-                      ancestor: ancestors.contains(i),
-                      above: lineAbove[i],
-                      below: lineBelow[i],
-                    ),
-                  ),
+            child: _PathClock(
+              path: [
+                if (ancestors.isNotEmpty)
+                  for (
+                    var i = ancestors.reduce((a, b) => a < b ? a : b);
+                    i <= activeIndex;
+                    i++
+                  )
+                    items[i].id,
               ],
+              child: _BranchRows(
+                duration: motion,
+                entries: [
+                  for (var i = 0; i < items.length; i++)
+                    (
+                      id: items[i].id,
+                      child: tile(
+                        items[i],
+                        expanded: i == expandedParent,
+                        ancestor: ancestors.contains(i),
+                        above: lineAbove[i],
+                        below: lineBelow[i],
+                        slot: lineSlot[i],
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
           SafeArea(
@@ -311,6 +338,8 @@ class _BranchTile extends StatelessWidget {
     this.ancestor = false,
     this.lineAboveIndent,
     this.lineBelowIndent,
+    this.pathLines = false,
+    this.lineSlot = (0, 1),
     required this.expanded,
     required this.compact,
     required this.compactWidth,
@@ -329,6 +358,13 @@ class _BranchTile extends StatelessWidget {
   /// drawn under the icon of a row at this indent. Null draws none.
   final double? lineAboveIndent;
   final double? lineBelowIndent;
+
+  /// Whether this rail draws path lines at all (keeps the line's state, so
+  /// it can retract when the path moves away).
+  final bool pathLines;
+
+  /// When this row's piece of the line draws, as a share of the whole draw.
+  final (double, double) lineSlot;
   final bool expanded;
   final bool compact;
   final double compactWidth;
@@ -367,35 +403,6 @@ class _BranchTile extends StatelessWidget {
             );
             // The line sits under the icon column of the row it comes from:
             // outer padding 8, inner padding 8, then a 40 wide icon box.
-            const lineWidth = 6.0;
-            Widget? line(double? indent, {required bool top}) {
-              if (indent == null) return null;
-              final x =
-                  8 +
-                  (constraints.maxWidth - compactWidth).clamp(0.0, indent) +
-                  8 +
-                  20 -
-                  lineWidth / 2;
-              return PositionedDirectional(
-                start: x,
-                width: lineWidth,
-                top: 0,
-                bottom: 0,
-                // From the row's middle to its top or bottom edge, through
-                // the gap between rows, so the shapes join.
-                child: Align(
-                  alignment: top ? Alignment.topCenter : Alignment.bottomCenter,
-                  child: FractionallySizedBox(
-                    heightFactor: 0.5,
-                    widthFactor: 1,
-                    child: ColoredBox(color: cs.secondaryContainer),
-                  ),
-                ),
-              );
-            }
-
-            final above = line(lineAboveIndent, top: true);
-            final below = line(lineBelowIndent, top: false);
             final tile = Padding(
               padding: EdgeInsetsDirectional.fromSTEB(
                 8 + effectiveIndent,
@@ -489,13 +496,287 @@ class _BranchTile extends StatelessWidget {
                 ),
               ),
             );
-            if (above == null && below == null) return tile;
-            return Stack(children: [?above, ?below, tile]);
+            if (!pathLines) return tile;
+            double? x(double? indent) => indent == null
+                ? null
+                // Under the icon of the row the line comes from: outer
+                // padding 8, inner padding 8, then a 40 wide icon box.
+                : 8 +
+                      (constraints.maxWidth - compactWidth).clamp(0.0, indent) +
+                      8 +
+                      20;
+            return Stack(
+              children: [
+                Positioned.fill(
+                  child: _PathLine(
+                    aboveIndent: lineAboveIndent,
+                    belowIndent: lineBelowIndent,
+                    aboveX: x(lineAboveIndent),
+                    belowX: x(lineBelowIndent),
+                    slot: lineSlot,
+                    duration: duration,
+                    color: cs.secondaryContainer,
+                  ),
+                ),
+                tile,
+              ],
+            );
           },
         ),
       ),
     );
   }
+}
+
+/// One row's piece of the path line: from the row's top edge to its middle
+/// (the line coming in) and from the middle to its bottom edge (going on),
+/// through the gaps between rows so the highlighted shapes join.
+///
+/// It draws top down within [slot] of the whole draw, so across rows the
+/// line flows from the parent into the selection, and retracts bottom up
+/// when the path moves away. The whole draw takes one and a half times the
+/// rail's motion; reduced motion makes it instant.
+class _PathLine extends StatefulWidget {
+  const _PathLine({
+    required this.aboveIndent,
+    required this.belowIndent,
+    required this.aboveX,
+    required this.belowX,
+    required this.slot,
+    required this.duration,
+    required this.color,
+  });
+
+  final double? aboveIndent;
+  final double? belowIndent;
+  final double? aboveX;
+  final double? belowX;
+  final (double, double) slot;
+  final Duration duration;
+  final Color color;
+
+  @override
+  State<_PathLine> createState() => _PathLineState();
+}
+
+class _PathLineState extends State<_PathLine> with TickerProviderStateMixin {
+  // The incoming (top half) and outgoing (bottom half) pieces animate on
+  // their own, so a piece that stays put never redraws when the path moves.
+  late final _above = AnimationController(vsync: this);
+  late final _below = AnimationController(vsync: this);
+  Timer? _aboveTimer;
+  Timer? _belowTimer;
+
+  // What is drawn: kept while a piece that went away retracts.
+  late double? _aboveX = widget.aboveX;
+  late double? _belowX = widget.belowX;
+  late (double, double) _slot = widget.slot;
+
+  Duration get _total => widget.duration * 1.5;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_above.status == AnimationStatus.dismissed &&
+        _below.status == AnimationStatus.dismissed &&
+        !_started) {
+      _started = true;
+      _show(_above, widget.aboveIndent != null, top: true);
+      _show(_below, widget.belowIndent != null, top: false);
+    }
+  }
+
+  bool _started = false;
+
+  /// Runs [c] to shown or hidden at the moment the shared path clock says
+  /// this piece's turn comes: drawing top down, retracting bottom up. A row
+  /// rebuilt late (the list shifted) catches up at once.
+  void _show(AnimationController c, bool show, {required bool top}) {
+    final total = _total;
+    final (begin, end) = _slot;
+    final mid = (begin + end) / 2;
+    final piece = total * ((end - begin) / 2);
+    if (total == Duration.zero || piece == Duration.zero) {
+      c.value = show ? 1 : 0;
+      return;
+    }
+    c.duration = piece;
+    final turn = show ? (top ? begin : mid) : (1 - (top ? mid : end));
+    final elapsed = _PathClock.elapsed(context);
+    final wait = total * turn - elapsed;
+    void run() {
+      if (!mounted) return;
+      show ? c.forward() : c.reverse();
+    }
+
+    final timer = top ? _aboveTimer : _belowTimer;
+    timer?.cancel();
+    if (top) {
+      _aboveTimer = null;
+    } else {
+      _belowTimer = null;
+    }
+    if (wait <= Duration.zero) {
+      // Late: jump to where the draw is by now, then finish.
+      final late = (-wait).inMicroseconds / piece.inMicroseconds;
+      final target = show ? late.clamp(0.0, 1.0) : 1 - late.clamp(0.0, 1.0);
+      if (show ? target > c.value : target < c.value) c.value = target;
+      run();
+      return;
+    }
+    final t = Timer(wait, run);
+    if (top) {
+      _aboveTimer = t;
+    } else {
+      _belowTimer = t;
+    }
+  }
+
+  @override
+  void didUpdateWidget(_PathLine old) {
+    super.didUpdateWidget(old);
+    // Positions follow the rail's width morph; a retracting piece keeps its
+    // last place.
+    if (widget.aboveIndent != null) _aboveX = widget.aboveX;
+    if (widget.belowIndent != null) _belowX = widget.belowX;
+    if (widget.aboveIndent != null || widget.belowIndent != null) {
+      _slot = widget.slot;
+    }
+    // A piece that moved to another row's column keeps its progress and
+    // only slides over, under the pills.
+    if ((old.aboveIndent == null) != (widget.aboveIndent == null)) {
+      _show(_above, widget.aboveIndent != null, top: true);
+    }
+    if ((old.belowIndent == null) != (widget.belowIndent == null)) {
+      _show(_below, widget.belowIndent != null, top: false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _aboveTimer?.cancel();
+    _belowTimer?.cancel();
+    _above.dispose();
+    _below.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    key: ValueKey(
+      'safaeh_branch_line_${widget.aboveIndent != null}_'
+      '${widget.belowIndent != null}',
+    ),
+    painter: _PathLinePainter(
+      above: CurvedAnimation(parent: _above, curve: Curves.easeOut),
+      below: CurvedAnimation(parent: _below, curve: Curves.easeIn),
+      aboveX: _aboveX,
+      belowX: _belowX,
+      color: widget.color,
+      rtl: Directionality.of(context) == TextDirection.rtl,
+    ),
+  );
+}
+
+/// When the highlighted path last changed, so every row's piece of the line
+/// keeps time with the others, even a row the list rebuilt midway.
+class _PathClock extends StatefulWidget {
+  const _PathClock({required this.path, required this.child});
+
+  final List<Key> path;
+  final Widget child;
+
+  static Duration elapsed(BuildContext context) {
+    final since = context
+        .getInheritedWidgetOfExactType<_PathClockScope>()
+        ?.state
+        ._changedAt;
+    return since == null ? Duration.zero : _now() - since;
+  }
+
+  // The frame clock: it follows animation time (and test time), unlike the
+  // wall clock.
+  static Duration _now() =>
+      SchedulerBinding.instance.currentSystemFrameTimeStamp;
+
+  @override
+  State<_PathClock> createState() => _PathClockState();
+}
+
+class _PathClockState extends State<_PathClock> {
+  Duration? _changedAt;
+
+  @override
+  void initState() {
+    super.initState();
+    _changedAt = _PathClock._now();
+  }
+
+  @override
+  void didUpdateWidget(_PathClock old) {
+    super.didUpdateWidget(old);
+    if (!listEquals(old.path, widget.path)) _changedAt = _PathClock._now();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      _PathClockScope(state: this, child: widget.child);
+}
+
+class _PathClockScope extends InheritedWidget {
+  const _PathClockScope({required this.state, required super.child});
+
+  final _PathClockState state;
+
+  @override
+  bool updateShouldNotify(_PathClockScope old) => false;
+}
+
+class _PathLinePainter extends CustomPainter {
+  _PathLinePainter({
+    required this.above,
+    required this.below,
+    required this.aboveX,
+    required this.belowX,
+    required this.color,
+    required this.rtl,
+  }) : super(repaint: Listenable.merge([above, below]));
+
+  static const width = 6.0;
+
+  final Animation<double> above;
+  final Animation<double> below;
+  final double? aboveX;
+  final double? belowX;
+  final Color color;
+  final bool rtl;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final mid = size.height / 2;
+    final paint = Paint()..color = color;
+    void bar(double? x, double top, double bottom) {
+      if (x == null || bottom <= top) return;
+      final cx = rtl ? size.width - x : x;
+      canvas.drawRect(
+        Rect.fromLTRB(cx - width / 2, top, cx + width / 2, bottom),
+        paint,
+      );
+    }
+
+    // Both pieces grow downwards: in from the top edge, out from the middle.
+    bar(aboveX, 0, mid * above.value);
+    bar(belowX, mid, mid + mid * below.value);
+  }
+
+  @override
+  bool shouldRepaint(_PathLinePainter old) =>
+      old.aboveX != aboveX ||
+      old.belowX != belowX ||
+      old.color != color ||
+      old.rtl != rtl ||
+      old.above != above ||
+      old.below != below;
 }
 
 typedef _BranchEntry = ({Key id, Widget child});
