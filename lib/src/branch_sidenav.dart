@@ -158,6 +158,8 @@ class SafaehBranchSidenav extends StatelessWidget {
     // the depth of the line entering it from above and leaving it below.
     final lineAbove = <int, int>{};
     final lineBelow = <int, int>{};
+    final bridgeAbove = <int, int>{};
+    final bridgeBelow = <int, int>{};
     // When each row's piece of the line draws, as a share of the whole
     // draw: top to bottom, so it flows from the parent into the selection.
     final lineSlot = <int, (double, double)>{};
@@ -176,6 +178,15 @@ class SafaehBranchSidenav extends StatelessWidget {
           lineBelow[i] = depth;
         }
         lineAbove[path[k + 1]] = depth;
+        // Next to each other: one shape, bridged across the width both
+        // pills share, instead of a thin line.
+        if (path[k + 1] == path[k] + 1) {
+          final shared = depth > items[path[k + 1]].depth
+              ? depth
+              : items[path[k + 1]].depth;
+          bridgeBelow[path[k]] = shared;
+          bridgeAbove[path[k + 1]] = shared;
+        }
       }
     }
 
@@ -185,6 +196,8 @@ class SafaehBranchSidenav extends StatelessWidget {
       bool ancestor = false,
       int? above,
       int? below,
+      int? bridgeUp,
+      int? bridgeDown,
       (double, double)? slot,
     }) => _BranchTile(
       item: item,
@@ -196,6 +209,12 @@ class SafaehBranchSidenav extends StatelessWidget {
       lineBelowIndent: below == null
           ? null
           : (compact ? 0 : indentStep * below),
+      bridgeAboveIndent: bridgeUp == null
+          ? null
+          : (compact ? 0 : indentStep * bridgeUp),
+      bridgeBelowIndent: bridgeDown == null
+          ? null
+          : (compact ? 0 : indentStep * bridgeDown),
       pathLines: highlightAncestors,
       lineSlot: slot ?? (0, 1),
       expanded: expanded,
@@ -300,6 +319,8 @@ class SafaehBranchSidenav extends StatelessWidget {
                         ancestor: ancestors.contains(i),
                         above: lineAbove[i],
                         below: lineBelow[i],
+                        bridgeUp: bridgeAbove[i],
+                        bridgeDown: bridgeBelow[i],
                         slot: lineSlot[i],
                       ),
                     ),
@@ -338,6 +359,8 @@ class _BranchTile extends StatelessWidget {
     this.ancestor = false,
     this.lineAboveIndent,
     this.lineBelowIndent,
+    this.bridgeAboveIndent,
+    this.bridgeBelowIndent,
     this.pathLines = false,
     this.lineSlot = (0, 1),
     required this.expanded,
@@ -358,6 +381,12 @@ class _BranchTile extends StatelessWidget {
   /// drawn under the icon of a row at this indent. Null draws none.
   final double? lineAboveIndent;
   final double? lineBelowIndent;
+
+  /// Set when the path row above / below sits right next to this one: the
+  /// piece is a bridge from this indent to the rail's end edge, filling the
+  /// gap and the rounded corners between the two pills.
+  final double? bridgeAboveIndent;
+  final double? bridgeBelowIndent;
 
   /// Whether this rail draws path lines at all (keeps the line's state, so
   /// it can retract when the path moves away).
@@ -497,22 +526,29 @@ class _BranchTile extends StatelessWidget {
               ),
             );
             if (!pathLines) return tile;
-            double? x(double? indent) => indent == null
-                ? null
-                // Under the icon of the row the line comes from: outer
-                // padding 8, inner padding 8, then a 40 wide icon box.
-                : 8 +
-                      (constraints.maxWidth - compactWidth).clamp(0.0, indent) +
-                      8 +
-                      20;
+            double eff(double indent) =>
+                (constraints.maxWidth - compactWidth).clamp(0.0, indent);
+            const lineWidth = 6.0;
+            // A bridge spans the pills' shared width (outer padding 8 each
+            // side); a line sits under the icon of the row it comes from
+            // (padding 8, inner padding 8, then a 40 wide icon box).
+            (double, double)? span(double? line, double? bridge) {
+              if (bridge != null) {
+                return (8 + eff(bridge), constraints.maxWidth - 8);
+              }
+              if (line == null) return null;
+              final x = 8 + eff(line) + 8 + 20;
+              return (x - lineWidth / 2, x + lineWidth / 2);
+            }
+
             return Stack(
               children: [
                 Positioned.fill(
                   child: _PathLine(
                     aboveIndent: lineAboveIndent,
                     belowIndent: lineBelowIndent,
-                    aboveX: x(lineAboveIndent),
-                    belowX: x(lineBelowIndent),
+                    aboveSpan: span(lineAboveIndent, bridgeAboveIndent),
+                    belowSpan: span(lineBelowIndent, bridgeBelowIndent),
                     slot: lineSlot,
                     duration: duration,
                     color: cs.secondaryContainer,
@@ -540,8 +576,8 @@ class _PathLine extends StatefulWidget {
   const _PathLine({
     required this.aboveIndent,
     required this.belowIndent,
-    required this.aboveX,
-    required this.belowX,
+    required this.aboveSpan,
+    required this.belowSpan,
     required this.slot,
     required this.duration,
     required this.color,
@@ -549,8 +585,10 @@ class _PathLine extends StatefulWidget {
 
   final double? aboveIndent;
   final double? belowIndent;
-  final double? aboveX;
-  final double? belowX;
+
+  /// Start-relative horizontal extent of each piece.
+  final (double, double)? aboveSpan;
+  final (double, double)? belowSpan;
   final (double, double) slot;
   final Duration duration;
   final Color color;
@@ -568,8 +606,8 @@ class _PathLineState extends State<_PathLine> with TickerProviderStateMixin {
   Timer? _belowTimer;
 
   // What is drawn: kept while a piece that went away retracts.
-  late double? _aboveX = widget.aboveX;
-  late double? _belowX = widget.belowX;
+  late (double, double)? _aboveSpan = widget.aboveSpan;
+  late (double, double)? _belowSpan = widget.belowSpan;
   late (double, double) _slot = widget.slot;
 
   Duration get _total => widget.duration * 1.5;
@@ -637,8 +675,8 @@ class _PathLineState extends State<_PathLine> with TickerProviderStateMixin {
     super.didUpdateWidget(old);
     // Positions follow the rail's width morph; a retracting piece keeps its
     // last place.
-    if (widget.aboveIndent != null) _aboveX = widget.aboveX;
-    if (widget.belowIndent != null) _belowX = widget.belowX;
+    if (widget.aboveIndent != null) _aboveSpan = widget.aboveSpan;
+    if (widget.belowIndent != null) _belowSpan = widget.belowSpan;
     if (widget.aboveIndent != null || widget.belowIndent != null) {
       _slot = widget.slot;
     }
@@ -670,8 +708,8 @@ class _PathLineState extends State<_PathLine> with TickerProviderStateMixin {
     painter: _PathLinePainter(
       above: CurvedAnimation(parent: _above, curve: Curves.easeOut),
       below: CurvedAnimation(parent: _below, curve: Curves.easeIn),
-      aboveX: _aboveX,
-      belowX: _belowX,
+      aboveSpan: _aboveSpan,
+      belowSpan: _belowSpan,
       color: widget.color,
       rtl: Directionality.of(context) == TextDirection.rtl,
     ),
@@ -736,18 +774,16 @@ class _PathLinePainter extends CustomPainter {
   _PathLinePainter({
     required this.above,
     required this.below,
-    required this.aboveX,
-    required this.belowX,
+    required this.aboveSpan,
+    required this.belowSpan,
     required this.color,
     required this.rtl,
   }) : super(repaint: Listenable.merge([above, below]));
 
-  static const width = 6.0;
-
   final Animation<double> above;
   final Animation<double> below;
-  final double? aboveX;
-  final double? belowX;
+  final (double, double)? aboveSpan;
+  final (double, double)? belowSpan;
   final Color color;
   final bool rtl;
 
@@ -755,24 +791,23 @@ class _PathLinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final mid = size.height / 2;
     final paint = Paint()..color = color;
-    void bar(double? x, double top, double bottom) {
-      if (x == null || bottom <= top) return;
-      final cx = rtl ? size.width - x : x;
-      canvas.drawRect(
-        Rect.fromLTRB(cx - width / 2, top, cx + width / 2, bottom),
-        paint,
-      );
+    void bar((double, double)? span, double top, double bottom) {
+      if (span == null || bottom <= top) return;
+      final (from, to) = span;
+      final left = rtl ? size.width - to : from;
+      final right = rtl ? size.width - from : to;
+      canvas.drawRect(Rect.fromLTRB(left, top, right, bottom), paint);
     }
 
     // Both pieces grow downwards: in from the top edge, out from the middle.
-    bar(aboveX, 0, mid * above.value);
-    bar(belowX, mid, mid + mid * below.value);
+    bar(aboveSpan, 0, mid * above.value);
+    bar(belowSpan, mid, mid + mid * below.value);
   }
 
   @override
   bool shouldRepaint(_PathLinePainter old) =>
-      old.aboveX != aboveX ||
-      old.belowX != belowX ||
+      old.aboveSpan != aboveSpan ||
+      old.belowSpan != belowSpan ||
       old.color != color ||
       old.rtl != rtl ||
       old.above != above ||
