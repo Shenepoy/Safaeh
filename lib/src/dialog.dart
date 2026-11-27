@@ -6,7 +6,8 @@ import 'floating_surface_renderer.dart';
 import 'theme.dart';
 
 /// Centered dialog. [railWidthOf] is accepted for API compatibility and does
-/// not shift the panel — floating dialogs stay in the full viewport.
+/// not shift the panel; on wide screens a [SafaehContentInset] does, so the
+/// dialog centers over the page beside a desktop rail.
 ///
 /// Unlike [showSafaeh], this does not morph into a phone bottom sheet.
 /// [SafaehRouteOptions.slideUp], [SafaehRouteOptions.phonePlacement], and
@@ -38,6 +39,8 @@ Future<T?> showSafaehDialog<T>({
       route?.floatingAppearance ??
       tokens.floatingAppearance;
   final theme = Theme.of(context);
+  // The route sits on the root navigator, above the host's inset: carry it.
+  final contentInset = SafaehContentInset.of(context);
 
   return showGeneralDialog<T>(
     context: context,
@@ -49,7 +52,7 @@ Future<T?> showSafaehDialog<T>({
         barrierColor ?? theme.colorScheme.scrim.withValues(alpha: 0.32),
     transitionDuration: resolvedMotion,
     pageBuilder: (ctx, animation, secondaryAnimation) {
-      return _SafaehDialogHost(
+      final host = _SafaehDialogHost(
         builder: builder,
         barrierDismissible: resolvedBarrier,
         fadeScale: fadeScale,
@@ -64,6 +67,9 @@ Future<T?> showSafaehDialog<T>({
         useRootNavigator: resolvedRoot,
         floatingAppearance: resolvedFloatingAppearance,
       );
+      return contentInset > 0
+          ? SafaehContentInset(start: contentInset, child: host)
+          : host;
     },
     transitionBuilder: (ctx, animation, secondaryAnimation, child) => child,
   );
@@ -127,10 +133,21 @@ class _SafaehDialogHost extends StatelessWidget {
       );
     }
     final child = Align(alignment: Alignment.center, child: panel);
-    final entering = (transition ?? (fadeScale ? safaehFadeScale : safaehFade))(
-      animation: openAnimation,
-      child: child,
-    );
+    final size = MediaQuery.sizeOf(context);
+    final startInset = size.width >= tokens.tabletBreakpoint
+        ? SafaehContentInset.of(context).clamp(0.0, size.width / 2)
+        : 0.0;
+    Widget entering =
+        (transition ?? (fadeScale ? safaehFadeScale : safaehFade))(
+          animation: openAnimation,
+          child: child,
+        );
+    if (startInset > 0) {
+      entering = Padding(
+        padding: EdgeInsetsDirectional.only(start: startInset),
+        child: entering,
+      );
+    }
 
     return SafaehTheme(
       data: SafaehTheme.of(context)

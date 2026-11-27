@@ -12,6 +12,16 @@ See [VERSIONING.md](VERSIONING.md).
 
 ### Added
 
+- Add `SafaehContentInset`: set it around a page beside a desktop rail, and
+  wide `showSafaeh` sheets and `showSafaehDialog` dialogs center over the
+  page instead of the whole window. Phone sheets ignore it.
+- Add `onPressChanged` and `semanticsActions` to `SafaehBranchNavItem`, for a
+  row that also acts on a press-and-hold.
+- Add `leadingBuilder`, `leadingWidth` and `lineWidth` to `SafaehTimeline`,
+  for a timetable: a stop's time before a thick route line.
+- Add `lineWidth` to `SafaehBranchSidenav`, for a thin line joining a
+  highlighted ancestor to the selection; a thin line leaves the parent's
+  squared corner.
 - Add `highlightAncestors` to `SafaehBranchSidenav`: the rows the selected row
   branches from get a secondary tone fill, joined to the selection by a line
   in the same tone: rows right next to each other merge into one shape, and a

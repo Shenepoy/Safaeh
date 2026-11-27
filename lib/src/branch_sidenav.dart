@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -27,6 +28,8 @@ class SafaehBranchNavItem {
     this.subtitle,
     this.depth = 0,
     this.animateSelection = true,
+    this.onPressChanged,
+    this.semanticsActions,
   }) : assert(icon != null || leading != null, 'Give an icon or a leading');
 
   final Key id;
@@ -45,6 +48,14 @@ class SafaehBranchNavItem {
   /// False makes the selection fill switch instantly, for a row that is
   /// selected as the rail changes context (it would otherwise flash).
   final bool animateSelection;
+
+  /// Called with true when a press on the row starts and false when it ends
+  /// or is cancelled, for a row that also acts on a hold (a theme switch that
+  /// resets to System when held). [onTap] still fires on release.
+  final ValueChanged<bool>? onPressChanged;
+
+  /// Extra accessibility actions, such as the action a hold performs.
+  final Map<CustomSemanticsAction, VoidCallback>? semanticsActions;
 }
 
 /// A navigation rail whose rows branch with the current context.
@@ -77,6 +88,7 @@ class SafaehBranchSidenav extends StatelessWidget {
     this.expandedWidth,
     this.duration,
     this.indentStep = 16,
+    this.lineWidth = 16,
     this.footer,
     this.haptics = true,
     this.highlightAncestors = false,
@@ -105,6 +117,11 @@ class SafaehBranchSidenav extends StatelessWidget {
   /// [SafaehThemeData.navMotion]; reduced motion makes it instant.
   final Duration? duration;
   final double indentStep;
+
+  /// How wide the line joining a [highlightAncestors] row to the selection
+  /// is. At the default 16 it fills the pills' rounded corners; thinner, it
+  /// reads as a line down the rows' leading edge.
+  final double lineWidth;
 
   /// A small line under the pinned rows (a version), hidden when compact.
   final Widget? footer;
@@ -228,6 +245,7 @@ class SafaehBranchSidenav extends StatelessWidget {
       lineAboveKind: kindUp,
       lineBelowKind: kindDown,
       pathLines: highlightAncestors,
+      lineWidth: lineWidth,
       lineSlot: slot ?? (0, 1),
       expanded: expanded,
       compact: compact,
@@ -378,6 +396,7 @@ class _BranchTile extends StatelessWidget {
     this.lineAboveKind,
     this.lineBelowKind,
     this.pathLines = false,
+    this.lineWidth = 16,
     this.lineSlot = (0, 1),
     required this.expanded,
     required this.compact,
@@ -411,6 +430,7 @@ class _BranchTile extends StatelessWidget {
   /// Whether this rail draws path lines at all (keeps the line's state, so
   /// it can retract when the path moves away).
   final bool pathLines;
+  final double lineWidth;
 
   /// When this row's piece of the line draws, as a share of the whole draw.
   final (double, double) lineSlot;
@@ -440,9 +460,15 @@ class _BranchTile extends StatelessWidget {
         Icon(selected ? (item.selectedIcon ?? item.icon) : item.icon);
     return Tooltip(
       message: item.label,
+      // A row that acts on a hold keeps the press: a touch long press would
+      // otherwise show the tooltip and cancel the hold. Hover still shows it.
+      triggerMode: item.onPressChanged == null
+          ? null
+          : TooltipTriggerMode.manual,
       child: Semantics(
         selected: selected,
         expanded: expanded ? true : null,
+        customSemanticsActions: item.semanticsActions,
         child: LayoutBuilder(
           builder: (context, constraints) {
             // Keep the compact icon column while the rail animates open.
@@ -469,6 +495,7 @@ class _BranchTile extends StatelessWidget {
                   key: item.id,
                   borderRadius: BorderRadius.circular(16),
                   onTap: onTap,
+                  onHighlightChanged: item.onPressChanged,
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(minHeight: 48),
                     child: Padding(
@@ -552,7 +579,7 @@ class _BranchTile extends StatelessWidget {
             final end = constraints.maxWidth - 8;
             // A bridge spans the pills' shared width (outer padding 8 each
             // side). The spine runs down the leading edge of the row it
-            // comes from, 16 wide.
+            // comes from, [lineWidth] wide.
             _PieceShape? shape(_Piece? kind, double? line, double? bridge) {
               if (kind == null) return null;
               if (kind == _Piece.bridge && bridge != null) {
@@ -560,7 +587,7 @@ class _BranchTile extends StatelessWidget {
               }
               if (line == null) return null;
               final start = 8 + eff(line);
-              return _PieceShape(kind, start, start + 16, own);
+              return _PieceShape(kind, start, start + lineWidth, own);
             }
 
             return Stack(
@@ -901,7 +928,10 @@ class _PathLinePainter extends CustomPainter {
             paint,
           );
         }
-        if (reach > inset) {
+        // A thin line beside a pill that isn't indented meets the pill's
+        // rounded corner: a fillet there would float off it.
+        final thin = a.to - a.from < radius;
+        if (reach > inset && (indented || !thin)) {
           // The rounded inner corner between spine and pill top.
           final x = a.to > a.own ? a.to : a.own;
           canvas.drawPath(
@@ -927,6 +957,15 @@ class _PathLinePainter extends CustomPainter {
     if (b != null && u > 0) {
       final reach = mid + (h - mid) * u;
       canvas.drawRect(Rect.fromLTRB(b.from, mid, b.to, reach), paint);
+      final thin = b.to - b.from < radius;
+      if (b.kind == _Piece.source && thin && b.own <= b.from + 0.5) {
+        // A thin line leaves from the parent's own corner: square that
+        // corner (it is the line's color) so the line flows out of it.
+        canvas.drawRect(
+          Rect.fromLTRB(b.from, h - inset - radius, b.from + radius, h - inset),
+          paint,
+        );
+      }
       if (b.kind == _Piece.source && reach >= h - inset) {
         // The rounded inner corner between the parent's pill and the spine.
         final y = h - inset;

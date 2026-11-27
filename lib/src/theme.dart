@@ -211,6 +211,35 @@ class SafaehTheme extends InheritedTheme {
   bool updateShouldNotify(SafaehTheme oldWidget) => data != oldWidget.data;
 }
 
+/// How much of the window's start edge persistent chrome covers, such as a
+/// desktop rail. Wide sheets and dialogs center in the rest of the window,
+/// over the page, rather than in the whole window. Phone sheets ignore it.
+///
+/// It is an [InheritedTheme], so a sheet opened from inside it (on the root
+/// navigator) still reads the value from where it was opened.
+class SafaehContentInset extends InheritedTheme {
+  const SafaehContentInset({
+    super.key,
+    required this.start,
+    required super.child,
+  });
+
+  /// Logical pixels from the start edge (left in LTR, right in RTL).
+  final double start;
+
+  static double of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<SafaehContentInset>()?.start ??
+      0;
+
+  @override
+  Widget wrap(BuildContext context, Widget child) =>
+      SafaehContentInset(start: start, child: child);
+
+  @override
+  bool updateShouldNotify(SafaehContentInset oldWidget) =>
+      start != oldWidget.start;
+}
+
 /// Host bidi / i18n wrapper for a string label. Same shape on sidenav,
 /// floating nav, and page index.
 typedef SafaehLabelBuilder = Widget Function(String data, TextStyle? style);

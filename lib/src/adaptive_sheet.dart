@@ -621,10 +621,13 @@ class _AdaptiveSheetHost extends StatelessWidget {
     final phoneBottomInset = !isWide && useSafeArea && viewInsets.bottom <= 0
         ? MediaQuery.paddingOf(context).bottom
         : 0.0;
-    // [railWidthOf] is host API for camera / older call sites. Floating
-    // sheets stay centered in the full viewport and never shift with a
-    // sidenav open, collapse, or overlay drawer.
-    final availableWidth = size.width;
+    // [railWidthOf] is host API for camera / older call sites. Wide sheets
+    // center over the page: the window less a [SafaehContentInset] (a
+    // desktop rail), when the host sets one.
+    final startInset = isWide
+        ? math.min(SafaehContentInset.of(context), size.width / 2)
+        : 0.0;
+    final availableWidth = size.width - startInset;
     final dialogMax = maxWidth ?? dialogMaxWidth;
     final panelWidth = isWide
         ? math.min(dialogMax, math.max(0.0, availableWidth - 48))
@@ -932,7 +935,12 @@ class _AdaptiveSheetHost extends StatelessWidget {
                 bottom: false,
                 left: false,
                 right: false,
-                child: entering,
+                child: startInset > 0
+                    ? Padding(
+                        padding: EdgeInsetsDirectional.only(start: startInset),
+                        child: entering,
+                      )
+                    : entering,
               ),
             ),
           ],

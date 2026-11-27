@@ -20,12 +20,15 @@ class SafaehTimeline<T> extends StatelessWidget {
     required this.itemBuilder,
     this.legBuilder,
     this.markerBuilder,
+    this.leadingBuilder,
+    this.leadingWidth = 0,
     this.onReorder,
     this.reorderHandleBuilder,
     this.markerSize = 28,
     this.markerColor,
     this.onMarkerColor,
     this.lineColor,
+    this.lineWidth = 2,
     this.padding = EdgeInsets.zero,
     this.shrinkWrap = false,
     this.physics,
@@ -42,6 +45,12 @@ class SafaehTimeline<T> extends StatelessWidget {
   /// Replaces the numbered circle for a stop.
   final Widget Function(BuildContext context, T item, int index)? markerBuilder;
 
+  /// A column before the line, [leadingWidth] wide, aligned with the marker:
+  /// a stop's time, as in a timetable.
+  final Widget Function(BuildContext context, T item, int index)?
+  leadingBuilder;
+  final double leadingWidth;
+
   /// Called with the old and new index (already adjusted for removal).
   final void Function(int oldIndex, int newIndex)? onReorder;
 
@@ -53,6 +62,10 @@ class SafaehTimeline<T> extends StatelessWidget {
   final Color? markerColor;
   final Color? onMarkerColor;
   final Color? lineColor;
+
+  /// The connector's thickness. A thick line in the stops' color reads as a
+  /// route line.
+  final double lineWidth;
   final EdgeInsets padding;
   final bool shrinkWrap;
   final ScrollPhysics? physics;
@@ -71,6 +84,8 @@ class SafaehTimeline<T> extends StatelessWidget {
       final item = items[index];
       final isLast = index == items.length - 1;
       final leg = isLast ? null : legBuilder?.call(context, item, index);
+      final leading = leadingBuilder?.call(context, item, index);
+      final leadWidth = leading == null ? 0.0 : leadingWidth;
       Widget markerWidget =
           markerBuilder?.call(context, item, index) ??
           Container(
@@ -107,14 +122,19 @@ class SafaehTimeline<T> extends StatelessWidget {
           children: [
             if (!isLast)
               PositionedDirectional(
-                start: (markerSize + 8) / 2 - 1,
+                start: leadWidth + (markerSize + 8) / 2 - lineWidth / 2,
                 top: markerSize,
                 bottom: 0,
-                child: SizedBox(width: 2, child: ColoredBox(color: line)),
+                child: SizedBox(
+                  width: lineWidth,
+                  child: ColoredBox(color: line),
+                ),
               ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (leading != null)
+                  SizedBox(width: leadingWidth, child: leading),
                 SizedBox(
                   width: markerSize + 8,
                   child: Center(child: markerWidget),
